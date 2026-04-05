@@ -9,7 +9,7 @@
 
 - [x] **AUTH-01**: User can sign up with email and password
 - [x] **AUTH-02**: User can log in and stay logged in across browser refresh
-- [ ] **AUTH-03**: User can log out from any page
+- [x] **AUTH-03**: User can log out from any page
 - [x] **AUTH-04**: Each user can only see their own data (RLS enforced)
 
 ### Data Model
@@ -99,7 +99,7 @@
 |-------------|-------|--------|
 | AUTH-01 | Phase 1 | Complete |
 | AUTH-02 | Phase 1 | Complete |
-| AUTH-03 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Complete |
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 2 | Pending |

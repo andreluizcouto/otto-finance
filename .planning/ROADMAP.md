@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md -- Database schema with RLS, auth module, project scaffolding
-- [ ] 01-02-PLAN.md -- Streamlit app shell with login, navigation, dashboard, settings
+- [x] 01-02-PLAN.md -- Streamlit app shell with login, navigation, dashboard, settings
 **UI hint**: yes
 
 ### Phase 2: Data & Dashboard
