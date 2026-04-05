@@ -7,16 +7,16 @@
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can sign up with email and password
-- [ ] **AUTH-02**: User can log in and stay logged in across browser refresh
+- [x] **AUTH-01**: User can sign up with email and password
+- [x] **AUTH-02**: User can log in and stay logged in across browser refresh
 - [ ] **AUTH-03**: User can log out from any page
-- [ ] **AUTH-04**: Each user can only see their own data (RLS enforced)
+- [x] **AUTH-04**: Each user can only see their own data (RLS enforced)
 
 ### Data Model
 
-- [ ] **DATA-01**: Database schema supports users, transactions, categories, budgets, and goals
+- [x] **DATA-01**: Database schema supports users, transactions, categories, budgets, and goals
 - [ ] **DATA-02**: AI-generated simulated transactions populate the system for testing (realistic Brazilian merchant names)
-- [ ] **DATA-03**: Transactions have fields: amount, date, description, category, confidence_score, user_id
+- [x] **DATA-03**: Transactions have fields: amount, date, description, category, confidence_score, user_id
 
 ### AI Classification
 
@@ -97,13 +97,13 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Pending |
-| AUTH-04 | Phase 1 | Pending |
-| DATA-01 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Complete |
+| DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 2 | Pending |
-| DATA-03 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Complete |
 | AICL-01 | Phase 3 | Pending |
 | AICL-02 | Phase 3 | Pending |
 | AICL-03 | Phase 3 | Pending |
