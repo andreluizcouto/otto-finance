@@ -63,8 +63,11 @@ def _show_signup_form():
         with st.spinner("Criando conta..."):
             result = sign_up(email, password)
         if result["success"]:
-            st.success("Conta criada com sucesso!")
-            st.rerun()
+            if result.get("needs_confirmation"):
+                st.success("Conta criada com sucesso! Verifique seu email para confirmar.")
+            else:
+                st.success("Conta criada com sucesso!")
+                st.rerun()
         else:
             st.error(result["error"])
 

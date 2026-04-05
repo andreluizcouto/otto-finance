@@ -12,15 +12,21 @@ def sign_up(email: str, password: str) -> dict:
     try:
         response = client.auth.sign_up({"email": email, "password": password})
         if response.user:
-            st.session_state["access_token"] = (
-                response.session.access_token if response.session else None
-            )
-            st.session_state["user"] = {
-                "id": str(response.user.id),
-                "email": response.user.email,
-                "created_at": str(response.user.created_at),
-            }
-            return {"success": True, "user": response.user, "error": None}
+            if response.session:
+                st.session_state["access_token"] = response.session.access_token
+                st.session_state["user"] = {
+                    "id": str(response.user.id),
+                    "email": response.user.email,
+                    "created_at": str(response.user.created_at),
+                }
+                return {"success": True, "user": response.user, "error": None}
+            else:
+                return {
+                    "success": True,
+                    "user": response.user,
+                    "error": None,
+                    "needs_confirmation": True,
+                }
         return {
             "success": False,
             "user": None,
