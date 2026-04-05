@@ -30,10 +30,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can log out from any page in the app
   4. Two different users each see only their own data (verified with test accounts)
   5. Database tables for transactions, categories, budgets, and goals exist with correct fields
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
+- [ ] 01-01-PLAN.md -- Database schema with RLS, auth module, project scaffolding
+- [ ] 01-02-PLAN.md -- Streamlit app shell with login, navigation, dashboard, settings
 **UI hint**: yes
 
 ### Phase 2: Data & Dashboard
@@ -102,11 +103,11 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/0 | Not started | - |
+| 1. Foundation | 0/2 | Planning complete | - |
 | 2. Data & Dashboard | 0/0 | Not started | - |
 | 3. AI Classification | 0/0 | Not started | - |
 | 4. Budgets & WhatsApp Alerts | 0/0 | Not started | - |
