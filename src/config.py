@@ -34,3 +34,15 @@ def get_supabase_client() -> Client:
     url = get_supabase_url()
     key = get_supabase_anon_key()
     return create_client(url, key)
+
+
+def get_authenticated_client() -> Client:
+    """Create Supabase client with user's JWT session for RLS-compliant operations."""
+    url = get_supabase_url()
+    key = get_supabase_anon_key()
+    client = create_client(url, key)
+    access_token = st.session_state.get("access_token")
+    refresh_token = st.session_state.get("refresh_token")
+    if access_token and refresh_token:
+        client.auth.set_session(access_token, refresh_token)
+    return client
