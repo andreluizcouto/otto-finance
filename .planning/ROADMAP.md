@@ -47,10 +47,12 @@ Plans:
   3. User can filter spending view by time period (this week, this month)
   4. User can see spending trend lines over multiple months
   5. User can compare current month vs previous month spending side by side
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md -- Authenticated Supabase client, Plotly chart builders, Wave 0 test infrastructure
+- [ ] 02-02-PLAN.md -- Transaction generator with Brazilian merchants, Settings page data management UI
+- [ ] 02-03-PLAN.md -- Full interactive dashboard (KPIs, donut, trend, comparison, table, filter)
 **UI hint**: yes
 
 ### Phase 3: AI Classification
@@ -108,7 +110,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 0/2 | Planning complete | - |
-| 2. Data & Dashboard | 0/0 | Not started | - |
+| 2. Data & Dashboard | 0/3 | Planning complete | - |
 | 3. AI Classification | 0/0 | Not started | - |
 | 4. Budgets & WhatsApp Alerts | 0/0 | Not started | - |
 | 5. AI Coach & Goals | 0/0 | Not started | - |
