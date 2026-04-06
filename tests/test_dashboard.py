@@ -9,10 +9,6 @@ from datetime import date
 
 import pytest
 
-# Dashboard module with calculate_date_range does not exist yet -- created in Plan 03
-pytestmark = pytest.mark.skip(reason="Implemented in Plan 03")
-
-
 def test_date_filter_this_week():
     """'Esta semana' returns Monday of current week through today."""
     from src.pages.dashboard import calculate_date_range
