@@ -9,8 +9,7 @@ from datetime import date, timedelta
 
 import pytest
 
-# Generator module does not exist yet -- created in Plan 02
-pytestmark = pytest.mark.skip(reason="Implemented in Plan 02")
+# Generator module now exists (created in Plan 02)
 
 
 @pytest.fixture
