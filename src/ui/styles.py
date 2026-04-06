@@ -92,5 +92,97 @@ def inject_custom_css():
         background-color: #EF4444 !important;
         color: #F8FAFC !important;
     }
+
+    /* KPI card styling */
+    .kpi-card {
+        background-color: #1E293B;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 24px;
+    }
+    .kpi-card .kpi-icon {
+        font-size: 20px;
+        color: #94A3B8;
+        margin-bottom: 8px;
+    }
+    .kpi-card .kpi-metric {
+        font-size: 28px;
+        font-weight: 600;
+        color: #F8FAFC;
+        line-height: 1.1;
+    }
+    .kpi-card .kpi-label {
+        font-size: 14px;
+        font-weight: 400;
+        color: #94A3B8;
+        margin-top: 4px;
+    }
+    .kpi-card .kpi-delta {
+        font-size: 14px;
+        margin-top: 4px;
+    }
+    .kpi-card .kpi-delta.positive {
+        color: #22C55E;
+    }
+    .kpi-card .kpi-delta.negative {
+        color: #EF4444;
+    }
+
+    /* Generate data button */
+    .generate-btn button {
+        background-color: #2563EB !important;
+        color: #F8FAFC !important;
+        border: none !important;
+    }
+    .generate-btn button:hover {
+        background-color: #1D4ED8 !important;
+    }
+
+    /* Destructive button (Limpar Dados) */
+    .destructive-btn button {
+        border: 1px solid #EF4444 !important;
+        color: #EF4444 !important;
+        background-color: transparent !important;
+    }
+    .destructive-btn button:hover {
+        background-color: #EF4444 !important;
+        color: #F8FAFC !important;
+    }
+
+    /* Section heading */
+    .section-heading {
+        font-size: 20px;
+        font-weight: 600;
+        color: #F8FAFC;
+        margin-bottom: 16px;
+        line-height: 1.2;
+    }
+
+    /* Chart container */
+    .chart-container {
+        background-color: #1E293B;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 32px;
+    }
+
+    /* Empty state */
+    .empty-state {
+        background-color: #1E293B;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 48px 24px;
+        text-align: center;
+    }
+    .empty-state .empty-heading {
+        color: #94A3B8;
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+    .empty-state .empty-body {
+        color: #64748B;
+        font-size: 14px;
+    }
     </style>
     """, unsafe_allow_html=True)
