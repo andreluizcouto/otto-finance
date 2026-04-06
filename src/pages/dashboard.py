@@ -149,3 +149,212 @@ def compute_kpis(
         "daily_avg": daily_avg,
         "delta_pct": delta_pct,
     }
+
+
+def show_dashboard():
+    """Render the full interactive spending dashboard."""
+    user = get_current_user()
+    if not user:
+        st.error("Erro ao carregar dados. Verifique sua conexao e tente novamente.")
+        return
+
+    # --- Filter bar (per D-11, D-12) ---
+    # Right-align filter using 3-column layout, filter in last column
+    _, _, filter_col = st.columns([2, 2, 1])
+    with filter_col:
+        period = st.selectbox(
+            "Periodo",
+            options=["Esta semana", "Este mes", "Ultimos 3 meses"],
+            index=1,
+            key="dashboard_period_filter",
+            label_visibility="collapsed",
+        )
+
+    start_date, end_date = calculate_date_range(period)
+
+    # --- Load data ---
+    try:
+        with st.spinner("Carregando dashboard..."):
+            data = load_dashboard_data(user["id"], start_date, end_date)
+    except Exception:
+        st.error("Erro ao carregar dados. Verifique sua conexao e tente novamente.")
+        return
+
+    transactions = data["transactions"]
+    categories = data["categories"]
+    all_transactions = data["all_transactions"]
+
+    # Build category id->cat lookup for fast lookups
+    cat_by_id = {cat["id"]: cat for cat in categories.values()}
+
+    # --- Empty state (no transactions at all) ---
+    if not transactions and not all_transactions:
+        st.markdown("""
+        <div class="empty-state">
+            <div class="empty-heading">Nenhuma transacao encontrada</div>
+            <div class="empty-body">Va em Configuracoes e clique em Gerar Dados para popular o dashboard com transacoes simuladas.</div>
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
+    # Build DataFrame for filtered period
+    df = pd.DataFrame(transactions) if transactions else pd.DataFrame(
+        columns=["id", "amount", "date", "description", "merchant_name", "category_id"]
+    )
+    if not df.empty:
+        df["amount"] = df["amount"].astype(float)
+        df["date"] = pd.to_datetime(df["date"])
+
+    # --- KPI cards (per D-05) ---
+    kpis = compute_kpis(df, categories, start_date, end_date, all_transactions)
+
+    top_cat_display = kpis["top_category"]
+
+    # Spacer above KPIs
+    st.markdown('<div style="margin-top: 32px;"></div>', unsafe_allow_html=True)
+
+    kpi_cols = st.columns(4)
+    kpi_data = [
+        ("bi-cash-stack", format_brl(kpis["total_spent"]), "Total no mes", kpis["delta_pct"]),
+        ("bi-receipt", f"{kpis['txn_count']} transacoes", "Transacoes", None),
+        ("bi-trophy", top_cat_display, "Categoria mais cara", None),
+        ("bi-calendar3", format_brl(kpis["daily_avg"]), "Media por dia", None),
+    ]
+    for col, (icon, metric, label, delta) in zip(kpi_cols, kpi_data):
+        with col:
+            delta_html = ""
+            if delta is not None:
+                sign = "+" if delta > 0 else ""
+                css_class = "negative" if delta > 0 else "positive"
+                delta_html = f'<div class="kpi-delta {css_class}">{sign}{delta:.1f}% vs mes anterior</div>'
+            st.markdown(f"""
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="{icon}"></i></div>
+                <div class="kpi-metric">{metric}</div>
+                <div class="kpi-label">{label}</div>
+                {delta_html}
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown('<div style="margin-top: 32px;"></div>', unsafe_allow_html=True)
+
+    # --- Empty filtered state ---
+    if df.empty:
+        st.info("Nenhuma transacao neste periodo.")
+        return
+
+    # --- Donut chart: Gastos por Categoria (per D-08, DASH-01) ---
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    st.markdown('<p class="section-heading">Gastos por Categoria</p>', unsafe_allow_html=True)
+    category_totals = df.groupby("category_id")["amount"].sum().reset_index()
+    category_totals["category_name"] = category_totals["category_id"].map(
+        lambda cid: cat_by_id.get(cid, {}).get("name", "Outros")
+    )
+    category_totals["color_hex"] = category_totals["category_id"].map(
+        lambda cid: cat_by_id.get(cid, {}).get("color_hex", "#64748B")
+    )
+    total_formatted = format_brl(kpis["total_spent"])
+    fig_donut = create_donut_chart(category_totals, total_formatted)
+    st.plotly_chart(fig_donut, use_container_width=True, config={"displayModeBar": False})
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div style="margin-top: 32px;"></div>', unsafe_allow_html=True)
+
+    # --- Trend line chart: Tendencia de Gastos (per D-09, DASH-03) ---
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    st.markdown('<p class="section-heading">Tendencia de Gastos</p>', unsafe_allow_html=True)
+    # Determine grouping granularity: weekly for 3-month view, daily otherwise
+    df_trend = df.copy()
+    if period == "Ultimos 3 meses":
+        df_trend["period_label"] = df_trend["date"].dt.to_period("W").astype(str)
+    else:
+        df_trend["period_label"] = df_trend["date"].dt.strftime("%d/%m")
+    trend_agg = df_trend.groupby("period_label")["amount"].sum().reset_index()
+    trend_agg.columns = ["period_label", "total_amount"]
+    fig_trend = create_trend_chart(trend_agg)
+    st.plotly_chart(fig_trend, use_container_width=True, config={"displayModeBar": False})
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- Comparison chart: Atual vs Mes Anterior (per D-10, DASH-04) ---
+    # Show only for "Este mes" and "Ultimos 3 meses" (not "Esta semana")
+    if period != "Esta semana":
+        st.markdown('<div style="margin-top: 32px;"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+        st.markdown('<p class="section-heading">Atual vs Mes Anterior</p>', unsafe_allow_html=True)
+
+        # Current month: month of end_date
+        current_month_start = end_date.replace(day=1)
+        if current_month_start.month == 1:
+            prev_month_start = date(current_month_start.year - 1, 12, 1)
+        else:
+            prev_month_start = date(current_month_start.year, current_month_start.month - 1, 1)
+        if prev_month_start.month == 12:
+            prev_month_end = date(prev_month_start.year + 1, 1, 1) - timedelta(days=1)
+        else:
+            prev_month_end = date(prev_month_start.year, prev_month_start.month + 1, 1) - timedelta(days=1)
+
+        all_df = pd.DataFrame(all_transactions) if all_transactions else pd.DataFrame(
+            columns=["amount", "date", "category_id"]
+        )
+        if not all_df.empty:
+            all_df["amount"] = all_df["amount"].astype(float)
+            all_df["date"] = pd.to_datetime(all_df["date"]).dt.date
+
+        curr_df = all_df[
+            (all_df["date"] >= current_month_start) & (all_df["date"] <= end_date)
+        ] if not all_df.empty else pd.DataFrame(columns=["amount", "date", "category_id"])
+        prev_df = all_df[
+            (all_df["date"] >= prev_month_start) & (all_df["date"] <= prev_month_end)
+        ] if not all_df.empty else pd.DataFrame(columns=["amount", "date", "category_id"])
+
+        # Get all category names present in either month
+        all_cat_ids = set()
+        if not curr_df.empty:
+            all_cat_ids.update(curr_df["category_id"].unique())
+        if not prev_df.empty:
+            all_cat_ids.update(prev_df["category_id"].unique())
+
+        if all_cat_ids:
+            cat_names = [cat_by_id.get(cid, {}).get("name", "Outros") for cid in all_cat_ids]
+            curr_totals = [
+                float(curr_df[curr_df["category_id"] == cid]["amount"].sum()) if not curr_df.empty else 0.0
+                for cid in all_cat_ids
+            ]
+            prev_totals = [
+                float(prev_df[prev_df["category_id"] == cid]["amount"].sum()) if not prev_df.empty else 0.0
+                for cid in all_cat_ids
+            ]
+            fig_comparison = create_comparison_chart(cat_names, curr_totals, prev_totals)
+            st.plotly_chart(fig_comparison, use_container_width=True, config={"displayModeBar": False})
+        else:
+            st.info("Nenhuma transacao neste periodo.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- Recent transactions table (per D-07) ---
+    st.markdown('<div style="margin-top: 32px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    st.markdown('<p class="section-heading">Transacoes Recentes</p>', unsafe_allow_html=True)
+
+    table_df = df.head(20).copy()
+    table_df["Data"] = table_df["date"].dt.strftime("%d/%m")
+    table_df["Merchant"] = table_df["merchant_name"].fillna(table_df["description"])
+    table_df["Categoria"] = table_df["category_id"].map(
+        lambda cid: f"{cat_by_id.get(cid, {}).get('emoji', '')} {cat_by_id.get(cid, {}).get('name', 'Outros')}"
+    )
+    table_df["Valor"] = table_df["amount"].apply(format_brl)
+    display_df = table_df[["Data", "Merchant", "Categoria", "Valor"]].rename(
+        columns={"Merchant": "Estabelecimento"}
+    )
+
+    st.dataframe(
+        display_df,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Data": st.column_config.TextColumn("Data", width="small"),
+            "Estabelecimento": st.column_config.TextColumn("Estabelecimento", width="medium"),
+            "Categoria": st.column_config.TextColumn("Categoria", width="medium"),
+            "Valor": st.column_config.TextColumn("Valor", width="small"),
+        },
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
