@@ -50,9 +50,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Authenticated Supabase client, Plotly chart builders, Wave 0 test infrastructure
-- [ ] 02-02-PLAN.md -- Transaction generator with Brazilian merchants, Settings page data management UI
-- [ ] 02-03-PLAN.md -- Full interactive dashboard (KPIs, donut, trend, comparison, table, filter)
+- [x] 02-01-PLAN.md -- Authenticated Supabase client, Plotly chart builders, Wave 0 test infrastructure
+- [x] 02-02-PLAN.md -- Transaction generator with Brazilian merchants, Settings page data management UI
+- [x] 02-03-PLAN.md -- Full interactive dashboard (KPIs, donut, trend, comparison, table, filter)
 **UI hint**: yes
 
 ### Phase 3: AI Classification
