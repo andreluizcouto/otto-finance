@@ -46,3 +46,14 @@ def get_authenticated_client() -> Client:
     if access_token and refresh_token:
         client.auth.set_session(access_token, refresh_token)
     return client
+
+
+def get_make_webhook_url() -> str:
+    """Get Make.com classification webhook URL from st.secrets (production) or .env (local dev)."""
+    try:
+        return st.secrets["MAKE_WEBHOOK_URL"]
+    except (FileNotFoundError, KeyError):
+        url = os.getenv("MAKE_WEBHOOK_URL")
+        if not url:
+            raise ValueError("MAKE_WEBHOOK_URL not found in st.secrets or .env")
+        return url

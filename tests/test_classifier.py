@@ -3,7 +3,6 @@ import pytest
 # These tests will be activated (skip removed) after Wave 1 creates src/data/classifier.py
 
 
-@pytest.mark.skip(reason="Wave 1 not yet implemented — activates after src/data/classifier.py is created")
 def test_build_payload():
     """AICL-01: build_classification_payload() returns dict with user_id, transactions[], categories[].
     transactions items must only contain fields: id, description, merchant_name, amount.
@@ -24,7 +23,6 @@ def test_build_payload():
     assert "user_id" not in txn
 
 
-@pytest.mark.skip(reason="Wave 1 not yet implemented — activates after src/data/classifier.py is created")
 def test_merchant_lookup_table():
     """AICL-02: resolve_merchant_name() maps cryptic Brazilian codes to readable names.
     RCHLO -> Riachuelo, MELI -> Mercado Livre, NF* prefix -> Netflix, SPT* prefix -> Spotify.
@@ -37,7 +35,6 @@ def test_merchant_lookup_table():
     assert resolve_merchant_name("UNKNOWN_XYZ") == "UNKNOWN_XYZ"  # passthrough
 
 
-@pytest.mark.skip(reason="Wave 1 not yet implemented — activates after src/data/classifier.py is created")
 def test_confidence_mapping():
     """AICL-03 + D-10: map_confidence_score() maps float to 3-tier enum string.
     >= 0.8 -> 'high', 0.5 <= x < 0.8 -> 'medium', < 0.5 -> 'low'.
@@ -52,7 +49,6 @@ def test_confidence_mapping():
     assert map_confidence_score(0.0) == "low"
 
 
-@pytest.mark.skip(reason="Wave 1 not yet implemented — activates after src/data/classifier.py is created")
 def test_unclassified_query():
     """AICL-04 + D-02: get_unclassified_transactions() fetches only rows where
     category_id IS NULL OR confidence_score IS NULL AND manually_reviewed IS NOT TRUE.
@@ -73,7 +69,6 @@ def test_unclassified_query():
     assert "confidence_score.is.null" in or_filter
 
 
-@pytest.mark.skip(reason="Wave 1 not yet implemented — activates after src/data/classifier.py is created")
 def test_json_schema_structure():
     """AICL-06 + D-08: get_openai_json_schema() returns a dict with strict:true and
     category_slug enum containing all 10 Brazilian category slugs.
