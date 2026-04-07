@@ -75,7 +75,6 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Implementar pagina de transacoes (`.planning/todos/pending/2026-04-07-implementar-pagina-de-transacoes.md`)
 - Implementar testes de categorias e classificacao (`.planning/todos/pending/2026-04-07-implementar-testes-de-categorias-e-classificacao.md`)
 
 ### Blockers/Concerns
