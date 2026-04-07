@@ -1,8 +1,10 @@
 """
-categories.py — Category CRUD operations.
+categories.py — Category CRUD operations for Phase 3.
 
 All operations use the authenticated Supabase client (RLS-scoped).
-Default categories (is_default=True) are visible but not modifiable.
+Default categories (is_default=True) are visible but not modifiable per RLS.
+
+Implements AICL-05 + D-05 + D-06.
 """
 
 from __future__ import annotations
