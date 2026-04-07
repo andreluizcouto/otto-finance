@@ -20,10 +20,10 @@
 
 ### AI Classification
 
-- [ ] **AICL-01**: Transactions are automatically classified into categories via OpenAI through Make.com
+- [x] **AICL-01**: Transactions are automatically classified into categories via OpenAI through Make.com
 - [ ] **AICL-02**: System includes Brazilian merchant name mapping (RCHLO → Riachuelo, Pag* → PagSeguro, etc.)
-- [ ] **AICL-03**: Each classification includes a confidence score (high/medium/low)
-- [ ] **AICL-04**: Low-confidence classifications are flagged for user review
+- [x] **AICL-03**: Each classification includes a confidence score (high/medium/low)
+- [x] **AICL-04**: Low-confidence classifications are flagged for user review
 - [ ] **AICL-05**: Users can create and manage custom categories
 - [ ] **AICL-06**: Classification uses structured outputs (JSON schema) for reliability
 
@@ -51,7 +51,7 @@
 
 ### Integration
 
-- [ ] **INTG-01**: Make.com receives webhook calls and orchestrates AI classification flow
+- [x] **INTG-01**: Make.com receives webhook calls and orchestrates AI classification flow
 - [ ] **INTG-02**: Make.com scheduled scenarios generate monthly insights
 - [ ] **INTG-03**: Z-API integration sends WhatsApp messages for alerts and coaching
 - [ ] **INTG-04**: Z-API health check before sending messages (detect disconnections)
@@ -104,10 +104,10 @@
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 2 | Pending |
 | DATA-03 | Phase 1 | Complete |
-| AICL-01 | Phase 3 | Pending |
+| AICL-01 | Phase 3 | Complete |
 | AICL-02 | Phase 3 | Pending |
-| AICL-03 | Phase 3 | Pending |
-| AICL-04 | Phase 3 | Pending |
+| AICL-03 | Phase 3 | Complete |
+| AICL-04 | Phase 3 | Complete |
 | AICL-05 | Phase 3 | Pending |
 | AICL-06 | Phase 3 | Pending |
 | DASH-01 | Phase 2 | Pending |
@@ -123,7 +123,7 @@
 | COACH-03 | Phase 5 | Pending |
 | COACH-04 | Phase 5 | Pending |
 | COACH-05 | Phase 5 | Pending |
-| INTG-01 | Phase 3 | Pending |
+| INTG-01 | Phase 3 | Complete |
 | INTG-02 | Phase 5 | Pending |
 | INTG-03 | Phase 4 | Pending |
 | INTG-04 | Phase 4 | Pending |
