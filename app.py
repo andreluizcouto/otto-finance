@@ -3,6 +3,7 @@ from src.ui.styles import inject_custom_css
 from src.auth import is_authenticated
 from src.pages.login import show_login_page
 from src.pages.dashboard import show_dashboard
+from src.pages.transactions import show_transactions
 from src.pages.settings import show_settings
 from src.navigation import show_sidebar
 
@@ -28,5 +29,7 @@ selected = show_sidebar()
 # 5. Route to selected page
 if selected == "Dashboard":
     show_dashboard()
+elif selected == "Transacoes":
+    show_transactions()
 elif selected == "Configuracoes":
     show_settings()

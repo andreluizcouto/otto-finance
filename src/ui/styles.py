@@ -184,5 +184,58 @@ def inject_custom_css():
         color: #64748B;
         font-size: 14px;
     }
+
+    /* Phase 3: Classify CTA button */
+    .classify-btn button {
+        background-color: #2563EB !important;
+        color: #F8FAFC !important;
+        border: none !important;
+        width: 100%;
+    }
+    .classify-btn button:hover {
+        background-color: #1D4ED8 !important;
+    }
+
+    /* Phase 3: Low-confidence badge */
+    .confidence-badge-low {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background-color: rgba(239, 68, 68, 0.15);
+        border: 1px solid #EF4444;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #EF4444;
+        white-space: nowrap;
+    }
+
+    /* Phase 3: Transactions table container */
+    .transactions-container {
+        background-color: #1E293B;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+
+    /* Phase 3: Category row in Settings */
+    .category-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid #334155;
+    }
+
+    /* Phase 3: Category color swatch */
+    .category-swatch {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        display: inline-block;
+        flex-shrink: 0;
+    }
     </style>
     """, unsafe_allow_html=True)

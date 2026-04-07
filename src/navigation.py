@@ -6,7 +6,7 @@ from src.auth import sign_out, get_current_user
 def show_sidebar() -> str:
     """
     Render the sidebar with navigation and return the selected page name.
-    Returns one of: "Dashboard", "Configuracoes"
+    Returns one of: "Dashboard", "Transacoes", "Configuracoes"
     """
     with st.sidebar:
         # App branding
@@ -15,8 +15,8 @@ def show_sidebar() -> str:
         # Navigation menu
         selected = option_menu(
             menu_title=None,
-            options=["Dashboard", "Configuracoes"],
-            icons=["house", "gear"],
+            options=["Dashboard", "Transacoes", "Configuracoes"],
+            icons=["house", "bi-list-ul", "gear"],
             default_index=0,
             styles={
                 "container": {"padding": "0"},
