@@ -65,10 +65,14 @@ Plans:
   3. Each classified transaction shows a confidence indicator (high/medium/low) in the UI
   4. Low-confidence classifications appear in a review queue where the user can correct them
   5. User can create, rename, and delete custom spending categories
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-00-PLAN.md -- Wave 0: test stubs (test_classifier.py, test_categories.py) + manually_reviewed schema step
+- [ ] 03-01-PLAN.md -- Wave 1: classifier.py helpers + config.get_make_webhook_url() + Make.com setup docs
+- [ ] 03-02-PLAN.md -- Wave 2a: Transactions page (classify CTA + inline low-confidence correction + nav wiring)
+- [ ] 03-03-PLAN.md -- Wave 2b: Category CRUD (categories.py + Settings Categorias section)
+**UI hint**: yes
 
 ### Phase 4: Budgets & WhatsApp Alerts
 **Goal**: Users can set spending limits and receive WhatsApp alerts when approaching or exceeding them
@@ -111,6 +115,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 0/2 | Planning complete | - |
 | 2. Data & Dashboard | 0/3 | Planning complete | - |
-| 3. AI Classification | 0/0 | Not started | - |
+| 3. AI Classification | 0/4 | Planning complete | - |
 | 4. Budgets & WhatsApp Alerts | 0/0 | Not started | - |
 | 5. AI Coach & Goals | 0/0 | Not started | - |
