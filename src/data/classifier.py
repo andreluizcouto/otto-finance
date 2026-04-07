@@ -133,7 +133,7 @@ def build_classification_payload(
             {
                 "id": t["id"],
                 "description": t["description"],
-                "merchant_name": t.get("merchant_name", ""),
+                "merchant_name": resolve_merchant_name(t.get("merchant_name", "")),
                 "amount": t["amount"],
             }
             for t in transactions

@@ -2,6 +2,7 @@ import streamlit as st
 from src.auth import get_current_user, sign_out
 from src.config import get_authenticated_client
 from src.data.categories import add_category, delete_category, get_all_categories, rename_category
+from src.data.classifier import trigger_classification
 from src.data.generator import generate_transactions
 
 
@@ -67,9 +68,22 @@ def show_settings():
                     category_map = {cat["slug"]: cat for cat in cat_resp.data}
                     transactions = generate_transactions(user["id"], category_map)
                     client.table("transactions").insert(transactions).execute()
-                    st.session_state["data_success"] = (
-                        f"{len(transactions)} transacoes geradas com sucesso!"
-                    )
+                    classify_result = trigger_classification(client, user["id"])
+                    if classify_result.get("success"):
+                        st.session_state["data_success"] = (
+                            f"{len(transactions)} transacoes geradas com sucesso! "
+                            f"Classificacao automatica iniciada para "
+                            f"{classify_result.get('classified_count', 0)} transacoes."
+                        )
+                    else:
+                        st.session_state["data_success"] = (
+                            f"{len(transactions)} transacoes geradas com sucesso! "
+                            "Voce pode usar o botao de classificacao manual em Transacoes."
+                        )
+                        st.session_state["data_error"] = classify_result.get(
+                            "error",
+                            "Erro ao classificar automaticamente. Tente novamente em Transacoes.",
+                        )
                     st.rerun()
             except Exception:
                 st.session_state["data_error"] = (
