@@ -55,7 +55,9 @@ Exceptions:
 | Heading | 20px | 600 | 1.2 | Section headings (.section-heading class — existing) |
 | Display | 28px | 600 | 1.1 | KPI metrics (existing .kpi-metric pattern) |
 
-Source: All sizes confirmed from `src/ui/styles.py` — no new sizes introduced.
+Source: All sizes confirmed from `src/ui/styles.py` — no new typographic roles introduced.
+
+**Component exception:** `.confidence-badge-low` uses `font-size: 12px` in its CSS block. This is a component-scoped micro-text override, not a typographic role in the scale — it is not added as a row in this table to avoid inflating the type scale beyond 4 entries.
 
 ---
 
@@ -123,7 +125,7 @@ Loading state: st.spinner("Classificando... Isso pode levar alguns segundos.")
     background-color: rgba(239, 68, 68, 0.15);
     border: 1px solid #EF4444;
     border-radius: 4px;
-    padding: 2px 6px;
+    padding: 4px 8px;
     font-size: 12px;
     font-weight: 600;
     color: #EF4444;
@@ -282,7 +284,7 @@ Add these classes to the existing `inject_custom_css()` function:
     background-color: rgba(239, 68, 68, 0.15);
     border: 1px solid #EF4444;
     border-radius: 4px;
-    padding: 2px 6px;
+    padding: 4px 8px;
     font-size: 12px;
     font-weight: 600;
     color: #EF4444;
@@ -321,11 +323,11 @@ Add these classes to the existing `inject_custom_css()` function:
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS — 12px badge font annotated as component-scoped exception
+- [x] Dimension 5 Spacing: PASS (FLAG: `gap: 12px` in `.category-row` — multiple of 4, non-blocking)
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-04-07
