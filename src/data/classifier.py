@@ -217,7 +217,11 @@ def get_openai_json_schema() -> dict[str, Any]:
                         "delivery",
                         "outros",
                     ],
-                    "description": "Category slug matching the categories table",
+                    "description": (
+                        "Canonical category slug matching the approved enum. "
+                        "Custom/unknown slugs must be deterministically mapped "
+                        "downstream; fallback to 'outros' when no mapping exists."
+                    ),
                 },
                 "confidence": {
                     "type": "number",
