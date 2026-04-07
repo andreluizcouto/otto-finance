@@ -22,18 +22,20 @@ def show_sidebar() -> str:
                 "container": {"padding": "0"},
                 "icon": {"font-size": "16px"},
                 "nav-link": {
-                    "font-size": "16px",
+                    "font-size": "15px",
                     "text-align": "left",
-                    "margin": "0px",
-                    "color": "#94A3B8",
+                    "margin": "0 0 6px 0",
+                    "padding": "10px 12px",
+                    "color": "#CBD5E1",
                     "background-color": "transparent",
                 },
                 "nav-link:hover": {
-                    "background-color": "#334155",
+                    "background-color": "rgba(59,130,246,0.16)",
                 },
                 "nav-link-selected": {
                     "background-color": "#2563EB",
                     "color": "#F8FAFC",
+                    "font-weight": "600",
                 },
             },
         )

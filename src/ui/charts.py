@@ -4,11 +4,11 @@ import plotly.graph_objects as go
 PLOTLY_LAYOUT = dict(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="Inter", color="#94A3B8", size=14),
+    font=dict(family="Inter", color="#CBD5E1", size=14),
     margin=dict(l=0, r=0, t=32, b=0),
-    legend=dict(font=dict(size=14, color="#94A3B8")),
-    xaxis=dict(gridcolor="rgba(51,65,85,0.3)", zerolinecolor="#334155"),
-    yaxis=dict(gridcolor="rgba(51,65,85,0.3)", zerolinecolor="#334155"),
+    legend=dict(font=dict(size=13, color="#94A3B8")),
+    xaxis=dict(gridcolor="rgba(148,163,184,0.16)", zerolinecolor="rgba(148,163,184,0.16)"),
+    yaxis=dict(gridcolor="rgba(148,163,184,0.16)", zerolinecolor="rgba(148,163,184,0.16)"),
 )
 
 
@@ -63,10 +63,10 @@ def create_trend_chart(df_trend: pd.DataFrame) -> go.Figure:
                 x=df_trend["period_label"],
                 y=df_trend["total_amount"],
                 mode="lines+markers",
-                line=dict(color="#2563EB", width=2),
-                marker=dict(size=6, color="#2563EB"),
+                line=dict(color="#3B82F6", width=2.5),
+                marker=dict(size=6, color="#60A5FA"),
                 fill="tozeroy",
-                fillcolor="rgba(37, 99, 235, 0.1)",
+                fillcolor="rgba(59, 130, 246, 0.14)",
                 hovertemplate="R$ %{y:,.2f}<extra></extra>",
             )
         ]
@@ -91,13 +91,13 @@ def create_comparison_chart(
                 x=categories,
                 y=current_amounts,
                 name="Mes atual",
-                marker_color="#2563EB",
+                marker_color="#3B82F6",
             ),
             go.Bar(
                 x=categories,
                 y=previous_amounts,
                 name="Mes anterior",
-                marker_color="#475569",
+                marker_color="#334155",
             ),
         ]
     )
