@@ -339,3 +339,123 @@ def test_correction_updates_transaction_and_tracks_corrected_ids(monkeypatch):
             },
         }
     ]
+
+
+def test_feedback_messages_are_shown_and_cleared_from_session(monkeypatch):
+    import src.pages.transactions as transactions
+
+    fake_st = _FakeStreamlit(button_returns=[False])
+    fake_st.session_state["classify_success"] = "ok"
+    fake_st.session_state["classify_error"] = "erro"
+    fake_client = _FakeClient(
+        transactions_responses=[
+            _FakeResponse(data=[], count=0),
+            _FakeResponse(data=[]),
+        ]
+    )
+    monkeypatch.setattr(transactions, "st", fake_st)
+    monkeypatch.setattr(transactions, "get_current_user", lambda: {"id": "user-1"})
+    monkeypatch.setattr(transactions, "get_authenticated_client", lambda: fake_client)
+
+    transactions.show_transactions()
+
+    assert "ok" in fake_st.successes
+    assert "erro" in fake_st.errors
+    assert "classify_success" not in fake_st.session_state
+    assert "classify_error" not in fake_st.session_state
+
+
+def test_invalid_correction_selection_is_ignored(monkeypatch):
+    import src.pages.transactions as transactions
+
+    tx_rows = [
+        {
+            "id": "t1",
+            "date": "2026-04-07",
+            "description": "Compra 1",
+            "merchant_name": "Loja 1",
+            "amount": 20.0,
+            "confidence_score": "low",
+            "manually_reviewed": False,
+            "categories": {"name": "Outros", "emoji": "📦"},
+        }
+    ]
+    categories = [{"id": "c1", "name": "Compras", "emoji": "🛍️"}]
+    edited = pd.DataFrame(
+        [
+            {
+                "Data": "2026-04-07",
+                "Descricao": "Compra 1",
+                "Merchant": "Loja 1",
+                "Categoria": "📦 Outros",
+                "Valor": 20.0,
+                "Confianca": "? Baixa",
+                "Corrigir": "Categoria Invalida",
+            }
+        ]
+    )
+
+    fake_st = _FakeStreamlit(button_returns=[False], editor_return=edited)
+    fake_client = _FakeClient(
+        transactions_responses=[
+            _FakeResponse(data=[], count=1),
+            _FakeResponse(data=tx_rows),
+        ],
+        categories_responses=[_FakeResponse(data=categories)],
+    )
+    monkeypatch.setattr(transactions, "st", fake_st)
+    monkeypatch.setattr(transactions, "get_current_user", lambda: {"id": "user-1"})
+    monkeypatch.setattr(transactions, "get_authenticated_client", lambda: fake_client)
+
+    transactions.show_transactions()
+
+    assert fake_client.updates == []
+    assert fake_st.toasts == []
+
+
+def test_already_corrected_id_does_not_patch_again(monkeypatch):
+    import src.pages.transactions as transactions
+
+    tx_rows = [
+        {
+            "id": "t1",
+            "date": "2026-04-07",
+            "description": "Compra 1",
+            "merchant_name": "Loja 1",
+            "amount": 20.0,
+            "confidence_score": "low",
+            "manually_reviewed": False,
+            "categories": {"name": "Outros", "emoji": "📦"},
+        }
+    ]
+    categories = [{"id": "c1", "name": "Compras", "emoji": "🛍️"}]
+    edited = pd.DataFrame(
+        [
+            {
+                "Data": "2026-04-07",
+                "Descricao": "Compra 1",
+                "Merchant": "Loja 1",
+                "Categoria": "📦 Outros",
+                "Valor": 20.0,
+                "Confianca": "? Baixa",
+                "Corrigir": "🛍️ Compras",
+            }
+        ]
+    )
+
+    fake_st = _FakeStreamlit(button_returns=[False], editor_return=edited)
+    fake_st.session_state["corrected_ids"] = {"t1"}
+    fake_client = _FakeClient(
+        transactions_responses=[
+            _FakeResponse(data=[], count=1),
+            _FakeResponse(data=tx_rows),
+        ],
+        categories_responses=[_FakeResponse(data=categories)],
+    )
+    monkeypatch.setattr(transactions, "st", fake_st)
+    monkeypatch.setattr(transactions, "get_current_user", lambda: {"id": "user-1"})
+    monkeypatch.setattr(transactions, "get_authenticated_client", lambda: fake_client)
+
+    transactions.show_transactions()
+
+    assert fake_client.updates == []
