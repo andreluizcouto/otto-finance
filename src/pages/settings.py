@@ -1,12 +1,7 @@
 import streamlit as st
 from src.auth import get_current_user, sign_out
 from src.config import get_authenticated_client
-from src.data.categories import (
-    add_category,
-    delete_category,
-    get_all_categories,
-    rename_category,
-)
+from src.data.categories import add_category, delete_category, get_all_categories, rename_category
 from src.data.generator import generate_transactions
 
 
