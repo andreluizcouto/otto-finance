@@ -75,7 +75,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Implementar testes de categorias e classificacao (`.planning/todos/pending/2026-04-07-implementar-testes-de-categorias-e-classificacao.md`)
+None yet.
 
 ### Blockers/Concerns
 
