@@ -27,8 +27,7 @@ def show_transactions():
 
     user = get_current_user()
     if not user:
-        st.error("Erro ao carregar dados. Verifique sua conexao e tente novamente.")
-        return
+        st.stop()
 
     client = get_authenticated_client()
 
@@ -43,7 +42,9 @@ def show_transactions():
     unclassified_count = unclassified_resp.count or 0
 
     if st.session_state.get("classify_success"):
-        st.success(st.session_state.pop("classify_success"))
+        success_msg = st.session_state.pop("classify_success")
+        st.success(success_msg)
+        st.toast(success_msg, icon="✅")
     if st.session_state.get("classify_error"):
         st.error(st.session_state.pop("classify_error"))
 
