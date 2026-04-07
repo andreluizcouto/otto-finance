@@ -185,7 +185,7 @@ def inject_custom_css():
         font-size: 14px;
     }
 
-    /* Phase 3: Classify CTA button */
+    /* Classify CTA button */
     .classify-btn button {
         background-color: #2563EB !important;
         color: #F8FAFC !important;
@@ -196,7 +196,7 @@ def inject_custom_css():
         background-color: #1D4ED8 !important;
     }
 
-    /* Phase 3: Low-confidence badge */
+    /* Low-confidence badge */
     .confidence-badge-low {
         display: inline-flex;
         align-items: center;
@@ -211,7 +211,7 @@ def inject_custom_css():
         white-space: nowrap;
     }
 
-    /* Phase 3: Transactions table container */
+    /* Transactions table container */
     .transactions-container {
         background-color: #1E293B;
         border: 1px solid #334155;
@@ -220,7 +220,7 @@ def inject_custom_css():
         margin-bottom: 24px;
     }
 
-    /* Phase 3: Category row in Settings */
+    /* Category row in Settings */
     .category-row {
         display: flex;
         align-items: center;
@@ -229,7 +229,7 @@ def inject_custom_css():
         border-bottom: 1px solid #334155;
     }
 
-    /* Phase 3: Category color swatch */
+    /* Category color swatch */
     .category-swatch {
         width: 16px;
         height: 16px;
