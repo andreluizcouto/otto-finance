@@ -14,7 +14,7 @@ Classificação automática de transações em categorias de gastos via pipeline
 ## Implementation Decisions
 
 ### Trigger de Classificação
-- **D-01:** Botão manual na página de Transações: "Classificar transações não classificadas" — o usuário controla quando roda. Simples, previsível, sem complexidade de background.
+- **D-01:** Comportamento híbrido: classificação automática roda para transações recém-criadas/importadas no fluxo de criação ao vivo; o botão manual na página de Transações ("Classificar transações não classificadas") permanece disponível como fallback/retry explícito sob controle do usuário.
 - **D-02:** Classifica apenas transações sem categoria ou com confidence_score = null (idempotente — não sobrescreve correções manuais do usuário).
 
 ### Review Queue (Confiança Baixa)
