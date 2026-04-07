@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 
+import pandas as pd
 import pytest
 
 
@@ -59,10 +60,18 @@ class _FakeClient:
 
     def table(self, name):
         if name == "transactions":
-            resp = self._transactions_responses.pop(0)
+            resp = (
+                self._transactions_responses.pop(0)
+                if self._transactions_responses
+                else _FakeResponse(data=[])
+            )
             return _FakeQuery(resp, self.updates)
         if name == "categories":
-            resp = self._categories_responses.pop(0)
+            resp = (
+                self._categories_responses.pop(0)
+                if self._categories_responses
+                else _FakeResponse(data=[])
+            )
             return _FakeQuery(resp, self.updates)
         raise AssertionError(f"Unexpected table: {name}")
 
@@ -79,6 +88,8 @@ class _FakeStreamlit:
         self.successes = []
         self.errors = []
         self.toasts = []
+        self.last_data_editor_df = None
+        self.column_config = _FakeColumnConfig()
 
     def title(self, *_args, **_kwargs):
         return None
@@ -111,6 +122,8 @@ class _FakeStreamlit:
         return None
 
     def data_editor(self, *_args, **_kwargs):
+        if _args:
+            self.last_data_editor_df = _args[0]
         return self.editor_return
 
     def success(self, message):
@@ -118,6 +131,24 @@ class _FakeStreamlit:
 
     def toast(self, message, **_kwargs):
         self.toasts.append(message)
+
+
+class _FakeColumnConfig:
+    @staticmethod
+    def DateColumn(*_args, **_kwargs):
+        return {}
+
+    @staticmethod
+    def NumberColumn(*_args, **_kwargs):
+        return {}
+
+    @staticmethod
+    def TextColumn(*_args, **_kwargs):
+        return {}
+
+    @staticmethod
+    def SelectboxColumn(*_args, **_kwargs):
+        return {}
 
 
 def test_classify_button_disabled_when_no_pending(monkeypatch):
@@ -200,3 +231,111 @@ def test_empty_state_when_no_transactions(monkeypatch):
 
     rendered = "\n".join(fake_st.markdowns)
     assert "Nenhuma transacao encontrada" in rendered
+
+
+def test_table_marks_only_low_confidence_rows_for_correction(monkeypatch):
+    import src.pages.transactions as transactions
+
+    tx_rows = [
+        {
+            "id": "t1",
+            "date": "2026-04-07",
+            "description": "Compra 1",
+            "merchant_name": "Loja 1",
+            "amount": 20.0,
+            "confidence_score": "low",
+            "manually_reviewed": False,
+            "categories": {"name": "Outros", "emoji": "📦"},
+        },
+        {
+            "id": "t2",
+            "date": "2026-04-06",
+            "description": "Compra 2",
+            "merchant_name": "Loja 2",
+            "amount": 35.0,
+            "confidence_score": "high",
+            "manually_reviewed": False,
+            "categories": {"name": "Compras", "emoji": "🛍️"},
+        },
+    ]
+    fake_st = _FakeStreamlit(button_returns=[False])
+    fake_client = _FakeClient(
+        transactions_responses=[
+            _FakeResponse(data=[], count=1),  # unclassified count
+            _FakeResponse(data=tx_rows),  # all transactions
+        ],
+        categories_responses=[_FakeResponse(data=[])],
+    )
+    monkeypatch.setattr(transactions, "st", fake_st)
+    monkeypatch.setattr(transactions, "get_current_user", lambda: {"id": "user-1"})
+    monkeypatch.setattr(transactions, "get_authenticated_client", lambda: fake_client)
+
+    def _echo_df(df, **_kwargs):
+        fake_st.last_data_editor_df = df
+        return df
+
+    fake_st.data_editor = _echo_df
+    transactions.show_transactions()
+
+    rendered_df = fake_st.last_data_editor_df
+    assert rendered_df.loc[0, "Confianca"] == "? Baixa"
+    assert rendered_df.loc[0, "Corrigir"] == ""
+    assert pd.isna(rendered_df.loc[1, "Corrigir"])
+
+
+def test_correction_updates_transaction_and_tracks_corrected_ids(monkeypatch):
+    import src.pages.transactions as transactions
+
+    tx_rows = [
+        {
+            "id": "t1",
+            "date": "2026-04-07",
+            "description": "Compra 1",
+            "merchant_name": "Loja 1",
+            "amount": 20.0,
+            "confidence_score": "low",
+            "manually_reviewed": False,
+            "categories": {"name": "Outros", "emoji": "📦"},
+        }
+    ]
+    categories = [{"id": "c1", "name": "Compras", "emoji": "🛍️"}]
+    edited = pd.DataFrame(
+        [
+            {
+                "Data": "2026-04-07",
+                "Descricao": "Compra 1",
+                "Merchant": "Loja 1",
+                "Categoria": "📦 Outros",
+                "Valor": 20.0,
+                "Confianca": "? Baixa",
+                "Corrigir": "🛍️ Compras",
+            }
+        ]
+    )
+
+    fake_st = _FakeStreamlit(button_returns=[False], editor_return=edited)
+    fake_client = _FakeClient(
+        transactions_responses=[
+            _FakeResponse(data=[], count=1),  # unclassified count
+            _FakeResponse(data=tx_rows),  # all transactions
+        ],
+        categories_responses=[_FakeResponse(data=categories)],
+    )
+    monkeypatch.setattr(transactions, "st", fake_st)
+    monkeypatch.setattr(transactions, "get_current_user", lambda: {"id": "user-1"})
+    monkeypatch.setattr(transactions, "get_authenticated_client", lambda: fake_client)
+
+    with pytest.raises(_RerunCalled):
+        transactions.show_transactions()
+
+    assert isinstance(fake_st.session_state["corrected_ids"], set)
+    assert fake_client.updates == [
+        {
+            "id": "t1",
+            "payload": {
+                "category_id": "c1",
+                "confidence_score": "high",
+                "manually_reviewed": True,
+            },
+        }
+    ]
