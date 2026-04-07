@@ -4,7 +4,6 @@ import pytest
 # These tests will be activated (skip removed) after Wave 3 creates src/data/categories.py
 
 
-@pytest.mark.skip(reason="Wave 3 not yet implemented — activates after src/data/categories.py is created")
 def test_add_duplicate(mock_supabase):
     """AICL-05 + T-3-02: add_category() returns error dict when a category with same name
     (case-insensitive) already exists. Must NOT insert into DB.
@@ -21,7 +20,6 @@ def test_add_duplicate(mock_supabase):
     mock_supabase.table.return_value.insert.assert_not_called()
 
 
-@pytest.mark.skip(reason="Wave 3 not yet implemented — activates after src/data/categories.py is created")
 def test_add_category(mock_supabase):
     """AICL-05: add_category() inserts correct fields when name is unique.
     Slug must be lowercase, spaces -> underscores, hyphens -> underscores.
