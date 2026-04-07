@@ -26,6 +26,22 @@ def test_build_payload():
     assert "user_id" not in txn
 
 
+def test_build_payload_normalizes_merchant_name_runtime():
+    """AICL-02 gap closure: payload builder must normalize cryptic merchant names."""
+    from src.data.classifier import build_classification_payload
+
+    transactions = [
+        {"id": "t1", "description": "Compra", "merchant_name": "RCHLO", "amount": 120.0},
+        {"id": "t2", "description": "Assinatura", "merchant_name": "PAG*XYZ", "amount": 39.9},
+        {"id": "t3", "description": "Streaming", "merchant_name": "NF123", "amount": 55.0},
+    ]
+    categories = [{"id": "c1", "name": "Compras", "slug": "compras"}]
+
+    payload = build_classification_payload("u1", transactions, categories)
+    merchant_names = [t["merchant_name"] for t in payload["transactions"]]
+    assert merchant_names == ["Riachuelo", "PagSeguro", "Netflix"]
+
+
 def test_merchant_lookup_table():
     """AICL-02: resolve_merchant_name() maps cryptic Brazilian codes to readable names.
     RCHLO -> Riachuelo, MELI -> Mercado Livre, NF* prefix -> Netflix, SPT* prefix -> Spotify.
