@@ -1,6 +1,12 @@
 import streamlit as st
 from src.auth import get_current_user, sign_out
 from src.config import get_authenticated_client
+from src.data.categories import (
+    add_category,
+    delete_category,
+    get_all_categories,
+    rename_category,
+)
 from src.data.generator import generate_transactions
 
 
@@ -120,6 +126,144 @@ def show_settings():
                 if st.button("Cancelar", key="btn_cancel_clear", use_container_width=True):
                     st.session_state.pop("confirm_clear", None)
                     st.rerun()
+
+    st.divider()
+
+    # --- Categorias section (D-05) ---
+    st.header("Categorias")
+
+    if st.session_state.get("cat_success"):
+        st.success(st.session_state.pop("cat_success"))
+    if st.session_state.get("cat_error"):
+        st.error(st.session_state.pop("cat_error"))
+
+    categories = get_all_categories(client)
+
+    for cat in categories:
+        is_default = cat.get("is_default", False)
+        cat_id = cat["id"]
+
+        col1, col2, col3, col4, col5 = st.columns([0.5, 3, 1, 1, 1])
+
+        with col1:
+            st.markdown(
+                f'<span class="category-swatch" style="background-color:{cat["color_hex"]};"></span>',
+                unsafe_allow_html=True,
+            )
+        with col2:
+            st.write(f"{cat['emoji']} {cat['name']}")
+
+        with col3:
+            rename_key = f"rename_trigger_{cat_id}"
+            if not is_default:
+                if st.button(
+                    "Renomear", key=f"btn_rename_{cat_id}", use_container_width=True
+                ):
+                    st.session_state[rename_key] = True
+                    st.rerun()
+
+        with col4:
+            confirm_key = f"confirm_delete_{cat_id}"
+            if is_default:
+                st.button(
+                    "Excluir",
+                    key=f"btn_del_{cat_id}",
+                    disabled=True,
+                    help="Categoria padrao — nao pode ser removida",
+                    use_container_width=True,
+                )
+            else:
+                st.markdown('<div class="destructive-btn">', unsafe_allow_html=True)
+                if st.button(
+                    "Excluir", key=f"btn_del_{cat_id}", use_container_width=True
+                ):
+                    st.session_state[confirm_key] = True
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        with col5:
+            pass
+
+        rename_key = f"rename_trigger_{cat_id}"
+        if st.session_state.get(rename_key):
+            new_name = st.text_input(
+                "Novo nome",
+                value=cat["name"],
+                key=f"rename_input_{cat_id}",
+                max_chars=50,
+            )
+            rcol1, rcol2 = st.columns(2)
+            with rcol1:
+                if st.button(
+                    "Salvar", key=f"btn_save_rename_{cat_id}", use_container_width=True
+                ):
+                    result = rename_category(client, user["id"], cat_id, new_name)
+                    if result["success"]:
+                        st.session_state["cat_success"] = "Categoria renomeada com sucesso."
+                    else:
+                        st.session_state["cat_error"] = result.get(
+                            "error", "Erro ao renomear."
+                        )
+                    st.session_state.pop(rename_key, None)
+                    st.rerun()
+            with rcol2:
+                if st.button(
+                    "Cancelar",
+                    key=f"btn_cancel_rename_{cat_id}",
+                    use_container_width=True,
+                ):
+                    st.session_state.pop(rename_key, None)
+                    st.rerun()
+
+        confirm_key = f"confirm_delete_{cat_id}"
+        if st.session_state.get(confirm_key):
+            st.warning(
+                f"Tem certeza? Isso removera a categoria '{cat['name']}'. "
+                "Transacoes associadas ficarao sem categoria."
+            )
+            dcol1, dcol2 = st.columns(2)
+            with dcol1:
+                st.markdown('<div class="destructive-btn">', unsafe_allow_html=True)
+                if st.button(
+                    "Confirmar exclusao",
+                    key=f"btn_confirm_del_{cat_id}",
+                    use_container_width=True,
+                ):
+                    result = delete_category(client, user["id"], cat_id)
+                    if result["success"]:
+                        st.session_state["cat_success"] = "Categoria removida."
+                    else:
+                        st.session_state["cat_error"] = result.get(
+                            "error", "Erro ao remover."
+                        )
+                    st.session_state.pop(confirm_key, None)
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+            with dcol2:
+                if st.button(
+                    "Cancelar",
+                    key=f"btn_cancel_del_{cat_id}",
+                    use_container_width=True,
+                ):
+                    st.session_state.pop(confirm_key, None)
+                    st.rerun()
+
+    st.subheader("Adicionar categoria")
+    with st.form("add_category_form", clear_on_submit=True):
+        new_cat_name = st.text_input("Nome da categoria", max_chars=50)
+        new_cat_color = st.color_picker("Cor", value="#6366F1")
+        new_cat_emoji = st.text_input("Emoji (opcional)", placeholder="🏷️", max_chars=4)
+        submitted = st.form_submit_button("Adicionar categoria")
+
+    if submitted:
+        result = add_category(client, user["id"], new_cat_name, new_cat_color, new_cat_emoji)
+        if result["success"]:
+            st.session_state["cat_success"] = "Categoria adicionada com sucesso."
+        else:
+            st.session_state["cat_error"] = result.get(
+                "error", "Erro ao adicionar categoria."
+            )
+        st.rerun()
 
     st.divider()
 
