@@ -21,7 +21,7 @@
 ### AI Classification
 
 - [x] **AICL-01**: Transactions are automatically classified into categories via OpenAI through Make.com
-- [ ] **AICL-02**: System includes Brazilian merchant name mapping (RCHLO → Riachuelo, Pag* → PagSeguro, etc.)
+- [x] **AICL-02**: System includes Brazilian merchant name mapping (RCHLO → Riachuelo, Pag* → PagSeguro, etc.)
 - [x] **AICL-03**: Each classification includes a confidence score (high/medium/low)
 - [x] **AICL-04**: Low-confidence classifications are flagged for user review
 - [x] **AICL-05**: Users can create and manage custom categories
@@ -105,7 +105,7 @@
 | DATA-02 | Phase 2 | Pending |
 | DATA-03 | Phase 1 | Complete |
 | AICL-01 | Phase 3 | Complete |
-| AICL-02 | Phase 3 | Pending |
+| AICL-02 | Phase 3 | Complete |
 | AICL-03 | Phase 3 | Complete |
 | AICL-04 | Phase 3 | Complete |
 | AICL-05 | Phase 3 | Complete |
