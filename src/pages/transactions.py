@@ -134,7 +134,7 @@ def show_transactions():
     df = pd.DataFrame(rows)
 
     if "corrected_ids" not in st.session_state:
-        st.session_state["corrected_ids"] = []
+        st.session_state["corrected_ids"] = set()
 
     low_count = int(df["_is_low"].sum())
     if low_count > 0:
@@ -185,7 +185,7 @@ def show_transactions():
                     "manually_reviewed": True,
                 }
             ).eq("id", txn_id).execute()
-            st.session_state["corrected_ids"].append(txn_id)
+            st.session_state["corrected_ids"].add(txn_id)
             st.toast("Categoria corrigida.", icon="✅")
             correction_made = True
 
