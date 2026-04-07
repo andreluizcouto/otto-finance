@@ -34,8 +34,12 @@ CREATE TABLE transactions (
     is_recurring BOOLEAN DEFAULT false,
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    manually_reviewed BOOLEAN DEFAULT false
 );
+
+-- Applied via ALTER TABLE (not in original CREATE):
+-- ALTER TABLE transactions ADD COLUMN IF NOT EXISTS manually_reviewed BOOLEAN DEFAULT false;
 
 -- ============================================================
 -- Table: budgets
