@@ -669,3 +669,36 @@ Current suite: 14 tests, all passing [VERIFIED: local run].
 
 **Research date:** 2026-04-07
 **Valid until:** 2026-05-07 (stable stack; Make.com and OpenAI API patterns may shift faster)
+
+## Runtime Evidence (AICL-06)
+
+- Data/hora: 2026-04-07 16:15 (local)
+- Cenario Make: InitialFinc
+- Modulo testado: HTTP > Make a request (Gemini)
+- Endpoint testado: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`
+
+### Request (runtime)
+- Method: `POST`
+- Header: `Content-Type: application/json`
+- Body:
+  - `generationConfig.responseMimeType = "application/json"`
+  - `generationConfig.responseSchema.type = "object"`
+  - `responseSchema.properties.category_slug.type = "string"`
+  - `responseSchema.properties.category_slug.enum = [alimentacao, transporte, moradia, saude, lazer, educacao, compras, assinaturas, delivery, outros]`
+  - `responseSchema.properties.confidence.type = "number"`
+  - `responseSchema.required = ["category_slug", "confidence"]`
+
+### Response (runtime)
+- Output observado no Make:
+  - `{"category_slug": "compras", "confidence": 0.9}`
+- `finishReason = "STOP"`
+
+### Deterministic custom/unknown slug handling
+- Contrato operacional registrado: output final persiste apenas slug canonico do enum.
+- Quando slug customizado/desconhecido chegar ao fluxo downstream, o cenario aplica mapeamento deterministico para slug canonico; sem mapeamento valido, usa `outros` e marca baixa confianca para revisao.
+
+### Verdict
+- PASS: retorno JSON estruturado valido com os campos esperados (`category_slug`, `confidence`) em execucao real.
+
+### Mismatch notes
+- Sem divergencias observadas entre o contrato de enum/required testado em repositorio e o payload runtime capturado.
