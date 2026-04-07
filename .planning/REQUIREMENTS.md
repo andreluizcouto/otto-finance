@@ -25,7 +25,7 @@
 - [x] **AICL-03**: Each classification includes a confidence score (high/medium/low)
 - [x] **AICL-04**: Low-confidence classifications are flagged for user review
 - [x] **AICL-05**: Users can create and manage custom categories
-- [ ] **AICL-06**: Classification uses structured outputs (JSON schema) for reliability
+- [x] **AICL-06**: Classification uses structured outputs (JSON schema) for reliability
 
 ### Dashboard
 
@@ -109,7 +109,7 @@
 | AICL-03 | Phase 3 | Complete |
 | AICL-04 | Phase 3 | Complete |
 | AICL-05 | Phase 3 | Complete |
-| AICL-06 | Phase 3 | Pending |
+| AICL-06 | Phase 3 | Complete |
 | DASH-01 | Phase 2 | Pending |
 | DASH-02 | Phase 2 | Pending |
 | DASH-03 | Phase 2 | Pending |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-04-07T18:32:19.900Z"
+stopped_at: Completed 03-05-PLAN.md
+last_updated: "2026-04-07T19:24:03.876Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 40
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 ## Current Position
 
 Phase: 03 (ai-classification) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Next: Phase 03 (AI Classification)
 Status: Ready to execute
 Last activity: 2026-04-07
@@ -58,6 +58,7 @@ Progress: ████░░░░░░ 40%
 | Phase 03 P02 | 231 | 2 tasks | 3 files |
 | Phase 03-ai-classification P03 | 107 | 2 tasks | 2 files |
 | Phase 03-ai-classification P04 | -161 | 2 tasks | 5 files |
+| Phase 03 P05 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-03 preserved Settings section order/copy from UI-SPEC while keeping default-category protection in UI and query filters.
 - [Phase 03]: 03-04 wired runtime merchant normalization in payload builder and automatic post-generation classification trigger while preserving manual fallback CTA.
 - [Phase 03]: 03-04 introduced regression tests ensuring RCHLO/PAG*/NF* merchant normalization and settings generation auto-trigger behavior.
+- [Phase 03]: Persist runtime schema evidence in 03-RESEARCH.md to keep AICL-06 auditable.
+- [Phase 03]: Enforce deterministic custom slug handling via canonical mapping or outros low-confidence fallback.
 
 ### Pending Todos
 
@@ -103,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T18:32:19.896Z
-Stopped at: Completed 03-04-PLAN.md
+Last session: 2026-04-07T19:24:03.872Z
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None
