@@ -1,3 +1,6 @@
+from unittest import mock
+
+import httpx
 import pytest
 
 # These tests will be activated (skip removed) after Wave 1 creates src/data/classifier.py
@@ -86,3 +89,72 @@ def test_json_schema_structure():
                      "educacao", "compras", "assinaturas", "delivery", "outros"]:
         assert expected in slugs, f"Missing slug: {expected}"
     assert schema["schema"].get("additionalProperties") is False
+
+
+def test_trigger_classification_fallbacks_to_unclassified_length():
+    """trigger_classification() uses len(unclassified) when webhook response omits classified_count."""
+    from src.data import classifier
+
+    client = mock.MagicMock()
+    client.table.return_value.select.return_value.order.return_value.order.return_value.execute.return_value.data = [
+        {"id": "c1", "name": "Compras", "slug": "compras"}
+    ]
+    unclassified = [{"id": "t1", "description": "x", "merchant_name": "RCHLO", "amount": 10.0}]
+
+    fake_response = mock.MagicMock()
+    fake_response.raise_for_status.return_value = None
+    fake_response.json.return_value = {}
+
+    with (
+        mock.patch.object(classifier, "get_unclassified_transactions", return_value=unclassified),
+        mock.patch.object(classifier, "get_make_webhook_url", return_value="https://hook.example"),
+        mock.patch.object(classifier.httpx, "post", return_value=fake_response) as post_mock,
+    ):
+        result = classifier.trigger_classification(client, "user-1")
+
+    assert result == {"success": True, "classified_count": 1}
+    post_mock.assert_called_once()
+
+
+def test_trigger_classification_timeout_error_message():
+    """trigger_classification() returns timeout-specific error copy."""
+    from src.data import classifier
+
+    client = mock.MagicMock()
+    client.table.return_value.select.return_value.order.return_value.order.return_value.execute.return_value.data = [
+        {"id": "c1", "name": "Compras", "slug": "compras"}
+    ]
+    unclassified = [{"id": "t1", "description": "x", "merchant_name": "RCHLO", "amount": 10.0}]
+
+    with (
+        mock.patch.object(classifier, "get_unclassified_transactions", return_value=unclassified),
+        mock.patch.object(classifier, "get_make_webhook_url", return_value="https://hook.example"),
+        mock.patch.object(
+            classifier.httpx, "post", side_effect=httpx.TimeoutException("timeout")
+        ),
+    ):
+        result = classifier.trigger_classification(client, "user-1")
+
+    assert result["success"] is False
+    assert "nao respondeu" in result["error"]
+
+
+def test_trigger_classification_generic_error_message():
+    """trigger_classification() returns generic integration error copy on unexpected exceptions."""
+    from src.data import classifier
+
+    client = mock.MagicMock()
+    client.table.return_value.select.return_value.order.return_value.order.return_value.execute.return_value.data = [
+        {"id": "c1", "name": "Compras", "slug": "compras"}
+    ]
+    unclassified = [{"id": "t1", "description": "x", "merchant_name": "RCHLO", "amount": 10.0}]
+
+    with (
+        mock.patch.object(classifier, "get_unclassified_transactions", return_value=unclassified),
+        mock.patch.object(classifier, "get_make_webhook_url", return_value="https://hook.example"),
+        mock.patch.object(classifier.httpx, "post", side_effect=RuntimeError("boom")),
+    ):
+        result = classifier.trigger_classification(client, "user-1")
+
+    assert result["success"] is False
+    assert "Erro ao conectar com o servico de classificacao" in result["error"]
