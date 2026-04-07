@@ -71,7 +71,7 @@ Plans:
 - [x] 03-00-PLAN.md -- Wave 0: test stubs (test_classifier.py, test_categories.py) + manually_reviewed schema step
 - [x] 03-01-PLAN.md -- Wave 1: classifier.py helpers + config.get_make_webhook_url() + Make.com setup docs
 - [x] 03-02-PLAN.md -- Wave 2a: Transactions page (classify CTA + inline low-confidence correction + nav wiring)
-- [ ] 03-03-PLAN.md -- Wave 2b: Category CRUD (categories.py + Settings Categorias section)
+- [x] 03-03-PLAN.md -- Wave 2b: Category CRUD (categories.py + Settings Categorias section)
 **UI hint**: yes
 
 ### Phase 4: Budgets & WhatsApp Alerts

@@ -24,7 +24,7 @@
 - [ ] **AICL-02**: System includes Brazilian merchant name mapping (RCHLO → Riachuelo, Pag* → PagSeguro, etc.)
 - [x] **AICL-03**: Each classification includes a confidence score (high/medium/low)
 - [x] **AICL-04**: Low-confidence classifications are flagged for user review
-- [ ] **AICL-05**: Users can create and manage custom categories
+- [x] **AICL-05**: Users can create and manage custom categories
 - [ ] **AICL-06**: Classification uses structured outputs (JSON schema) for reliability
 
 ### Dashboard
@@ -108,7 +108,7 @@
 | AICL-02 | Phase 3 | Pending |
 | AICL-03 | Phase 3 | Complete |
 | AICL-04 | Phase 3 | Complete |
-| AICL-05 | Phase 3 | Pending |
+| AICL-05 | Phase 3 | Complete |
 | AICL-06 | Phase 3 | Pending |
 | DASH-01 | Phase 2 | Pending |
 | DASH-02 | Phase 2 | Pending |
