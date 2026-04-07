@@ -95,16 +95,44 @@ def test_json_schema_structure():
     """
     from src.data.classifier import get_openai_json_schema
     schema = get_openai_json_schema()
+
+    # Contract parity: this object is pasted under Make.com Module 4:
+    # response_format.json_schema = get_openai_json_schema()
+    make_payload_fragment = {
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": schema,
+        }
+    }
+    assert make_payload_fragment["response_format"]["type"] == "json_schema"
+    assert make_payload_fragment["response_format"]["json_schema"] == schema
+
     assert schema["strict"] is True
     assert schema["name"] == "classification_result"
+    assert schema["schema"]["type"] == "object"
+    assert schema["schema"].get("additionalProperties") is False
+
     props = schema["schema"]["properties"]
     assert "category_slug" in props
     assert "confidence" in props
-    slugs = props["category_slug"]["enum"]
-    for expected in ["alimentacao", "transporte", "moradia", "saude", "lazer",
-                     "educacao", "compras", "assinaturas", "delivery", "outros"]:
-        assert expected in slugs, f"Missing slug: {expected}"
-    assert schema["schema"].get("additionalProperties") is False
+    assert schema["schema"]["required"] == ["category_slug", "confidence"]
+
+    expected_slugs = [
+        "alimentacao",
+        "transporte",
+        "moradia",
+        "saude",
+        "lazer",
+        "educacao",
+        "compras",
+        "assinaturas",
+        "delivery",
+        "outros",
+    ]
+    assert props["category_slug"]["enum"] == expected_slugs
+    assert (
+        "fallback to 'outros'" in props["category_slug"]["description"].lower()
+    ), "Make.com mapping contract missing: unknown/custom slugs must fallback to 'outros'"
 
 
 def test_trigger_classification_fallbacks_to_unclassified_length():
