@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @theme {
   --color-background: #0A0F1C;
   --color-foreground: #F4F5F8;
@@ -33,6 +31,10 @@
 
   --radius: 0.75rem;
   --font-family-sans: 'Inter', sans-serif;
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
