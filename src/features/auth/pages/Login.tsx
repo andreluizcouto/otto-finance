@@ -31,19 +31,19 @@ export function Login() {
     <div className="flex w-full flex-col items-center justify-center min-h-[80vh]">
       <div className="w-full max-w-sm flex flex-col gap-12">
         <div className="flex flex-col items-center text-center gap-4">
-          <span className="text-4xl font-light tracking-[0.3em] text-white/90 otto-title">OTTO</span>
-          <p className="otto-label text-[10px] text-white/40 tracking-[0.2em]">Secure Authentication</p>
+          <span className="text-4xl font-light tracking-[0.3em] text-foreground otto-title">OTTO</span>
+          <p className="otto-label text-[10px] text-muted-foreground tracking-[0.2em]">Secure Authentication</p>
         </div>
 
         <form className="space-y-8" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="otto-label text-[9px]">Identity</label>
+              <label className="otto-label text-[9px] text-muted-foreground">Identity</label>
               <Input
                 placeholder="Email Address"
                 type="email"
                 required
-                className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                className="bg-card border-border rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
                 value={credentials.email}
                 onChange={(e) => setCredentials(p => ({ ...p, email: e.target.value }))}
               />
@@ -51,11 +51,11 @@ export function Login() {
 
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <label className="otto-label text-[9px]">Secret</label>
+                <label className="otto-label text-[9px] text-muted-foreground">Secret</label>
                 <button
                   type="button"
                   onClick={() => toast.info('Recovery protocol in development')}
-                  className="text-[9px] otto-label text-white/20 hover:text-white transition-all"
+                  className="text-[9px] otto-label text-muted-foreground/50 hover:text-foreground transition-all"
                 >
                   Forgot?
                 </button>
@@ -64,7 +64,7 @@ export function Login() {
                 placeholder="••••••••"
                 type="password"
                 required
-                className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                className="bg-card border-border rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
                 value={credentials.password}
                 onChange={(e) => setCredentials(p => ({ ...p, password: e.target.value }))}
               />
@@ -72,7 +72,7 @@ export function Login() {
           </div>
 
           {error && (
-            <div className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-[10px] otto-label text-red-400 text-center">
+            <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-[10px] otto-label text-red-400 text-center">
               {error}
             </div>
           )}
@@ -80,15 +80,15 @@ export function Login() {
           <Button
             type="submit"
             size="lg"
-            className="w-full bg-white text-black hover:bg-white/90 rounded-xl py-8 text-xs otto-label tracking-[0.2em] disabled:opacity-50"
+            className="w-full rounded-xl py-8 text-xs otto-label tracking-[0.2em] disabled:opacity-50"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Verifying...' : 'Authorize Access'}
           </Button>
         </form>
 
-        <p className="text-center text-[10px] otto-label text-white/20">
-          New to OTTO? <button onClick={() => navigate('/onboarding/1')} className="text-white hover:underline transition-all">Request Access</button>
+        <p className="text-center text-[10px] otto-label text-muted-foreground">
+          New to OTTO? <button onClick={() => navigate('/onboarding/1')} className="text-foreground hover:underline transition-all font-medium">Request Access</button>
         </p>
       </div>
     </div>

@@ -32,7 +32,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <h4
       data-slot="card-title"
-      className={cn("otto-label", className)}
+      className={cn("otto-label text-foreground font-medium", className)}
       {...props}
     />
   );

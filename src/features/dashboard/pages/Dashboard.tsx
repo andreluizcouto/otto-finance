@@ -34,18 +34,18 @@ export function Dashboard() {
     <div className="flex flex-col gap-8 pt-6 max-w-7xl mx-auto px-6">
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
         <div>
-          <h1 className="text-4xl otto-title text-white">Patrimônio Líquido</h1>
-          <p className="mt-2 otto-label text-xs">Quietly Wealthy</p>
+          <h1 className="text-4xl otto-title text-foreground">Patrimônio Líquido</h1>
+          <p className="mt-2 otto-serif text-sm text-muted-foreground">Quietly wealthy.</p>
         </div>
-        <div className="flex rounded-full bg-white/5 p-1 border border-white/10 backdrop-blur-xl">
+        <div className="flex rounded-full bg-secondary p-1 border border-border backdrop-blur-xl">
           {PERIOD_LABELS.map((period) => (
             <button
               key={period}
               onClick={() => setActivePeriod(PERIOD_API[period])}
               className={`rounded-full px-6 py-2 text-[10px] font-medium uppercase tracking-widest transition-all ${
                 PERIOD_API[period] === activePeriod
-                  ? 'bg-white/10 text-white shadow-lg'
-                  : 'text-white/40 hover:text-white'
+                  ? 'bg-white/10 text-foreground shadow-lg'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {period}
@@ -65,19 +65,19 @@ export function Dashboard() {
                 </div>
               </div>
               {isLoading ? (
-                <div className="animate-pulse h-12 rounded-xl bg-white/5"></div>
+                <div className="animate-pulse h-12 rounded-xl bg-secondary"></div>
               ) : (
                 <>
-                  <div className="text-5xl font-light tracking-tight text-white otto-title">
+                  <div className="text-5xl font-light tracking-tight text-foreground otto-title">
                     {data?.kpis?.total_spent_label ?? '—'}
                   </div>
                   <div className="mt-4 flex items-center gap-3">
-                    <div className="text-[10px] font-bold text-white bg-white/10 px-2 py-1 rounded">
+                    <div className="text-[10px] font-bold text-primary-foreground bg-primary px-2 py-1 rounded">
                       {data?.kpis?.delta_pct != null
                         ? `${data.kpis.delta_pct >= 0 ? '+' : ''}${data.kpis.delta_pct}%`
                         : '+0%'}
                     </div>
-                    <span className="text-white/40 text-[10px] uppercase tracking-widest font-medium">vs. mês anterior</span>
+                    <span className="text-muted-foreground text-[10px] uppercase tracking-widest font-medium">vs. mês anterior</span>
                   </div>
                 </>
               )}
@@ -90,15 +90,15 @@ export function Dashboard() {
                 </div>
               </div>
               {isLoading ? (
-                <div className="animate-pulse h-12 rounded-xl bg-white/5"></div>
+                <div className="animate-pulse h-12 rounded-xl bg-secondary"></div>
               ) : (
                 <>
-                  <div className="text-5xl font-light tracking-tight text-white otto-title">
+                  <div className="text-5xl font-light tracking-tight text-foreground otto-title">
                     {data?.kpis?.total_spent_label ?? '—'}
                   </div>
                   <div className="mt-6 w-full">
-                    <div className="h-1 w-full rounded-full bg-white/5 overflow-hidden">
-                      <div className="h-full w-[65%] rounded-full bg-white"></div>
+                    <div className="h-1 w-full rounded-full bg-secondary overflow-hidden">
+                      <div className="h-full w-[65%] rounded-full bg-primary"></div>
                     </div>
                   </div>
                 </>
@@ -108,7 +108,7 @@ export function Dashboard() {
 
           <Card className="flex h-[450px] flex-col p-8">
             <div className="mb-8 flex items-center justify-between">
-              <div className="flex items-center gap-3 otto-label text-[10px] text-white">
+              <div className="flex items-center gap-3 otto-label text-[10px] text-foreground">
                 <TrendingUp className="h-4 w-4" /> Tendência de Patrimônio
               </div>
             </div>
@@ -117,19 +117,19 @@ export function Dashboard() {
                 <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorAtual" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#FFFFFF" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#FFFFFF" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--color-foreground)" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="var(--color-foreground)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="0" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="period_label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 500 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 500 }} />
+                  <CartesianGrid strokeDasharray="0" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="period_label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-secondary)', fontWeight: 500 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-secondary)', fontWeight: 500 }} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#000000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#FFFFFF' }}
-                    itemStyle={{ color: '#FFFFFF' }}
-                    cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
+                    contentStyle={{ backgroundColor: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', color: 'var(--color-foreground)' }}
+                    itemStyle={{ color: 'var(--color-foreground)' }}
+                    cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }}
                   />
-                  <Area type="monotone" dataKey="total_amount" stroke="#FFFFFF" strokeWidth={2} fillOpacity={1} fill="url(#colorAtual)" />
+                  <Area type="monotone" dataKey="total_amount" stroke="var(--color-foreground)" strokeWidth={2} fillOpacity={1} fill="url(#colorAtual)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -138,37 +138,37 @@ export function Dashboard() {
 
         {/* Right Column */}
         <div className="flex flex-col gap-6">
-          <Card className="relative overflow-hidden p-8 border-white/5 bg-white/5">
+          <Card className="relative overflow-hidden p-8 border-border bg-secondary">
             <div className="relative h-full">
-              <div className="mb-6 flex items-center gap-3 otto-label text-[10px] text-white">
+              <div className="mb-6 flex items-center gap-3 otto-label text-[10px] text-foreground">
                 <Sparkles className="h-4 w-4" /> FINCOACH AI
               </div>
-              <h3 className="mb-4 text-xl otto-title text-white">Oportunidade de Patrimônio</h3>
-              <p className="mb-8 text-sm text-white/40 leading-relaxed font-medium">
+              <h3 className="mb-4 text-xl otto-title text-foreground">Oportunidade de Patrimônio</h3>
+              <p className="mb-8 text-sm text-muted-foreground leading-relaxed font-medium">
                 Notamos ativos com performance abaixo do esperado. Recomendamos uma rebalanceamento estratégico para otimização de liquidez.
               </p>
-              <div className="mb-8 flex items-center justify-between rounded-xl bg-white/5 p-5 border border-white/5">
+              <div className="mb-8 flex items-center justify-between rounded-xl bg-background/50 p-5 border border-border">
                 <span className="text-[10px] otto-label">Otimização</span>
-                <span className="text-lg font-light text-white otto-title">+ R$ 12.450<span className="text-[10px] font-medium ml-1">EST.</span></span>
+                <span className="text-lg font-light text-foreground otto-title">+ R$ 12.450<span className="text-[10px] font-medium ml-1">EST.</span></span>
               </div>
-              <Button className="w-full bg-white text-black hover:bg-white/90 rounded-xl py-6 font-medium tracking-tight" onClick={() => toast.info('Insights personalizados em breve')}>
+              <Button className="w-full font-medium tracking-tight" onClick={() => toast.info('Insights personalizados em breve')}>
                 Analisar Portfólio
               </Button>
             </div>
           </Card>
 
           <Card className="p-8">
-            <div className="mb-8 flex items-center gap-3 otto-label text-[10px] text-white">
+            <div className="mb-8 flex items-center gap-3 otto-label text-[10px] text-foreground">
               <HeartPulse className="h-4 w-4" /> Health Score
             </div>
 
             <div className="flex flex-col items-center justify-center py-6 relative">
               <svg width="160" height="160" viewBox="0 0 140 140" className="relative z-10">
-                <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="8" />
-                <circle cx="70" cy="70" r="60" fill="none" stroke="white" strokeWidth="8" strokeDasharray="377" strokeDashoffset="67" strokeLinecap="round" transform="rotate(-90 70 70)" />
+                <circle cx="70" cy="70" r="60" fill="none" stroke="var(--color-border)" strokeWidth="8" />
+                <circle cx="70" cy="70" r="60" fill="none" stroke="var(--color-foreground)" strokeWidth="8" strokeDasharray="377" strokeDashoffset="67" strokeLinecap="round" transform="rotate(-90 70 70)" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                <span className="text-4xl font-light text-white otto-title">82</span>
+                <span className="text-4xl font-light text-foreground otto-title">82</span>
                 <span className="text-[9px] otto-label mt-1">OPTIMIZED</span>
               </div>
             </div>
@@ -176,10 +176,10 @@ export function Dashboard() {
 
           <Card className="p-8">
             <div className="mb-8 flex items-center justify-between">
-              <h3 className="text-[10px] otto-label text-white">Últimas Transações</h3>
+              <h3 className="text-[10px] otto-label text-foreground">Últimas Transações</h3>
               <button
                 onClick={() => navigate('/transactions')}
-                className="text-[10px] otto-label text-white/40 hover:text-white transition-colors"
+                className="text-[10px] otto-label text-muted-foreground hover:text-foreground transition-colors"
               >
                 View All
               </button>
@@ -187,13 +187,13 @@ export function Dashboard() {
             {isLoading ? (
               <div className="flex flex-col gap-6">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="animate-pulse h-12 rounded-xl bg-white/5"></div>
+                  <div key={i} className="animate-pulse h-12 rounded-xl bg-secondary"></div>
                 ))}
               </div>
             ) : (
               <div className="flex flex-col gap-6">
                 {recentTxs.length === 0 ? (
-                  <p className="text-[10px] otto-label text-white/40">Nenhuma transação recente.</p>
+                  <p className="text-[10px] otto-label text-muted-foreground">Nenhuma transação recente.</p>
                 ) : (
                   recentTxs.map((tx: any) => (
                     <TransactionRow
@@ -227,15 +227,15 @@ function TransactionRow({ icon, name, category, time, amount, isPositive = false
   return (
     <div className="flex items-center justify-between group cursor-pointer">
       <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-white transition-colors group-hover:bg-white/10 [&>svg]:h-5 [&>svg]:w-5">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-foreground transition-colors group-hover:bg-muted [&>svg]:h-5 [&>svg]:w-5">
           {icon}
         </div>
         <div>
-          <h4 className="text-sm font-medium text-white tracking-tight">{name}</h4>
+          <h4 className="text-sm font-medium text-foreground tracking-tight">{name}</h4>
           <p className="text-[10px] otto-label mt-0.5">{category} • {time}</p>
         </div>
       </div>
-      <span className={`text-sm font-medium tracking-tight ${isPositive ? 'text-white' : 'text-white/60'}`}>{amount}</span>
+      <span className={`text-sm font-medium tracking-tight ${isPositive ? 'text-foreground' : 'text-muted-foreground'}`}>{amount}</span>
     </div>
   );
 }
@@ -244,9 +244,9 @@ function QuickActionButton({ icon, label, onClick }: { icon: React.ReactNode; la
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center gap-4 rounded-2xl bg-white/[0.02] border border-white/5 p-6 text-white/40 transition-all hover:bg-white/[0.05] hover:text-white hover:border-white/10 group"
+      className="flex flex-col items-center justify-center gap-4 rounded-2xl bg-secondary/50 border border-border p-6 text-muted-foreground transition-all hover:bg-secondary hover:text-foreground hover:border-white/10 group"
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-white transition-colors group-hover:bg-white/10 [&>svg]:h-6 [&>svg]:w-6">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background text-foreground transition-colors group-hover:bg-muted [&>svg]:h-6 [&>svg]:w-6">
         {icon}
       </div>
       <span className="text-[10px] otto-label">{label}</span>

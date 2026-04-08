@@ -42,8 +42,8 @@ export function Settings() {
     <div className="flex flex-col gap-10 pt-6 max-w-7xl mx-auto px-6">
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div>
-          <h1 className="text-4xl otto-title text-white">Configurações</h1>
-          <p className="mt-2 otto-label text-xs">Gestão de Identidade e Segurança</p>
+          <h1 className="text-4xl otto-title text-foreground">Configurações</h1>
+          <p className="mt-2 otto-serif text-sm text-muted-foreground">Gestão de identidade e segurança.</p>
         </div>
       </div>
 
@@ -59,18 +59,18 @@ export function Settings() {
         </aside>
 
         <div className="flex-1 space-y-10">
-          <Card className="p-10 border-white/5 bg-white/[0.02]">
-            <h2 className="mb-10 text-xl otto-title text-white uppercase tracking-widest text-[10px]">Identidade Digital</h2>
+          <Card className="p-10 border-border bg-secondary/20">
+            <h2 className="mb-10 text-xl otto-title text-foreground uppercase tracking-widest text-[10px]">Identidade Digital</h2>
 
             <div className="mb-12 flex items-center gap-8">
               <div className="relative group cursor-pointer">
                 <img
                   src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop"
                   alt="Profile"
-                  className="h-28 w-28 rounded-full object-cover grayscale border-2 border-white/10 group-hover:border-white/20 transition-all"
+                  className="h-28 w-28 rounded-full object-cover grayscale border-2 border-border group-hover:border-primary/20 transition-all"
                 />
                 <button
-                  className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-2xl transition-all hover:scale-105"
+                  className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl transition-all hover:scale-105"
                   onClick={() => avatarInputRef.current?.click()}
                 >
                   <UploadCloud className="h-5 w-5" />
@@ -86,40 +86,40 @@ export function Settings() {
                 />
               </div>
               <div>
-                <h3 className="text-2xl font-light text-white otto-title">
+                <h3 className="text-2xl font-light text-foreground otto-title">
                   {isLoading ? (
-                    <span className="inline-block animate-pulse h-6 w-48 rounded bg-white/5"></span>
+                    <span className="inline-block animate-pulse h-6 w-48 rounded bg-secondary"></span>
                   ) : (
                     profileForm.name || 'John Doe'
                   )}
                 </h3>
-                <p className="text-[10px] otto-label text-white/40 mt-1 uppercase tracking-[0.2em]">Private Member • Since 2026</p>
+                <p className="text-[10px] otto-label text-muted-foreground/40 mt-1 uppercase tracking-[0.2em]">Private Member • Since 2026</p>
               </div>
             </div>
 
             <form onSubmit={handleSave}>
               <div className="grid gap-8 md:grid-cols-2">
                 <div className="space-y-3">
-                  <label className="text-[10px] otto-label text-white/40">Full Name</label>
+                  <label className="text-[10px] otto-label text-muted-foreground">Full Name</label>
                   <Input
-                    className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                    className="bg-background border-border rounded-xl py-6 px-4 text-xs font-medium focus:border-primary/20 transition-all shadow-none"
                     value={profileForm.name}
                     onChange={(e) => setProfileForm(p => ({ ...p, name: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] otto-label text-white/40">Digital Signature (Email)</label>
+                  <label className="text-[10px] otto-label text-muted-foreground">Digital Signature (Email)</label>
                   <Input
-                    className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                    className="bg-background border-border rounded-xl py-6 px-4 text-xs font-medium focus:border-primary/20 transition-all shadow-none"
                     value={profileForm.email}
                     onChange={(e) => setProfileForm(p => ({ ...p, email: e.target.value }))}
                     type="email"
                   />
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] otto-label text-white/40">Secure Phone</label>
+                  <label className="text-[10px] otto-label text-muted-foreground">Secure Phone</label>
                   <Input
-                    className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                    className="bg-background border-border rounded-xl py-6 px-4 text-xs font-medium focus:border-primary/20 transition-all shadow-none"
                     value={profileForm.phone}
                     onChange={(e) => setProfileForm(p => ({ ...p, phone: e.target.value }))}
                     type="tel"
@@ -127,12 +127,12 @@ export function Settings() {
                   />
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] otto-label text-white/40">Tax ID</label>
-                  <Input defaultValue="***.***.***-**" disabled className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium opacity-20" />
+                  <label className="text-[10px] otto-label text-muted-foreground">Tax ID</label>
+                  <Input defaultValue="***.***.***-**" disabled className="bg-background border-border rounded-xl py-6 px-4 text-xs font-medium opacity-20" />
                 </div>
               </div>
 
-              <div className="mt-12 flex justify-end gap-6 border-t border-white/5 pt-10">
+              <div className="mt-12 flex justify-end gap-6 border-t border-border pt-10">
                 <Button
                   variant="ghost"
                   type="button"
@@ -141,29 +141,29 @@ export function Settings() {
                 >
                   CANCEL
                 </Button>
-                <Button type="submit" disabled={isSaving} className="bg-white text-black hover:bg-white/90 rounded-xl px-10 py-8 text-[10px] otto-label">
+                <Button type="submit" disabled={isSaving} className="px-10 py-8 text-[10px] otto-label">
                   {isSaving ? 'UPDATING...' : 'UPDATE SETTINGS'}
                 </Button>
               </div>
             </form>
           </Card>
 
-          <Card className="p-10 border-white/5 bg-white/[0.02]">
-            <h2 className="mb-4 text-xl otto-title text-white uppercase tracking-widest text-[10px]">Private Interface</h2>
-            <p className="mb-8 text-sm text-white/40 font-medium">Personalize a experiência visual do seu ecossistema OTTO.</p>
+          <Card className="p-10 border-border bg-secondary/20">
+            <h2 className="mb-4 text-xl otto-title text-foreground uppercase tracking-widest text-[10px]">Private Interface</h2>
+            <p className="mb-8 text-sm text-muted-foreground font-medium">Personalize a experiência visual do seu ecossistema OTTO.</p>
 
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-6">
+            <div className="flex items-center justify-between rounded-xl border border-border bg-background/50 p-6">
               <div className="flex items-center gap-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-white">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-foreground">
                   <Moon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-white tracking-tight">Absolute Dark Mode</h3>
-                  <p className="text-[10px] otto-label text-white/40 mt-0.5">ESTÉTICA PADRÃO ATIVADA</p>
+                  <h3 className="text-sm font-medium text-foreground tracking-tight">Absolute Dark Mode</h3>
+                  <p className="text-[10px] otto-label text-muted-foreground/40 mt-0.5">ESTÉTICA PADRÃO ATIVADA</p>
                 </div>
               </div>
-              <div className="h-8 w-14 rounded-full bg-white flex items-center px-1">
-                <div className="h-6 w-6 rounded-full bg-black shadow-lg" />
+              <div className="h-8 w-14 rounded-full bg-foreground flex items-center px-1">
+                <div className="h-6 w-6 rounded-full bg-background shadow-lg" />
               </div>
             </div>
           </Card>
@@ -179,11 +179,11 @@ function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNo
       onClick={onClick}
       className={`flex items-center gap-4 rounded-xl px-6 py-4 text-[10px] otto-label transition-all duration-300 group cursor-pointer ${
         active
-          ? 'bg-white/10 text-white'
-          : 'text-white/20 hover:bg-white/5 hover:text-white'
+          ? 'bg-secondary text-foreground'
+          : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
       }`}
     >
-      <div className={`transition-all duration-300 ${active ? 'text-white' : 'text-white/20 group-hover:text-white'} [&>svg]:h-5 [&>svg]:w-5`}>{icon}</div>
+      <div className={`transition-all duration-300 ${active ? 'text-foreground' : 'text-muted-foreground/40 group-hover:text-foreground'} [&>svg]:h-5 [&>svg]:w-5`}>{icon}</div>
       {label}
     </button>
   );

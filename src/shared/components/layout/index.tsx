@@ -13,10 +13,10 @@ export function MainLayout() {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-black">
+    <div className="flex flex-col min-h-screen bg-background">
       <Navbar />
       <main className="flex-1 z-10 pt-24">
-        <div className="mx-auto max-w-[1440px]">
+        <div className="mx-auto max-w-[1440px] pb-20">
           <Outlet />
         </div>
       </main>
@@ -26,7 +26,7 @@ export function MainLayout() {
 
 export function AuthLayout() {
   return (
-    <div className="flex min-h-screen flex-col justify-center bg-black px-4 py-12 lg:px-8">
+    <div className="flex min-h-screen flex-col justify-center bg-background px-4 py-12 lg:px-8">
       <div className="z-10 w-full max-w-7xl mx-auto relative">
         <Outlet />
       </div>

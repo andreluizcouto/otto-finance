@@ -49,14 +49,14 @@ export function Transactions() {
     <div className="flex flex-col gap-10 pt-6 max-w-7xl mx-auto px-6">
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div>
-          <h1 className="text-4xl otto-title text-white">Transações</h1>
-          <p className="mt-2 otto-label text-xs">Quietly Wealthy</p>
+          <h1 className="text-4xl otto-title text-foreground">Transações</h1>
+          <p className="mt-2 otto-serif text-sm text-muted-foreground">Quietly wealthy.</p>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="secondary" className="bg-white/5 text-white border-white/10 hover:bg-white/10 rounded-xl px-6 py-6 text-[10px] otto-label transition-all">
+          <Button variant="secondary" className="px-6 py-6 text-[10px] otto-label transition-all">
             <Download className="mr-3 h-4 w-4" /> Importar
           </Button>
-          <Button className="bg-white text-black hover:bg-white/90 rounded-xl px-6 py-6 text-[10px] otto-label transition-all">
+          <Button className="px-6 py-6 text-[10px] otto-label transition-all">
             <Plus className="mr-3 h-4 w-4" /> Adicionar
           </Button>
         </div>
@@ -66,24 +66,24 @@ export function Transactions() {
         <Card className="p-8">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3 otto-label text-[10px]">
-              <ArrowDown className="h-4 w-4 text-white/40" /> Total de Entradas
+              <ArrowDown className="h-4 w-4 text-muted-foreground/40" /> Total de Entradas
             </div>
           </div>
-          <div className="text-4xl font-light tracking-tight text-white otto-title">{fmt(totalIn)}</div>
+          <div className="text-4xl font-light tracking-tight text-foreground otto-title">{fmt(totalIn)}</div>
           <div className="mt-4 flex items-center gap-3">
-            <span className="text-white/20 text-[10px] uppercase tracking-widest font-medium">Fluxo Mensal</span>
+            <span className="text-muted-foreground/20 text-[10px] uppercase tracking-widest font-medium">Fluxo Mensal</span>
           </div>
         </Card>
 
         <Card className="p-8">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3 otto-label text-[10px]">
-              <ArrowUp className="h-4 w-4 text-white/40" /> Total de Saídas
+              <ArrowUp className="h-4 w-4 text-muted-foreground/40" /> Total de Saídas
             </div>
           </div>
-          <div className="text-4xl font-light tracking-tight text-white otto-title">{fmt(totalOut)}</div>
+          <div className="text-4xl font-light tracking-tight text-foreground otto-title">{fmt(totalOut)}</div>
           <div className="mt-4 flex items-center gap-3">
-            <span className="text-white/20 text-[10px] uppercase tracking-widest font-medium">Fluxo Mensal</span>
+            <span className="text-muted-foreground/20 text-[10px] uppercase tracking-widest font-medium">Fluxo Mensal</span>
           </div>
         </Card>
       </div>
@@ -92,20 +92,20 @@ export function Transactions() {
         <div className="flex-1">
           <Input
             icon={isFetching
-              ? <Loader2 className="h-4 w-4 animate-spin text-white/40" />
-              : <SlidersHorizontal className="h-4 w-4 text-white/40" />}
+              ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/40" />
+              : <SlidersHorizontal className="h-4 w-4 text-muted-foreground/40" />}
             placeholder="Buscar movimentações..."
-            className="max-w-md bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+            className="max-w-md bg-secondary border-border rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <Card className="overflow-hidden border-white/5">
+      <Card className="overflow-hidden border-border">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-white">
-            <thead className="bg-white/[0.02] text-[9px] otto-label text-white/40 border-b border-white/5">
+          <table className="w-full text-left text-sm text-foreground">
+            <thead className="bg-secondary/50 text-[9px] otto-label text-muted-foreground border-b border-border">
               <tr>
                 <th className="px-8 py-5">Entidade</th>
                 <th className="px-8 py-5">Data</th>
@@ -113,7 +113,7 @@ export function Transactions() {
                 <th className="px-8 py-5 text-right">Valor</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-border">
               {transactions.map((tx) => {
                 const isPositive = tx.amount >= 0;
                 const name = tx.merchant_name || tx.description || 'Transação';
@@ -127,28 +127,28 @@ export function Transactions() {
                   <tr
                     key={tx.id}
                     onClick={() => navigate(`/transactions/${tx.id}`)}
-                    className="group transition-all hover:bg-white/[0.02] cursor-pointer"
+                    className="group transition-all hover:bg-secondary/20 cursor-pointer"
                   >
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 text-white transition-all group-hover:bg-white/10 ${isPositive ? 'text-white' : 'text-white/60'}`}>
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-all group-hover:bg-muted ${isPositive ? 'text-foreground' : 'text-muted-foreground'}`}>
                           {isPositive
                             ? <ArrowDown className="h-4 w-4" />
                             : <ArrowUp className="h-4 w-4" />}
                         </div>
                         <div>
-                          <div className="font-medium text-white tracking-tight">{name}</div>
+                          <div className="font-medium text-foreground tracking-tight">{name}</div>
                           <div className="text-[10px] otto-label mt-1">{tx.category_id ? '' : 'Uncategorized'}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6 text-white/40 text-[10px] otto-label">{date}</td>
+                    <td className="px-8 py-6 text-muted-foreground text-[10px] otto-label">{date}</td>
                     <td className="px-8 py-6">
-                      <span className="text-[10px] otto-label px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                      <span className="text-[10px] otto-label px-3 py-1.5 rounded-full bg-secondary border border-border">
                         {category}
                       </span>
                     </td>
-                    <td className={`px-8 py-6 text-right font-medium tracking-tight ${isPositive ? 'text-white' : 'text-white/60'}`}>
+                    <td className={`px-8 py-6 text-right font-medium tracking-tight ${isPositive ? 'text-foreground' : 'text-muted-foreground'}`}>
                       {amountStr}
                     </td>
                   </tr>
@@ -156,7 +156,7 @@ export function Transactions() {
               })}
               {!isFetching && transactions.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-8 py-12 text-center text-[10px] otto-label text-white/20">
+                  <td colSpan={4} className="px-8 py-12 text-center text-[10px] otto-label text-muted-foreground/20">
                     Nenhuma movimentação identificada.
                   </td>
                 </tr>
@@ -165,12 +165,12 @@ export function Transactions() {
           </table>
         </div>
 
-        <div className="flex items-center justify-between border-t border-white/5 px-8 py-6">
-          <span className="text-[10px] otto-label text-white/20">{transactions.length} Entradas</span>
+        <div className="flex items-center justify-between border-t border-border px-8 py-6">
+          <span className="text-[10px] otto-label text-muted-foreground/20">{transactions.length} Entradas</span>
           <div className="flex items-center gap-3">
-            <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-all border border-white/5">&lt;</button>
-            <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-black text-[10px] otto-label">1</button>
-            <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-all border border-white/5">&gt;</button>
+            <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-secondary text-muted-foreground hover:text-foreground hover:bg-muted transition-all border border-border">&lt;</button>
+            <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-[10px] otto-label">1</button>
+            <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-secondary text-muted-foreground hover:text-foreground hover:bg-muted transition-all border border-border">&gt;</button>
           </div>
         </div>
       </Card>
