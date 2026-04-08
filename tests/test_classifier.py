@@ -11,7 +11,7 @@ def test_build_payload():
     transactions items must only contain fields: id, description, merchant_name, amount.
     No extra fields (e.g. user_id per-transaction, notes, payment_method) allowed.
     """
-    from src.data.classifier import build_classification_payload
+    from backend.modules.transactions.services import build_classification_payload
     transactions = [
         {"id": "abc", "description": "RCHLO COMPRA", "merchant_name": "RCHLO", "amount": 199.90,
          "user_id": "u1", "notes": "ignore this"},
@@ -28,7 +28,7 @@ def test_build_payload():
 
 def test_build_payload_normalizes_merchant_name_runtime():
     """AICL-02 gap closure: payload builder must normalize cryptic merchant names."""
-    from src.data.classifier import build_classification_payload
+    from backend.modules.transactions.services import build_classification_payload
 
     transactions = [
         {"id": "t1", "description": "Compra", "merchant_name": "RCHLO", "amount": 120.0},
@@ -46,7 +46,7 @@ def test_merchant_lookup_table():
     """AICL-02: resolve_merchant_name() maps cryptic Brazilian codes to readable names.
     RCHLO -> Riachuelo, MELI -> Mercado Livre, NF* prefix -> Netflix, SPT* prefix -> Spotify.
     """
-    from src.data.classifier import resolve_merchant_name
+    from backend.modules.transactions.services import resolve_merchant_name
     assert resolve_merchant_name("RCHLO") == "Riachuelo"
     assert resolve_merchant_name("MELI") == "Mercado Livre"
     assert resolve_merchant_name("NETFLIX") == "Netflix"
@@ -59,7 +59,7 @@ def test_confidence_mapping():
     >= 0.8 -> 'high', 0.5 <= x < 0.8 -> 'medium', < 0.5 -> 'low'.
     Boundary values must be exact.
     """
-    from src.data.classifier import map_confidence_score
+    from backend.modules.transactions.services import map_confidence_score
     assert map_confidence_score(1.0) == "high"
     assert map_confidence_score(0.8) == "high"
     assert map_confidence_score(0.79) == "medium"
@@ -73,7 +73,7 @@ def test_unclassified_query():
     category_id IS NULL OR confidence_score IS NULL AND manually_reviewed IS NOT TRUE.
     Uses supabase .or_() filter, not separate queries.
     """
-    from src.data.classifier import get_unclassified_transactions
+    from backend.modules.transactions.services import get_unclassified_transactions
     import unittest.mock as mock
     # Build a mock client that records the filter args
     client = mock.MagicMock()
@@ -93,7 +93,7 @@ def test_json_schema_structure():
     category_slug enum containing all 10 Brazilian category slugs.
     This schema is embedded in the Make.com HTTP module body as documentation.
     """
-    from src.data.classifier import get_openai_json_schema
+    from backend.modules.transactions.services import get_openai_json_schema
     schema = get_openai_json_schema()
 
     # Contract parity: this object is pasted under Make.com Module 4:
@@ -137,7 +137,7 @@ def test_json_schema_structure():
 
 def test_trigger_classification_fallbacks_to_unclassified_length():
     """trigger_classification() uses len(unclassified) when webhook response omits classified_count."""
-    from src.data import classifier
+    from backend.modules.transactions import services as classifier
 
     client = mock.MagicMock()
     client.table.return_value.select.return_value.order.return_value.order.return_value.execute.return_value.data = [
@@ -162,7 +162,7 @@ def test_trigger_classification_fallbacks_to_unclassified_length():
 
 def test_trigger_classification_timeout_error_message():
     """trigger_classification() returns timeout-specific error copy."""
-    from src.data import classifier
+    from backend.modules.transactions import services as classifier
 
     client = mock.MagicMock()
     client.table.return_value.select.return_value.order.return_value.order.return_value.execute.return_value.data = [
@@ -185,7 +185,7 @@ def test_trigger_classification_timeout_error_message():
 
 def test_trigger_classification_generic_error_message():
     """trigger_classification() returns generic integration error copy on unexpected exceptions."""
-    from src.data import classifier
+    from backend.modules.transactions import services as classifier
 
     client = mock.MagicMock()
     client.table.return_value.select.return_value.order.return_value.order.return_value.execute.return_value.data = [

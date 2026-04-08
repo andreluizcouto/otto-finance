@@ -11,7 +11,7 @@ import pytest
 
 def test_date_filter_this_week():
     """'Esta semana' returns Monday of current week through today."""
-    from src.pages.dashboard import calculate_date_range
+    from backend.modules.dashboard.services import calculate_date_range
 
     # Monday 2026-04-06
     today_monday = date(2026, 4, 6)
@@ -28,7 +28,7 @@ def test_date_filter_this_week():
 
 def test_date_filter_this_month():
     """'Este mes' returns 1st of current month through today."""
-    from src.pages.dashboard import calculate_date_range
+    from backend.modules.dashboard.services import calculate_date_range
 
     today = date(2026, 4, 15)
     start, end = calculate_date_range("Este mes", today)
@@ -38,7 +38,7 @@ def test_date_filter_this_month():
 
 def test_date_filter_last_3_months():
     """'Ultimos 3 meses' returns 1st of month 2 months prior through today."""
-    from src.pages.dashboard import calculate_date_range
+    from backend.modules.dashboard.services import calculate_date_range
 
     today = date(2026, 4, 15)
     start, end = calculate_date_range("Ultimos 3 meses", today)

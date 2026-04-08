@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routes import auth, categories, dashboard, transactions
+from backend.modules.auth import router as auth_router
+from backend.modules.categories import router as categories_router
+from backend.modules.dashboard import router as dashboard_router
+from backend.modules.transactions import router as transactions_router
 
 app = FastAPI(
     title="FinCoach API",
@@ -17,10 +20,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(dashboard.router)
-app.include_router(transactions.router)
-app.include_router(categories.router)
+app.include_router(auth_router)
+app.include_router(dashboard_router)
+app.include_router(transactions_router)
+app.include_router(categories_router)
 
 
 @app.get("/health", tags=["health"])

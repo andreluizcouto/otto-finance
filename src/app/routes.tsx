@@ -1,16 +1,16 @@
 import { createBrowserRouter } from "react-router";
-import { AuthLayout, MainLayout } from "./components/layout";
-import { Welcome } from "./pages/Welcome";
-import { Login } from "./pages/Login";
-import { Onboarding1 } from "./pages/Onboarding1";
-import { Onboarding2 } from "./pages/Onboarding2";
-import { Onboarding3 } from "./pages/Onboarding3";
-import { Dashboard } from "./pages/Dashboard";
-import { Transactions } from "./pages/Transactions";
-import { TransactionDetail } from "./pages/TransactionDetail";
-import { Categories } from "./pages/Categories";
-import { Goals } from "./pages/Goals";
-import { Settings } from "./pages/Settings";
+import { AuthLayout, MainLayout } from "@/shared/components/layout";
+import { Welcome } from "@/features/auth/pages/Welcome";
+import { Login } from "@/features/auth/pages/Login";
+import { Onboarding1 } from "@/features/onboarding/pages/Onboarding1";
+import { Onboarding2 } from "@/features/onboarding/pages/Onboarding2";
+import { Onboarding3 } from "@/features/onboarding/pages/Onboarding3";
+import { Dashboard } from "@/features/dashboard/pages/Dashboard";
+import { Transactions } from "@/features/transactions/pages/Transactions";
+import { TransactionDetail } from "@/features/transactions/pages/TransactionDetail";
+import { Categories } from "@/features/transactions/pages/Categories";
+import { Goals } from "@/features/goals/pages/Goals";
+import { Settings } from "@/features/settings/pages/Settings";
 
 export const router = createBrowserRouter([
   {

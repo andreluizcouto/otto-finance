@@ -8,7 +8,7 @@ def test_add_duplicate(mock_supabase):
     """AICL-05 + T-3-02: add_category() returns error dict when a category with same name
     (case-insensitive) already exists. Must NOT insert into DB.
     """
-    from src.data.categories import add_category
+    from backend.modules.categories.services import add_category
     # Simulate existing category found
     mock_supabase.table.return_value.select.return_value.ilike.return_value.execute.return_value.data = [
         {"id": "existing-id"}
@@ -25,7 +25,7 @@ def test_add_category(mock_supabase):
     Slug must be lowercase, spaces -> underscores, hyphens -> underscores.
     is_default must be False. user_id must match argument.
     """
-    from src.data.categories import add_category
+    from backend.modules.categories.services import add_category
     # No existing category
     mock_supabase.table.return_value.select.return_value.ilike.return_value.execute.return_value.data = []
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [{"id": "new-id"}]
@@ -89,7 +89,7 @@ class _RecorderClient:
 
 
 def test_rename_category_filters_user_and_non_default():
-    from src.data.categories import rename_category
+    from backend.modules.categories.services import rename_category
 
     query = _RecorderQuery(existing_data=[])
     client = _RecorderClient(query)
@@ -104,7 +104,7 @@ def test_rename_category_filters_user_and_non_default():
 
 
 def test_rename_category_duplicate_returns_error_without_update():
-    from src.data.categories import rename_category
+    from backend.modules.categories.services import rename_category
 
     query = _RecorderQuery(existing_data=[{"id": "other-cat"}])
     client = _RecorderClient(query)
@@ -117,7 +117,7 @@ def test_rename_category_duplicate_returns_error_without_update():
 
 
 def test_delete_category_filters_user_and_non_default():
-    from src.data.categories import delete_category
+    from backend.modules.categories.services import delete_category
 
     query = _RecorderQuery()
     client = _RecorderClient(query)
@@ -132,7 +132,7 @@ def test_delete_category_filters_user_and_non_default():
 
 
 def test_delete_category_db_error_message():
-    from src.data.categories import delete_category
+    from backend.modules.categories.services import delete_category
 
     query = _RecorderQuery(should_fail=True)
     client = _RecorderClient(query)
