@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Card, Button } from "@/shared/components/ui";
+import { Card, Button, Input } from "@/shared/components/ui";
 import { Plus, MoreVertical } from "lucide-react";
-import { apiGet, apiPost, apiFetch } from "@/shared/lib/api";
+import { apiGet, apiPost, apiDelete } from "@/shared/lib/api";
 import { toast } from "sonner";
 
 export function Categories() {
@@ -14,7 +14,7 @@ export function Categories() {
   const loadCategories = () => {
     apiGet('/api/categories')
       .then(res => setCategories(res.categories ?? []))
-      .catch(console.error);
+      .catch(() => toast.error('Erro ao carregar categorias'));
   };
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export function Categories() {
     if (isDeleting[id]) return;
     setIsDeleting(p => ({ ...p, [id]: true }));
     try {
-      await apiFetch(`/api/categories/${id}`, { method: 'DELETE' });
+      await apiDelete(`/api/categories/${id}`);
       loadCategories();
     } catch (err: any) {
       toast.error(err.message || 'Erro ao excluir categoria');
@@ -97,33 +97,30 @@ export function Categories() {
           <div className="w-full max-w-md rounded-2xl border border-[rgba(255,255,255,0.1)] bg-[#0D1526] p-8 shadow-2xl">
             <h2 className="mb-6 text-xl font-bold text-[#F4F5F8]">Nova Categoria</h2>
             <div className="space-y-4">
-              <input
+              <Input
                 placeholder="Nome"
                 value={newCat.name}
                 onChange={e => setNewCat(p => ({ ...p, name: e.target.value }))}
-                className="w-full rounded-lg border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] px-4 py-2.5 text-[#F4F5F8] outline-none focus:border-[#aa68ff]"
               />
-              <input
+              <Input
                 placeholder="Emoji (ex: 🏠)"
                 value={newCat.emoji}
                 onChange={e => setNewCat(p => ({ ...p, emoji: e.target.value }))}
-                className="w-full rounded-lg border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] px-4 py-2.5 text-[#F4F5F8] outline-none focus:border-[#aa68ff]"
               />
-              <input
+              <Input
                 placeholder="Cor hex (#aa68ff)"
                 value={newCat.color_hex}
                 onChange={e => setNewCat(p => ({ ...p, color_hex: e.target.value }))}
-                className="w-full rounded-lg border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] px-4 py-2.5 text-[#F4F5F8] outline-none focus:border-[#aa68ff]"
               />
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => setIsModalOpen(false)}
-                className="rounded-lg px-4 py-2 text-sm text-[#8B949E] hover:text-[#F4F5F8]"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 disabled={isSaving}
                 onClick={async () => {
                   setIsSaving(true);
@@ -139,10 +136,9 @@ export function Categories() {
                     setIsSaving(false);
                   }
                 }}
-                className="rounded-lg bg-[#aa68ff] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
                 {isSaving ? 'Salvando...' : 'Criar'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

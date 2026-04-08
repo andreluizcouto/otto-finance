@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Card, Button, Input, Badge } from "@/shared/components/ui";
 import { Download, Plus, ArrowDown, ArrowUp, SlidersHorizontal, MoreHorizontal, Loader2 } from "lucide-react";
 import { apiGet } from "@/shared/lib/api";
+import { toast } from "sonner";
 
 export function Transactions() {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ export function Transactions() {
           : all;
         setTransactions(filtered);
       })
-      .catch(console.error)
+      .catch(() => toast.error('Erro ao carregar transações'))
       .finally(() => setIsFetching(false));
   }, [debouncedSearch]);
 

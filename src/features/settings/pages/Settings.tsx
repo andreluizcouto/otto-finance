@@ -4,6 +4,7 @@ import { User, Bell, Shield, Wallet, Smartphone, Globe, UploadCloud, Moon } from
 import { apiGet } from "@/shared/lib/api";
 import { toast } from "sonner";
 
+
 export function Settings() {
   const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '' });
   const [originalProfile, setOriginalProfile] = useState({ name: '', email: '', phone: '' });
@@ -25,7 +26,7 @@ export function Settings() {
         setProfileForm(profile);
         setOriginalProfile(profile);
       })
-      .catch(console.error)
+      .catch(() => toast.error('Erro ao carregar perfil'))
       .finally(() => setIsLoading(false));
   }, []);
 

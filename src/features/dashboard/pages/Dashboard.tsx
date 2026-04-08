@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Card, Button, Badge } from "@/shared/components/ui";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Wallet, CreditCard, Sparkles, HeartPulse, DollarSign, ArrowDown, Plus, List, Settings, Target } from "lucide-react";
+import { Wallet, CreditCard, Sparkles, HeartPulse, DollarSign, TrendingUp, Plus, List, Settings, Target } from "lucide-react";
 import { apiGet } from "@/shared/lib/api";
+import { toast } from "sonner";
 import { toast } from "sonner";
 
 const PERIOD_LABELS = ['Este Mês', 'Esta Semana', 'Últimos 3 Meses'];
@@ -23,7 +24,7 @@ export function Dashboard() {
     setIsLoading(true);
     apiGet(`/api/dashboard?period=${encodeURIComponent(activePeriod)}`)
       .then(setData)
-      .catch(console.error)
+      .catch(() => toast.error('Erro ao carregar dashboard'))
       .finally(() => setIsLoading(false));
   }, [activePeriod]);
 
@@ -118,7 +119,7 @@ export function Dashboard() {
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-[#F4F5F8]">
                 <div className="flex h-6 w-6 items-center justify-center rounded bg-[rgba(170,104,255,0.1)] text-[#aa68ff]">
-                  <LineChartIcon className="h-3 w-3" />
+                  <TrendingUp className="h-3 w-3" />
                 </div>
                 Tendência de Gastos
               </div>
@@ -247,10 +248,6 @@ export function Dashboard() {
       </div>
     </div>
   );
-}
-
-function LineChartIcon(props: any) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
 }
 
 function TransactionRow({ icon, name, category, time, amount, isPositive = false }: any) {

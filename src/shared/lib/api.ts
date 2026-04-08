@@ -1,6 +1,6 @@
 import { getToken } from './auth';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
   const token = getToken();
@@ -43,3 +43,6 @@ export const apiPost = (path: string, body: unknown): Promise<any> =>
 
 export const apiPut = (path: string, body: unknown): Promise<any> =>
   apiFetch(path, { method: 'PUT', body: JSON.stringify(body) });
+
+export const apiDelete = (path: string): Promise<any> =>
+  apiFetch(path, { method: 'DELETE' });
