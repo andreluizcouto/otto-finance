@@ -1,9 +1,19 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Button, Card } from "../components/ui";
 import { CheckCircle2, Shield, BrainCircuit, Play, Apple } from "lucide-react";
+import { toast } from "sonner";
 
 export function Welcome() {
   const navigate = useNavigate();
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
+
+  const handleSocialLogin = (provider: string) => {
+    if (socialLoading !== null) return;
+    setSocialLoading(provider);
+    toast.info('Em breve — OAuth com ' + provider + ' não implementado ainda');
+    setTimeout(() => setSocialLoading(null), 500);
+  };
 
   return (
     <div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-2 lg:items-center">
@@ -76,11 +86,23 @@ export function Welcome() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <Button variant="secondary" className="w-full">
-              <Play className="mr-2 h-4 w-4" /> Continuar com Google
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => handleSocialLogin('Google')}
+              disabled={!!socialLoading}
+            >
+              <Play className="mr-2 h-4 w-4" />
+              {socialLoading === 'Google' ? 'Carregando...' : 'Continuar com Google'}
             </Button>
-            <Button variant="secondary" className="w-full">
-              <Apple className="mr-2 h-4 w-4" /> Continuar com Apple
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => handleSocialLogin('Apple')}
+              disabled={!!socialLoading}
+            >
+              <Apple className="mr-2 h-4 w-4" />
+              {socialLoading === 'Apple' ? 'Carregando...' : 'Continuar com Apple'}
             </Button>
           </div>
 
