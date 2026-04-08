@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 03-05-PLAN.md
-last_updated: "2026-04-07T19:24:03.876Z"
-last_activity: 2026-04-07
+last_updated: "2026-04-08T00:42:00.000Z"
+last_activity: 2026-04-08
 progress:
   total_phases: 5
   completed_phases: 3
@@ -103,6 +103,7 @@ None yet.
 | 260407-jxx | Implementar testes de categorias e classificacao | 2026-04-07 | 555aa5c | [260407-jxx-implementar-testes-de-categorias-e-class](./quick/260407-jxx-implementar-testes-de-categorias-e-class/) |
 | 260407-jmt | Implementar pagina de transacoes | 2026-04-07 | 88162af | [260407-jmt-implementar-pagina-de-transacoes](./quick/260407-jmt-implementar-pagina-de-transacoes/) |
 | 260407-jai | Implementar modulo de categorias | 2026-04-07 | 416a0ab | [260407-jai-implementar-modulo-de-categorias](./quick/260407-jai-implementar-modulo-de-categorias/) |
+| 260407-u4y | Hidratação Frontend React + FastAPI — substituir dados mockados por estado real | 2026-04-08 | 337f419 | [260407-u4y-hidrata-o-frontend-react-fastapi-substit](./quick/260407-u4y-hidrata-o-frontend-react-fastapi-substit/) |
 
 ## Session Continuity
 
