@@ -40,76 +40,70 @@ export function Navbar() {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-[60px] bg-[rgba(10,15,28,0.92)] backdrop-blur-md border-b border-[rgba(255,255,255,0.05)]">
-      <div className="flex items-center justify-between px-6 h-full">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-20 bg-black/80 backdrop-blur-[24px] border-b border-white/5">
+      <div className="flex items-center justify-between px-10 h-full max-w-[1440px] mx-auto">
 
-        {/* Left: Logo */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#aa68ff] to-[#820ad1] shadow-[0_0_12px_rgba(170,104,255,0.3)]">
-            <span className="text-sm font-bold text-white">F</span>
+        {/* Left: Logo & Manifesto */}
+        <div className="flex items-center gap-6 flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <span className="text-2xl font-light tracking-[0.2em] text-white/90 otto-title">OTTO</span>
+            <div className="h-4 w-[1px] bg-white/20" />
+            <span className="text-[9px] font-medium tracking-[0.3em] text-white/40 uppercase">Quietly Wealthy</span>
           </div>
-          <span className="text-lg font-bold tracking-tight text-white" style={{ textShadow: '0 0 10px rgba(170,104,255,0.5)' }}>
-            FinCoach<span className="text-[#aa68ff]">.AI</span>
-          </span>
         </div>
 
         {/* Center: Nav links */}
-        <div className="flex items-center gap-1 h-full">
+        <div className="flex items-center gap-8 h-full">
           {centerNavItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
                 cn(
-                  "relative flex items-center h-full text-sm font-medium px-3 transition-colors",
-                  isActive ? "text-white" : "text-[#8B949E] hover:text-white"
+                  "relative flex items-center h-full text-[10px] otto-label transition-all duration-300",
+                  isActive ? "text-white" : "text-white/40 hover:text-white"
                 )
               }
             >
-              {({ isActive }) => (
-                <>
-                  {item.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#aa68ff] rounded-full" />
-                  )}
-                </>
-              )}
+              {item.label}
             </NavLink>
           ))}
         </div>
 
-        {/* Right: Bell + Avatar dropdown */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <Bell size={20} className="text-[#8B949E] hover:text-white cursor-pointer transition-colors" />
-
+        {/* Right: Actions */}
+        <div className="flex items-center gap-6 flex-shrink-0">
           <div className="relative" ref={dropdownRef}>
             <div
-              className="flex items-center gap-1 cursor-pointer"
+              className="flex items-center gap-3 cursor-pointer group"
               onClick={() => setDropdownOpen((prev) => !prev)}
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#aa68ff] to-[#820ad1] flex items-center justify-center text-xs font-bold text-white">
-                A
+              <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] otto-label text-white grayscale transition-all group-hover:border-white/20">
+                JD
               </div>
-              <ChevronDown size={16} className="text-[#8B949E]" />
+              <ChevronDown size={14} className="text-white/40 group-hover:text-white transition-colors" />
             </div>
 
             {dropdownOpen && (
-              <div className="absolute top-[44px] right-0 w-44 glass-panel border border-[rgba(255,255,255,0.08)] rounded-xl py-2 z-50 shadow-xl">
+              <div className="absolute top-[52px] right-0 w-48 glass-card bg-black/90 border border-white/10 rounded-xl py-3 z-50 shadow-2xl backdrop-blur-3xl">
+                <div className="px-4 py-2 mb-2 border-b border-white/5">
+                  <p className="text-[10px] otto-label text-white/40">John Doe</p>
+                  <p className="text-[9px] text-white/20 truncate">john@otto.private</p>
+                </div>
                 <NavLink
                   to="/settings"
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-[#8B949E] hover:text-white hover:bg-[rgba(255,255,255,0.04)] w-full transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 text-[10px] otto-label text-white/40 hover:text-white hover:bg-white/5 w-full transition-all"
                 >
-                  <Settings size={15} />
-                  Configurações
+                  <Settings size={14} />
+                  Settings
                 </NavLink>
                 <button
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-[#8B949E] hover:text-white hover:bg-[rgba(255,255,255,0.04)] w-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-3 px-4 py-2.5 text-[10px] otto-label text-white/40 hover:text-white hover:bg-white/5 w-full transition-all disabled:opacity-50"
                 >
-                  <LogOut size={15} />
-                  {isLoggingOut ? 'Saindo...' : 'Sair'}
+                  <LogOut size={14} />
+                  {isLoggingOut ? 'Leaving...' : 'Logout'}
                 </button>
               </div>
             )}

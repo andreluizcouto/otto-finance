@@ -13,11 +13,10 @@ export function MainLayout() {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#0A0F1C]">
-      <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at top right, rgba(170,104,255,0.08) 0%, transparent 50%)', backgroundAttachment: 'fixed' }} />
+    <div className="flex flex-col min-h-screen bg-black">
       <Navbar />
-      <main className="flex-1 overflow-y-auto px-8 py-8 lg:px-12 z-10 pt-[60px]">
-        <div className="mx-auto max-w-[1200px] pb-16">
+      <main className="flex-1 z-10 pt-24">
+        <div className="mx-auto max-w-[1440px]">
           <Outlet />
         </div>
       </main>
@@ -27,8 +26,7 @@ export function MainLayout() {
 
 export function AuthLayout() {
   return (
-    <div className="flex min-h-screen flex-col justify-center bg-[#0A0F1C] px-4 py-12 lg:px-8">
-      <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at top right, rgba(170,104,255,0.08) 0%, transparent 50%)', backgroundAttachment: 'fixed' }} />
+    <div className="flex min-h-screen flex-col justify-center bg-black px-4 py-12 lg:px-8">
       <div className="z-10 w-full max-w-7xl mx-auto relative">
         <Outlet />
       </div>
