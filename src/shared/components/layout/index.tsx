@@ -27,9 +27,9 @@ export function MainLayout() {
 
 export function AuthLayout() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0A0F1C] px-4 py-12 lg:px-8">
+    <div className="flex min-h-screen flex-col justify-center bg-[#0A0F1C] px-4 py-12 lg:px-8">
       <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at top right, rgba(170,104,255,0.08) 0%, transparent 50%)', backgroundAttachment: 'fixed' }} />
-      <div className="z-10 w-full max-w-7xl relative">
+      <div className="z-10 w-full max-w-7xl mx-auto relative">
         <Outlet />
       </div>
     </div>

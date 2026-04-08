@@ -2,16 +2,36 @@
 
 @theme {
   --color-background: #0A0F1C;
+  --color-foreground: #F4F5F8;
   --color-text-primary: #F4F5F8;
   --color-text-secondary: #8B949E;
   --color-neon-purple: #aa68ff;
   --color-neon-purple-dark: #820ad1;
   --color-neon-green: #74ee15;
 
+  --color-card: rgba(255, 255, 255, 0.05);
+  --color-card-foreground: #F4F5F8;
   --color-card-bg: rgba(255, 255, 255, 0.05);
   --color-card-border: rgba(255, 255, 255, 0.1);
   --color-panel-bg: rgba(255, 255, 255, 0.03);
 
+  --color-primary: #aa68ff;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: rgba(255, 255, 255, 0.05);
+  --color-secondary-foreground: #F4F5F8;
+  --color-muted: rgba(255, 255, 255, 0.05);
+  --color-muted-foreground: #8B949E;
+  --color-accent: rgba(255, 255, 255, 0.05);
+  --color-accent-foreground: #F4F5F8;
+  --color-destructive: #ef4444;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-input: rgba(255, 255, 255, 0.1);
+  --color-input-background: rgba(255, 255, 255, 0.02);
+  --color-ring: #aa68ff;
+  --color-popover: #0A0F1C;
+  --color-popover-foreground: #F4F5F8;
+
+  --radius: 0.75rem;
   --font-family-sans: 'Inter', sans-serif;
 }
 
