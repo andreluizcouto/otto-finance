@@ -4,6 +4,7 @@ import { Button, Card, Input } from "../components/ui";
 import { Mail, Lock, EyeOff, Eye, Play, Apple } from "lucide-react";
 import { apiPost } from "../../lib/api";
 import { setToken } from "../../lib/auth";
+import { toast } from "sonner";
 
 export function Login() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +27,13 @@ export function Login() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSocialLogin = (provider: string) => {
+    if (socialLoading !== null) return;
+    setSocialLoading(provider);
+    toast.info('Em breve — OAuth com ' + provider + ' não implementado ainda');
+    setTimeout(() => setSocialLoading(null), 500);
   };
 
   return (
@@ -77,9 +86,13 @@ export function Login() {
               <input type="checkbox" className="h-4 w-4 rounded border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] checked:bg-[#aa68ff] focus:ring-[#aa68ff]" />
               Lembrar-me
             </label>
-            <a href="#" className="text-xs text-[#8B949E] hover:text-[#F4F5F8] hover:underline">
+            <button
+              type="button"
+              onClick={() => toast.info('Recuperação de senha em breve')}
+              className="text-xs text-[#8B949E] hover:text-[#F4F5F8] hover:underline"
+            >
               Esqueceu a senha?
-            </a>
+            </button>
           </div>
 
           {error && (
@@ -108,11 +121,23 @@ export function Login() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <Button variant="secondary" className="w-full justify-center">
-            <Play className="mr-2 h-4 w-4" /> Continuar com Google
+          <Button
+            variant="secondary"
+            className="w-full justify-center"
+            onClick={() => handleSocialLogin('Google')}
+            disabled={!!socialLoading}
+          >
+            <Play className="mr-2 h-4 w-4" />
+            {socialLoading === 'Google' ? 'Carregando...' : 'Continuar com Google'}
           </Button>
-          <Button variant="secondary" className="w-full justify-center">
-            <Apple className="mr-2 h-4 w-4" /> Continuar com Apple
+          <Button
+            variant="secondary"
+            className="w-full justify-center"
+            onClick={() => handleSocialLogin('Apple')}
+            disabled={!!socialLoading}
+          >
+            <Apple className="mr-2 h-4 w-4" />
+            {socialLoading === 'Apple' ? 'Carregando...' : 'Continuar com Apple'}
           </Button>
         </div>
 
