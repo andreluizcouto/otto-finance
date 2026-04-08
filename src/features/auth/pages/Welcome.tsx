@@ -16,7 +16,7 @@ export function Welcome() {
   };
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-2 lg:items-center">
+    <div className="w-full mx-auto grid max-w-6xl gap-16 lg:grid-cols-2 lg:items-center">
       <div className="flex flex-col gap-8">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#aa68ff] to-[#820ad1] shadow-[0_0_15px_rgba(170,104,255,0.3)]">
