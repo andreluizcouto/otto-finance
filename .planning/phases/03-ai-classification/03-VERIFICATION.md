@@ -1,41 +1,36 @@
 ---
 phase: 03-ai-classification
-verified: 2026-04-07T00:00:00Z
+verified: 2026-04-07T19:26:47Z
 status: gaps_found
-score: 3/5 must-haves verified
+score: 4/5 must-haves verified
+re_verification:
+  previous_status: gaps_found
+  previous_score: 3/5
+  gaps_closed:
+    - "New transactions are automatically classified into categories via the Make.com-to-OpenAI pipeline"
+    - "Cryptic Brazilian merchant names (e.g., RCHLO, Pag*) are correctly mapped and classified"
+  gaps_remaining:
+    - "Classification uses structured outputs (JSON schema) for reliability"
+  regressions: []
 gaps:
-  - truth: "New transactions are automatically classified into categories via the Make.com-to-OpenAI pipeline"
-    status: failed
-    reason: "Classification is user-triggered by a button; no automatic classification trigger for new transactions was found."
-    artifacts:
-      - path: "src/pages/transactions.py"
-        issue: "Calls trigger_classification() only inside classify button click handler."
-    missing:
-      - "Automatic classification trigger when new transactions are created/imported (without manual button click)."
-  - truth: "Cryptic Brazilian merchant names (e.g., RCHLO, Pag*) are correctly mapped and classified"
-    status: failed
-    reason: "Mapping helper exists but is not wired into runtime classification flow."
-    artifacts:
-      - path: "src/data/classifier.py"
-        issue: "resolve_merchant_name() is defined but not used by trigger_classification() or UI pipeline."
-    missing:
-      - "Use merchant normalization in live classification flow (or enforce equivalent mapping in integrated pipeline with verifiable evidence)."
   - truth: "Classification uses structured outputs (JSON schema) for reliability"
-    status: partial
-    reason: "JSON schema helper exists in Python, but repo does not verify Make.com scenario actually enforces it at runtime."
+    status: failed
+    reason: "Runtime evidence now documented, but captured execution shows Gemini endpoint instead of OpenAI response_format.json_schema strict runtime proof required by phase contract."
     artifacts:
-      - path: "src/data/classifier.py"
-        issue: "get_openai_json_schema() is documentation/test helper only and not runtime-enforced in codebase."
+      - path: ".planning/phases/03-ai-classification/03-RESEARCH.md"
+        issue: "Runtime Evidence (AICL-06) section records `generativelanguage.googleapis.com ... gemini-2.5-flash:generateContent`, not OpenAI Module 4 strict json_schema payload evidence."
     missing:
-      - "Executable/config-as-code evidence that Make.com OpenAI call uses strict JSON schema in production flow."
+      - "Capture Make.com runtime evidence from the OpenAI module used for classification."
+      - "Show response_format.type='json_schema' and json_schema.strict=true in runtime payload evidence."
+      - "Attach one execution proof (scenario/module identifier + observed request fields)."
 ---
 
 # Phase 3: AI Classification Verification Report
 
 **Phase Goal:** Transactions are automatically and reliably classified into spending categories by AI  
-**Verified:** 2026-04-07T00:00:00Z  
+**Verified:** 2026-04-07T19:26:47Z  
 **Status:** gaps_found  
-**Re-verification:** No — initial verification
+**Re-verification:** Yes — after gap closure
 
 ## Goal Achievement
 
@@ -43,90 +38,87 @@ gaps:
 
 | # | Truth | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | New transactions are automatically classified into categories via the Make.com-to-OpenAI pipeline | ✗ FAILED | `src/pages/transactions.py` only triggers classification on button click (`trigger_classification(...)` at line 65). |
-| 2 | Cryptic Brazilian merchant names (e.g., RCHLO, Pag*) are correctly mapped and classified | ✗ FAILED | `resolve_merchant_name()` exists in `src/data/classifier.py` but no runtime usage found. |
-| 3 | Each classified transaction shows a confidence indicator (high/medium/low) in the UI | ✓ VERIFIED | `src/pages/transactions.py` renders confidence via `_confidence_label(...)` and low marker `? Baixa`. |
-| 4 | Low-confidence classifications appear in a review queue where the user can correct them | ✓ VERIFIED | Low-confidence rows get `Corrigir` selectbox; correction updates `category_id`, `confidence_score='high'`, `manually_reviewed=True`. |
-| 5 | User can create, rename, and delete custom spending categories | ✓ VERIFIED | `src/pages/settings.py` + `src/data/categories.py` implement add/rename/delete flows and guards for default categories. |
+| 1 | New transactions are automatically classified into categories via the Make.com-to-OpenAI pipeline | ✓ VERIFIED | `src/pages/settings.py:71-87` triggers `trigger_classification(client, user["id"])` immediately after insert; regression test `tests/test_settings.py:81-113` passes. |
+| 2 | Cryptic Brazilian merchant names (e.g., RCHLO, Pag*) are correctly mapped and classified | ✓ VERIFIED | `src/data/classifier.py:136` uses `resolve_merchant_name(...)` inside runtime payload builder; test `tests/test_classifier.py:29-43` validates runtime normalization output. |
+| 3 | Each classified transaction shows a confidence indicator (high/medium/low) in the UI | ✓ VERIFIED | `src/pages/transactions.py:130` renders `? Baixa` for low confidence and `_confidence_label(...)` for others. |
+| 4 | Low-confidence classifications appear in a review queue where the user can correct them | ✓ VERIFIED | `src/pages/transactions.py:182-189` writes correction with `category_id`, `confidence_score="high"`, `manually_reviewed=True`; tests in `tests/test_transactions.py` pass. |
+| 5 | Classification uses structured outputs (JSON schema) for reliability | ✗ FAILED | Contract helper/tests exist (`src/data/classifier.py:188-237`, `tests/test_classifier.py:91-136`), but runtime evidence section logs Gemini endpoint (`03-RESEARCH.md:678-689`) instead of OpenAI strict `response_format.json_schema` runtime proof. |
 
-**Score:** 3/5 truths verified
+**Score:** 4/5 truths verified
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | --- | --- | --- | --- |
-| `src/data/classifier.py` | Classification helpers + webhook trigger | ✓ VERIFIED | Exists, substantive, used by transactions page. |
-| `src/data/categories.py` | Category CRUD | ✓ VERIFIED | Exists, substantive, imported/used by settings page. |
-| `src/pages/transactions.py` | Classification UI + review queue | ✓ VERIFIED | Exists, substantive, routed from `app.py`. |
-| `src/pages/settings.py` | Category management UI | ✓ VERIFIED | Exists, substantive, wired to categories data module. |
-| `src/navigation.py` | Transacoes nav item | ✓ VERIFIED | Includes `Transacoes` option and icon, routed in `app.py`. |
-| `src/ui/styles.py` | Phase 3 CSS classes | ✓ VERIFIED | Contains `.classify-btn`, `.confidence-badge-low`, `.transactions-container`, `.category-swatch`. |
-| `supabase/schema.sql` | `manually_reviewed` schema documentation | ✓ VERIFIED | Column and ALTER comment present. |
+| `src/pages/settings.py` | Automatic post-create classification trigger | ✓ VERIFIED | Exists, substantive, wired (`trigger_classification` called after generate+insert). |
+| `src/data/classifier.py` | Runtime merchant normalization in payload builder | ✓ VERIFIED | Exists, substantive, wired via `build_classification_payload` used by `trigger_classification`. |
+| `tests/test_settings.py` | Regression for automatic trigger flow | ✓ VERIFIED | Exists and validates trigger invocation path. |
+| `tests/test_classifier.py` | Strict schema contract checks | ✓ VERIFIED | Schema contract assertions present and passing. |
+| `.planning/phases/03-ai-classification/03-RESEARCH.md` | Runtime strict-schema OpenAI evidence | ⚠️ HOLLOW | Evidence recorded, but endpoint is Gemini runtime, not OpenAI module proof requested in phase contract. |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 | --- | --- | --- | --- | --- |
-| `src/pages/transactions.py` | `src/data/classifier.py` | `trigger_classification(...)` import + call | WIRED | Import present and called in classify action flow. |
-| `src/data/classifier.py` | `src/config.py` | `get_make_webhook_url()` | WIRED | Accessor imported and used before `httpx.post`. |
-| `src/pages/settings.py` | `src/data/categories.py` | add/rename/delete/get_all_categories imports | WIRED | All CRUD helpers imported and invoked. |
-| `app.py` | `src/pages/transactions.py` | route branch for `"Transacoes"` | WIRED | `show_transactions()` called when selected. |
-| `resolve_merchant_name()` | live classification pipeline | runtime usage | NOT_WIRED | No call path from trigger/UI to mapping helper. |
+| `src/pages/settings.py` | `src/data/classifier.py` | `trigger_classification(...)` | WIRED | Import at line 5; invocation at line 71. |
+| `src/data/classifier.py` | Make webhook payload | `resolve_merchant_name(...)` in payload builder | WIRED | Normalization applied at payload construction (line 136). |
+| `src/pages/transactions.py` | `src/data/classifier.py` | Manual fallback CTA call | WIRED | Manual classify button still triggers `trigger_classification` (lines 63-77). |
+| `03-RESEARCH.md` runtime evidence | OpenAI strict schema runtime proof | Evidence checklist | NOT_WIRED | Runtime section demonstrates Gemini request, not OpenAI module 4 strict schema payload. |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data Variable | Source | Produces Real Data | Status |
 | --- | --- | --- | --- | --- |
-| `src/pages/transactions.py` | `unclassified_count` | Supabase query (`transactions` with `.or_(category_id/confidence_score).eq(manually_reviewed, False)`) | Yes | ✓ FLOWING |
-| `src/pages/transactions.py` | `transactions` | Supabase `transactions` select/order query | Yes | ✓ FLOWING |
-| `src/pages/settings.py` | `categories` | `get_all_categories(client)` -> Supabase `categories` query | Yes | ✓ FLOWING |
-| `src/data/classifier.py` | webhook response `classified_count` | `httpx.post(MAKE_WEBHOOK_URL)` JSON result | External | ? NEEDS HUMAN (external Make/OpenAI pipeline) |
-| `src/data/classifier.py` | merchant mapping | `resolve_merchant_name()` table | No runtime use | ✗ DISCONNECTED |
+| `src/pages/settings.py` | `transactions` → auto classification trigger | `generate_transactions(...)` then `client.table("transactions").insert(...).execute()` | Yes | ✓ FLOWING |
+| `src/data/classifier.py` | `payload["transactions"][*]["merchant_name"]` | `resolve_merchant_name(...)` transform during payload build | Yes | ✓ FLOWING |
+| `03-RESEARCH.md` runtime evidence | strict schema runtime proof | Documented external execution notes | No (OpenAI proof missing) | ⚠️ STATIC/MISMATCH |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 | --- | --- | --- | --- |
-| Core phase tests pass | `python -m pytest tests/test_classifier.py tests/test_categories.py tests/test_transactions.py -q` | 37 passed | ✓ PASS |
-| Full suite regression | `python -m pytest tests/ -q` | 23 passed | ✓ PASS |
+| Automatic trigger + classifier + transactions/category regressions | `python -m pytest tests/test_classifier.py tests/test_categories.py tests/test_settings.py tests/test_transactions.py -q` | `25 passed` | ✓ PASS |
+| Runtime normalization contract test | Included in command above (`test_build_payload_normalizes_merchant_name_runtime`) | passed | ✓ PASS |
+| OpenAI runtime strict-schema evidence | N/A (external Make.com runtime) | Not verifiable in repo; repo evidence currently points to Gemini endpoint | ✗ FAIL (evidence mismatch) |
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| AICL-01 | 03-00/01/02 | Automatic AI classification via Make/OpenAI | ✗ BLOCKED | Webhook trigger exists, but only manual button flow found (not automatic new-transaction classification). |
-| AICL-02 | 03-00/01 | Brazilian merchant mapping | ✗ BLOCKED | Mapping helper exists, but not wired into runtime classification path. |
-| AICL-03 | 03-00/01/02 | Confidence score shown | ✓ SATISFIED | Confidence labels rendered in transactions UI; tests pass. |
-| AICL-04 | 03-00/02 | Low-confidence flagged for review | ✓ SATISFIED | `? Baixa` marker + correction selectbox + update path with `manually_reviewed=True`. |
-| AICL-05 | 03-00/03 | Custom category CRUD | ✓ SATISFIED | Add/rename/delete flows in settings and categories module; tests pass. |
-| AICL-06 | 03-00/01 | Structured outputs JSON schema reliability | ✗ BLOCKED | Schema helper exists, but no runtime-enforced pipeline config in repository. |
-| INTG-01 | 03-01/02 | Make.com webhook integration | ? NEEDS HUMAN | `httpx.post` to `MAKE_WEBHOOK_URL` exists; external Make.com orchestration cannot be verified from code alone. |
+| AICL-01 | 03-01/03-04 | Automatic classification via OpenAI through Make.com | ? NEEDS HUMAN | Automatic trigger in code verified; external OpenAI runtime orchestration still needs direct Make.com runtime check. |
+| AICL-02 | 03-01/03-04 | Brazilian merchant mapping | ✓ SATISFIED | Runtime payload normalization wired and tested. |
+| AICL-03 | 03-01/03-02 | Confidence score tiers | ✓ SATISFIED | Mapping helper + UI confidence rendering + tests. |
+| AICL-04 | 03-02/03-04 | Low-confidence review flow | ✓ SATISFIED | Inline correction path writes reviewed/high confidence and reruns. |
+| AICL-05 | 03-03 | Custom category CRUD | ✓ SATISFIED | `src/data/categories.py` + settings UI + passing tests. |
+| AICL-06 | 03-01/03-05 | Structured outputs JSON schema reliability | ✗ BLOCKED | Contract tests exist, but runtime proof artifact does not show OpenAI strict `response_format.json_schema` execution. |
+| INTG-01 | 03-01/03-05 | Make.com webhook orchestration | ? NEEDS HUMAN | `httpx.post(MAKE_WEBHOOK_URL, ...)` exists and tested locally; external scenario execution must be validated in Make.com. |
 
-Orphaned requirements for Phase 3: none detected (all phase requirement IDs are declared in phase plans).
+Orphaned requirements mapped to Phase 3 but missing from plans: none found.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 | --- | --- | --- | --- | --- |
-| `src/data/classifier.py` | 185 | Comment indicates schema helper is not runtime-used | ⚠️ Warning | Reliability contract (AICL-06) is not enforced in executable flow. |
+| `.planning/phases/03-ai-classification/03-RESEARCH.md` | 678-689 | Runtime evidence points to Gemini endpoint, not OpenAI strict schema module | 🛑 Blocker | Leaves AICL-06 runtime reliability proof incomplete for this phase contract. |
 
 ### Human Verification Required
 
-### 1. Make.com runtime structured output enforcement
-**Test:** Execute a real classification run through Make.com and inspect Module 4 request config/output.  
-**Expected:** OpenAI call uses strict JSON schema and returns conforming payload for each transaction.  
-**Why human:** Make.com scenario config is external to repository.
+### 1. OpenAI runtime strict-schema verification in Make.com
+**Test:** Open the production classification scenario, inspect the actual OpenAI HTTP module request body for one execution.  
+**Expected:** `response_format.type = "json_schema"` and `response_format.json_schema.strict = true` with canonical enum and required fields.  
+**Why human:** Make.com runtime config/execution is external to repository.
 
-### 2. End-to-end webhook orchestration
-**Test:** Trigger classification in UI with real data and verify Supabase rows are patched with category/confidence.  
-**Expected:** Transactions are updated in DB and reflected in UI.  
-**Why human:** External network/service integration cannot be fully verified offline.
+### 2. End-to-end external orchestration check
+**Test:** Trigger classification from app with real webhook, then verify Supabase rows are patched and reflected in Transactions UI.  
+**Expected:** category/confidence updates appear for processed rows, with low-confidence rows flagged for review.  
+**Why human:** Depends on external network services (Make.com/OpenAI/Supabase runtime).
 
 ### Gaps Summary
 
-Phase 03 has strong implementation for UI review and category CRUD, and tests are passing. However, the phase goal is not fully achieved: classification is not automatic for new transactions, merchant mapping is not wired into live flow, and structured-output reliability is not enforced in versioned runtime config.
+Re-verification closed two prior blockers (automatic trigger and runtime merchant normalization).  
+One blocker remains: runtime structured-output evidence in repo does not currently prove OpenAI strict JSON-schema execution (it documents Gemini runtime instead). Phase goal is close, but requirement-level reliability proof for AICL-06/OpenAI path is still incomplete.
 
 ---
 
-_Verified: 2026-04-07T00:00:00Z_  
+_Verified: 2026-04-07T19:26:47Z_  
 _Verifier: the agent (gsd-verifier)_
