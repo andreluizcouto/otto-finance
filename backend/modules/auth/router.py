@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from backend.core import get_access_token, get_current_user
-from .schemas import LoginRequest, SignUpRequest
+from backend.schemas import LoginRequest, SignUpRequest
 from .services import sign_in, sign_out, sign_up
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])

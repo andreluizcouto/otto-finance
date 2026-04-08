@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from typing import Any
 import pandas as pd
 from supabase import Client
-from ..shared.utils import format_brl
+from backend.core import format_brl
 
 def calculate_date_range(period: str, today: date | None = None) -> tuple[date, date]:
     if today is None:

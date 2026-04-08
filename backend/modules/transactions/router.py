@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client
 
 from backend.core import get_current_client, get_current_user
-from .schemas import CorrectTransactionRequest
+from backend.schemas import CorrectTransactionRequest
 from .services import (
     classify_transactions,
     correct_transaction_category,

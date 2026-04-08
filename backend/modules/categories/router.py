@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
 
 from backend.core import get_current_client, get_current_user
-from .schemas import CreateCategoryRequest, RenameCategoryRequest
+from backend.schemas import CreateCategoryRequest, RenameCategoryRequest
 from .services import (
     add_category,
     delete_category,

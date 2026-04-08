@@ -81,3 +81,8 @@ def get_current_client(
     refresh_token: Annotated[str | None, Depends(get_refresh_token)],
 ) -> Client:
     return get_authenticated_client(access_token=access_token, refresh_token=refresh_token)
+
+
+def format_brl(value: float) -> str:
+    """Formata um valor float para o padrão de moeda brasileiro (R$)."""
+    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
