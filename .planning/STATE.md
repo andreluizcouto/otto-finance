@@ -104,6 +104,7 @@ None yet.
 | 260407-jmt | Implementar pagina de transacoes | 2026-04-07 | 88162af | [260407-jmt-implementar-pagina-de-transacoes](./quick/260407-jmt-implementar-pagina-de-transacoes/) |
 | 260407-jai | Implementar modulo de categorias | 2026-04-07 | 416a0ab | [260407-jai-implementar-modulo-de-categorias](./quick/260407-jai-implementar-modulo-de-categorias/) |
 | 260407-u4y | Hidratação Frontend React + FastAPI — substituir dados mockados por estado real | 2026-04-08 | 337f419 | [260407-u4y-hidrata-o-frontend-react-fastapi-substit](./quick/260407-u4y-hidrata-o-frontend-react-fastapi-substit/) |
+| 260407-uvw | Interatividade real em 12 componentes React | 2026-04-07 | 231d882 | [260407-uvw-interatividade-real-em-12-componentes-lo](./quick/260407-uvw-interatividade-real-em-12-componentes-lo/) |
 
 ## Session Continuity
 
