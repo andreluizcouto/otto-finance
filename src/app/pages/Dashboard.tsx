@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Card, Button, Badge } from "../components/ui";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Wallet, CreditCard, Sparkles, HeartPulse, DollarSign, ArrowDown, Plus, List, Settings, Target } from "lucide-react";
 import { apiGet } from "../../lib/api";
+import { toast } from "sonner";
 
 const PERIOD_LABELS = ['Este Mês', 'Esta Semana', 'Últimos 3 Meses'];
 const PERIOD_API: Record<string, string> = {
@@ -12,6 +14,7 @@ const PERIOD_API: Record<string, string> = {
 };
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const [activePeriod, setActivePeriod] = useState<string>('Este mes');
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -165,7 +168,7 @@ export function Dashboard() {
                 <span className="text-xs text-[#8B949E]">Economia Potencial</span>
                 <span className="font-bold text-[#74ee15]">R$ 89,90<span className="text-xs font-normal">/mês</span></span>
               </div>
-              <Button className="w-full">
+              <Button className="w-full" onClick={() => toast.info('Insights personalizados em breve')}>
                 Ver recomendação →
               </Button>
             </div>
@@ -200,7 +203,12 @@ export function Dashboard() {
           <Card className="p-6">
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-[#F4F5F8]">Últimas Transações</h3>
-              <a href="#" className="text-xs text-[#8B949E] hover:text-[#F4F5F8]">Ver todas</a>
+              <button
+                onClick={() => navigate('/transactions')}
+                className="text-xs text-[#8B949E] hover:text-[#F4F5F8]"
+              >
+                Ver todas
+              </button>
             </div>
             {isLoading ? (
               <div className="flex flex-col gap-4">
@@ -232,10 +240,10 @@ export function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mt-2">
-        <QuickActionButton icon={<Plus />} label="Adicionar Transação" />
-        <QuickActionButton icon={<List />} label="Ver Transações" />
-        <QuickActionButton icon={<Settings />} label="Ajustar Categorias" />
-        <QuickActionButton icon={<Target />} label="Criar Meta" />
+        <QuickActionButton icon={<Plus />} label="Adicionar Transação" onClick={() => toast.info('Adicionar transação em breve')} />
+        <QuickActionButton icon={<List />} label="Ver Transações" onClick={() => navigate('/transactions')} />
+        <QuickActionButton icon={<Settings />} label="Ajustar Categorias" onClick={() => navigate('/categories')} />
+        <QuickActionButton icon={<Target />} label="Criar Meta" onClick={() => navigate('/goals')} />
       </div>
     </div>
   );
@@ -262,9 +270,12 @@ function TransactionRow({ icon, name, category, time, amount, isPositive = false
   );
 }
 
-function QuickActionButton({ icon, label }: any) {
+function QuickActionButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
-    <button className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] p-4 text-[#8B949E] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F4F5F8]">
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] p-4 text-[#8B949E] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F4F5F8]"
+    >
       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] text-[#F4F5F8] [&>svg]:h-5 [&>svg]:w-5">
         {icon}
       </div>

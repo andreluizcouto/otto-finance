@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Card, Button, Badge } from "../components/ui";
 import { Target, TrendingUp, Car, Sparkles, Clock, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export function Goals() {
-  const [goals] = useState([
+  const [goals, setGoals] = useState([
     { id: '1', name: 'Reserva de Emergência', current: 6500, target: 10000, color: '#aa68ff', priority: 'PRIORIDADE ALTA', status: 'on_track' },
     { id: '2', name: 'Investimento Tesouro', current: 16000, target: 50000, color: '#74ee15', status: 'on_track' },
     { id: '3', name: 'Trocar de Carro', current: 6400, target: 80000, color: '#EF4444', status: 'delayed' },
   ]);
-  const [aiInsightsLoading, setAiInsightsLoading] = useState<Record<string, boolean>>({});
 
   const goalIcons: Record<string, React.ReactNode> = {
     '1': <Target className="h-6 w-6" />,
@@ -23,7 +23,7 @@ export function Goals() {
           <h1 className="text-3xl font-bold tracking-tight text-[#F4F5F8]">Metas</h1>
           <p className="mt-1 text-sm text-[#8B949E]">Acompanhe o progresso dos seus objetivos e receba insights da IA.</p>
         </div>
-        <Button>
+        <Button onClick={() => toast.info('Criar nova meta em breve')}>
           <Target className="mr-2 h-4 w-4" /> Nova Meta
         </Button>
       </div>
@@ -98,14 +98,17 @@ export function Goals() {
                     <Button
                       size="sm"
                       className="bg-[rgba(116,238,21,0.1)] text-[#74ee15] hover:bg-[rgba(116,238,21,0.2)] shadow-none"
-                      onClick={() => {
-                        setAiInsightsLoading(p => ({ ...p, [goal.id]: true }));
-                        setTimeout(() => setAiInsightsLoading(p => ({ ...p, [goal.id]: false })), 1500);
-                      }}
+                      onClick={() => toast.info('Aplicar sugestão de meta em breve')}
                     >
-                      {aiInsightsLoading[goal.id] ? 'Processando...' : 'Aceitar Sugestão'}
+                      Aceitar Sugestão
                     </Button>
-                    <Button size="sm" variant="ghost">Ignorar</Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setGoals(prev => prev.filter(g => g.id !== goal.id))}
+                    >
+                      Ignorar
+                    </Button>
                   </div>
                 </div>
               )}
@@ -140,7 +143,10 @@ export function Goals() {
           );
         })}
 
-        <Card className="flex h-full min-h-[260px] cursor-pointer flex-col items-center justify-center gap-3 border-dashed border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.01)] transition-all hover:border-[#aa68ff] hover:bg-[rgba(170,104,255,0.02)]">
+        <Card
+          className="flex h-full min-h-[260px] cursor-pointer flex-col items-center justify-center gap-3 border-dashed border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.01)] transition-all hover:border-[#aa68ff] hover:bg-[rgba(170,104,255,0.02)]"
+          onClick={() => toast.info('Criar nova meta em breve')}
+        >
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] text-[#8B949E]">
             <Target className="h-8 w-8" />
           </div>

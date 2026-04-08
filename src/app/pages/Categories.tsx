@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { Card, Button } from "../components/ui";
 import { Plus, MoreVertical } from "lucide-react";
-import { apiGet, apiPost } from "../../lib/api";
-import { getToken } from "../../lib/auth";
+import { apiGet, apiPost, apiFetch } from "../../lib/api";
+import { toast } from "sonner";
 
 export function Categories() {
   const [categories, setCategories] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCat, setNewCat] = useState({ name: '', color_hex: '#aa68ff', emoji: '📂' });
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
 
   const loadCategories = () => {
     apiGet('/api/categories')
@@ -21,14 +22,15 @@ export function Categories() {
   }, []);
 
   const handleDelete = async (id: string) => {
+    if (isDeleting[id]) return;
+    setIsDeleting(p => ({ ...p, [id]: true }));
     try {
-      await fetch(`http://localhost:8001/api/categories/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      await apiFetch(`/api/categories/${id}`, { method: 'DELETE' });
       loadCategories();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao excluir categoria');
+    } finally {
+      setIsDeleting(p => ({ ...p, [id]: false }));
     }
   };
 
@@ -63,10 +65,11 @@ export function Categories() {
                 </button>
                 <div className="absolute right-0 top-6 z-10 hidden group-hover/menu:flex flex-col rounded-lg border border-[rgba(255,255,255,0.1)] bg-[#0D1526] shadow-xl min-w-[120px]">
                   <button
-                    className="px-4 py-2 text-sm text-left text-[#8B949E] hover:text-[#F4F5F8] hover:bg-[rgba(255,255,255,0.05)]"
+                    className="px-4 py-2 text-sm text-left text-[#8B949E] hover:text-[#F4F5F8] hover:bg-[rgba(255,255,255,0.05)] disabled:opacity-50"
                     onClick={() => handleDelete(cat.id)}
+                    disabled={isDeleting[cat.id]}
                   >
-                    Excluir
+                    {isDeleting[cat.id] ? 'Excluindo...' : 'Excluir'}
                   </button>
                 </div>
               </div>
@@ -131,7 +134,7 @@ export function Categories() {
                     setIsModalOpen(false);
                     setNewCat({ name: '', color_hex: '#aa68ff', emoji: '📂' });
                   } catch (e: any) {
-                    alert(e.message);
+                    toast.error(e.message || 'Erro ao criar categoria');
                   } finally {
                     setIsSaving(false);
                   }
