@@ -1,9 +1,15 @@
 import { useNavigate } from "react-router";
 import { Button, Card, Badge } from "../components/ui";
 import { ArrowLeft, ShieldCheck, Building2, LineChart, FileText, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 export function Onboarding2() {
   const navigate = useNavigate();
+
+  const handleNext = () => {
+    localStorage.setItem('onboarding_step', '2');
+    navigate('/onboarding/3');
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -34,26 +40,33 @@ export function Onboarding2() {
             status="Última sync: há 2 min"
             icon={<Building2 className="h-6 w-6" />}
             state="connected"
+            onClick={() => toast.info('Gerenciamento de conexão em breve')}
           />
           <BankCard
             name="Itaú"
             status="Processando transações..."
             icon={<Building2 className="h-6 w-6" />}
             state="syncing"
+            onClick={() => toast.info('Gerenciamento de conexão em breve')}
           />
           <BankCard
             name="Importar CSV"
             status="Extratos ou planilhas"
             icon={<FileText className="h-6 w-6" />}
             state="pending"
+            onClick={() => toast.info('Integração com Importar CSV em breve')}
           />
           <BankCard
             name="Corretoras"
             status="XP, BTG, Rico, etc."
             icon={<LineChart className="h-6 w-6" />}
             state="pending"
+            onClick={() => toast.info('Integração com Corretoras em breve')}
           />
-          <button className="flex h-[140px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] text-[#8B949E] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F4F5F8]">
+          <button
+            className="flex h-[140px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] text-[#8B949E] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F4F5F8]"
+            onClick={() => toast.info('Novas integrações bancárias em breve')}
+          >
             <Plus className="h-8 w-8" />
             <span className="text-sm font-medium">Adicionar nova conexão</span>
           </button>
@@ -70,7 +83,7 @@ export function Onboarding2() {
         </Card>
 
         <div className="mt-12 flex w-full justify-end">
-          <Button size="lg" onClick={() => navigate('/onboarding/3')}>
+          <Button size="lg" onClick={handleNext}>
             Próximo Passo →
           </Button>
         </div>
@@ -79,9 +92,12 @@ export function Onboarding2() {
   );
 }
 
-function BankCard({ name, status, icon, state }: { name: string; status: string; icon: React.ReactNode; state: 'connected' | 'syncing' | 'pending' }) {
+function BankCard({ name, status, icon, state, onClick }: { name: string; status: string; icon: React.ReactNode; state: 'connected' | 'syncing' | 'pending'; onClick?: () => void }) {
   return (
-    <Card className={`flex h-[140px] flex-col justify-between p-5 transition-transform hover:scale-[1.02] ${state === 'connected' ? 'border-[#aa68ff] bg-[rgba(170,104,255,0.05)]' : ''}`}>
+    <Card
+      className={`flex h-[140px] cursor-pointer flex-col justify-between p-5 transition-transform hover:scale-[1.02] ${state === 'connected' ? 'border-[#aa68ff] bg-[rgba(170,104,255,0.05)]' : ''}`}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(255,255,255,0.05)] text-[#F4F5F8]">
           {icon}

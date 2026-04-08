@@ -2,11 +2,24 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Button, Card, Badge } from "../components/ui";
 import { ArrowLeft, Home, Coffee, BellRing, Check, PiggyBank } from "lucide-react";
+import { toast } from "sonner";
 
 export function Onboarding3() {
   const navigate = useNavigate();
   const [essentials, setEssentials] = useState(3500);
   const [leisure, setLeisure] = useState(1200);
+  const [alertEssentials, setAlertEssentials] = useState(true);
+  const [alertLeisure, setAlertLeisure] = useState(true);
+
+  const handleFinish = () => {
+    const step1 = JSON.parse(localStorage.getItem('onboarding_step1') || '{}');
+    localStorage.setItem('onboarding_complete', JSON.stringify({
+      ...step1,
+      budgets: { essentials, leisure },
+      alerts: { essentials: alertEssentials, leisure: alertLeisure },
+    }));
+    navigate('/dashboard');
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -86,8 +99,11 @@ export function Onboarding3() {
                 <div className="flex items-center gap-2 text-xs text-[#8B949E]">
                   <BellRing className="h-4 w-4" /> Alerta aos 80%
                 </div>
-                <button className="relative inline-flex h-5 w-9 items-center rounded-full bg-[#aa68ff] transition-colors">
-                  <span className="inline-block h-3 w-3 translate-x-5 transform rounded-full bg-white transition-transform" />
+                <button
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${alertEssentials ? 'bg-[#aa68ff]' : 'bg-[rgba(255,255,255,0.1)]'}`}
+                  onClick={() => setAlertEssentials(p => !p)}
+                >
+                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${alertEssentials ? 'translate-x-5' : 'translate-x-1'}`} />
                 </button>
               </div>
             </Card>
@@ -136,8 +152,11 @@ export function Onboarding3() {
                 <div className="flex items-center gap-2 text-xs text-[#8B949E]">
                   <BellRing className="h-4 w-4" /> Alerta aos 80%
                 </div>
-                <button className="relative inline-flex h-5 w-9 items-center rounded-full bg-[#aa68ff] transition-colors">
-                  <span className="inline-block h-3 w-3 translate-x-5 transform rounded-full bg-white transition-transform" />
+                <button
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${alertLeisure ? 'bg-[#aa68ff]' : 'bg-[rgba(255,255,255,0.1)]'}`}
+                  onClick={() => setAlertLeisure(p => !p)}
+                >
+                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${alertLeisure ? 'translate-x-5' : 'translate-x-1'}`} />
                 </button>
               </div>
             </Card>
@@ -146,7 +165,7 @@ export function Onboarding3() {
           <div className="flex flex-col gap-6 lg:col-span-2">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-[#F4F5F8]">
               <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[rgba(116,238,21,0.1)] text-[#74ee15]">
-                <Sparkles className="h-3 w-3" />
+                <SparklesIcon className="h-3 w-3" />
               </span>
               Sugestão da IA
             </h2>
@@ -154,7 +173,7 @@ export function Onboarding3() {
             <Card className="relative overflow-hidden border border-[#74ee15] border-opacity-30 p-1">
               <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[rgba(116,238,21,0.15)] blur-2xl"></div>
               <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-[rgba(116,238,21,0.15)] blur-2xl"></div>
-              
+
               <div className="relative h-full rounded-xl bg-[rgba(10,15,28,0.8)] p-6 backdrop-blur-md">
                 <div className="mb-6 flex items-start justify-between">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)]">
@@ -179,7 +198,10 @@ export function Onboarding3() {
                   </div>
                 </div>
 
-                <Button className="w-full bg-[rgba(116,238,21,0.1)] text-[#74ee15] border border-[rgba(116,238,21,0.2)] hover:bg-[rgba(116,238,21,0.2)] shadow-none">
+                <Button
+                  className="w-full bg-[rgba(116,238,21,0.1)] text-[#74ee15] border border-[rgba(116,238,21,0.2)] hover:bg-[rgba(116,238,21,0.2)] shadow-none"
+                  onClick={() => toast.success('Meta adicionada ao seu perfil em breve')}
+                >
                   <Check className="mr-2 h-4 w-4" /> Aceitar Meta
                 </Button>
               </div>
@@ -188,8 +210,8 @@ export function Onboarding3() {
         </div>
 
         <div className="mt-12 flex w-full justify-end">
-          <Button size="lg" onClick={() => navigate('/dashboard')} className="px-8">
-            Ir para o Dashboard 🚀
+          <Button size="lg" onClick={handleFinish} className="px-8">
+            Ir para o Dashboard
           </Button>
         </div>
       </main>
@@ -197,9 +219,9 @@ export function Onboarding3() {
   );
 }
 
-function Sparkles(props: any) {
+function SparklesIcon(props: any) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinelinejoin="round" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
     </svg>
   );

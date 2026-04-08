@@ -8,6 +8,14 @@ export function Onboarding1() {
   const [selectedGoal, setSelectedGoal] = useState<string | null>("economizar");
   const [frequency, setFrequency] = useState("diario");
   const [aiEnabled, setAiEnabled] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleNext = () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    localStorage.setItem('onboarding_step1', JSON.stringify({ selectedGoal, frequency, aiEnabled }));
+    navigate('/onboarding/2');
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -103,7 +111,12 @@ export function Onboarding1() {
         </Card>
 
         <div className="mt-12 flex w-full justify-end">
-          <Button size="lg" onClick={() => navigate('/onboarding/2')}>
+          <Button
+            size="lg"
+            onClick={handleNext}
+            disabled={isSubmitting}
+            className="disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Próximo Passo →
           </Button>
         </div>

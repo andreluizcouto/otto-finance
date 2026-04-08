@@ -1,22 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, Button, Input } from "../components/ui";
 import { User, Bell, Shield, Wallet, Smartphone, Globe, UploadCloud, Moon } from "lucide-react";
 import { apiGet } from "../../lib/api";
+import { toast } from "sonner";
 
 export function Settings() {
   const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '' });
+  const [originalProfile, setOriginalProfile] = useState({ name: '', email: '', phone: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState('conta');
+  const [darkMode, setDarkMode] = useState(true);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     apiGet('/api/auth/me')
       .then(res => {
         const u = res.user;
-        setProfileForm({
+        const profile = {
           name: u.email?.split('@')[0] ?? '',
           email: u.email ?? '',
           phone: '',
-        });
+        };
+        setProfileForm(profile);
+        setOriginalProfile(profile);
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
@@ -27,7 +34,9 @@ export function Settings() {
     setIsSaving(true);
     // PUT /api/users/me does not exist yet — simulate with delay for UX
     await new Promise(r => setTimeout(r, 800));
+    setOriginalProfile(profileForm);
     setIsSaving(false);
+    toast.success('Perfil salvo com sucesso');
   };
 
   return (
@@ -40,12 +49,12 @@ export function Settings() {
       <div className="flex flex-col gap-8 md:flex-row">
         <aside className="w-full md:w-64 flex-shrink-0">
           <nav className="flex flex-col gap-1">
-            <NavItem icon={<User />} label="Conta" active />
-            <NavItem icon={<Shield />} label="Segurança" />
-            <NavItem icon={<Wallet />} label="Bancos Conectados" />
-            <NavItem icon={<Bell />} label="Notificações" />
-            <NavItem icon={<Smartphone />} label="Dispositivos" />
-            <NavItem icon={<Globe />} label="Idioma e Região" />
+            <NavItem icon={<User />} label="Conta" active={activeSection === 'conta'} onClick={() => setActiveSection('conta')} />
+            <NavItem icon={<Shield />} label="Segurança" active={activeSection === 'seguranca'} onClick={() => setActiveSection('seguranca')} />
+            <NavItem icon={<Wallet />} label="Bancos Conectados" active={activeSection === 'bancos'} onClick={() => setActiveSection('bancos')} />
+            <NavItem icon={<Bell />} label="Notificações" active={activeSection === 'notificacoes'} onClick={() => setActiveSection('notificacoes')} />
+            <NavItem icon={<Smartphone />} label="Dispositivos" active={activeSection === 'dispositivos'} onClick={() => setActiveSection('dispositivos')} />
+            <NavItem icon={<Globe />} label="Idioma e Região" active={activeSection === 'idioma'} onClick={() => setActiveSection('idioma')} />
           </nav>
         </aside>
 
@@ -60,9 +69,21 @@ export function Settings() {
                   alt="Profile"
                   className="h-24 w-24 rounded-full object-cover ring-4 ring-[#0A0F1C]"
                 />
-                <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-[#aa68ff] text-white shadow-[0_0_10px_rgba(170,104,255,0.5)] transition-transform hover:scale-105">
+                <button
+                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-[#aa68ff] text-white shadow-[0_0_10px_rgba(170,104,255,0.5)] transition-transform hover:scale-105"
+                  onClick={() => avatarInputRef.current?.click()}
+                >
                   <UploadCloud className="h-4 w-4" />
                 </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) toast.success('Avatar selecionado (upload em breve)');
+                  }}
+                />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-[#F4F5F8]">
@@ -120,7 +141,13 @@ export function Settings() {
               )}
 
               <div className="mt-8 flex justify-end gap-3 border-t border-[rgba(255,255,255,0.05)] pt-6">
-                <Button variant="ghost" type="button">Cancelar</Button>
+                <Button
+                  variant="ghost"
+                  type="button"
+                  onClick={() => setProfileForm(originalProfile)}
+                >
+                  Cancelar
+                </Button>
                 <Button type="submit" disabled={isSaving}>
                   {isSaving ? 'Salvando...' : 'Salvar Alterações'}
                 </Button>
@@ -142,8 +169,15 @@ export function Settings() {
                   <p className="text-xs text-[#8B949E]">Tema ativado (padrão)</p>
                 </div>
               </div>
-              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-[#aa68ff] transition-colors">
-                <span className="inline-block h-4 w-4 translate-x-6 transform rounded-full bg-white transition-transform" />
+              <button
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${darkMode ? 'bg-[#aa68ff]' : 'bg-[rgba(255,255,255,0.1)]'}`}
+                onClick={() => {
+                  const next = !darkMode;
+                  setDarkMode(next);
+                  document.documentElement.classList.toggle('dark', next);
+                }}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
           </Card>
@@ -153,9 +187,10 @@ export function Settings() {
   );
 }
 
-function NavItem({ icon, label, active = false }: any) {
+function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }) {
   return (
     <button
+      onClick={onClick}
       className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${
         active
           ? 'bg-[rgba(255,255,255,0.05)] text-[#F4F5F8] border-l-[3px] border-[#aa68ff] rounded-l-none pl-[13px]'
