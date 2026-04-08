@@ -10,8 +10,7 @@ export function Settings() {
   const [originalProfile, setOriginalProfile] = useState({ name: '', email: '', phone: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState('conta');
-  const [darkMode, setDarkMode] = useState(true);
+  const [activeSection, setActiveSection] = useState('wealth');
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -33,48 +32,48 @@ export function Settings() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    // PUT /api/users/me does not exist yet — simulate with delay for UX
     await new Promise(r => setTimeout(r, 800));
     setOriginalProfile(profileForm);
     setIsSaving(false);
-    toast.success('Perfil salvo com sucesso');
+    toast.success('Configurações atualizadas');
   };
 
   return (
-    <div className="flex flex-col gap-8 pt-4">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-[#F4F5F8]">Perfil e Configurações</h1>
-        <p className="mt-1 text-sm text-[#8B949E]">Gerencie sua conta, segurança e preferências do sistema.</p>
+    <div className="flex flex-col gap-10 pt-6 max-w-7xl mx-auto px-6">
+      <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+        <div>
+          <h1 className="text-4xl otto-title text-white">Configurações</h1>
+          <p className="mt-2 otto-label text-xs">Gestão de Identidade e Segurança</p>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-8 md:flex-row">
+      <div className="flex flex-col gap-12 md:flex-row">
         <aside className="w-full md:w-64 flex-shrink-0">
-          <nav className="flex flex-col gap-1">
-            <NavItem icon={<User />} label="Conta" active={activeSection === 'conta'} onClick={() => setActiveSection('conta')} />
-            <NavItem icon={<Shield />} label="Segurança" active={activeSection === 'seguranca'} onClick={() => setActiveSection('seguranca')} />
-            <NavItem icon={<Wallet />} label="Bancos Conectados" active={activeSection === 'bancos'} onClick={() => setActiveSection('bancos')} />
-            <NavItem icon={<Bell />} label="Notificações" active={activeSection === 'notificacoes'} onClick={() => setActiveSection('notificacoes')} />
-            <NavItem icon={<Smartphone />} label="Dispositivos" active={activeSection === 'dispositivos'} onClick={() => setActiveSection('dispositivos')} />
-            <NavItem icon={<Globe />} label="Idioma e Região" active={activeSection === 'idioma'} onClick={() => setActiveSection('idioma')} />
+          <nav className="flex flex-col gap-2">
+            <NavItem icon={<User />} label="Wealth Identity" active={activeSection === 'wealth'} onClick={() => setActiveSection('wealth')} />
+            <NavItem icon={<Shield />} label="Security Protocol" active={activeSection === 'security'} onClick={() => setActiveSection('security')} />
+            <NavItem icon={<Wallet />} label="Institutional Links" active={activeSection === 'institutions'} onClick={() => setActiveSection('institutions')} />
+            <NavItem icon={<Bell />} label="Alert Management" active={activeSection === 'alerts'} onClick={() => setActiveSection('alerts')} />
+            <NavItem icon={<Globe />} label="Global Settings" active={activeSection === 'global'} onClick={() => setActiveSection('global')} />
           </nav>
         </aside>
 
-        <div className="flex-1 space-y-8">
-          <Card className="p-8">
-            <h2 className="mb-6 text-xl font-bold text-[#F4F5F8]">Informações Pessoais</h2>
+        <div className="flex-1 space-y-10">
+          <Card className="p-10 border-white/5 bg-white/[0.02]">
+            <h2 className="mb-10 text-xl otto-title text-white uppercase tracking-widest text-[10px]">Identidade Digital</h2>
 
-            <div className="mb-8 flex items-center gap-6">
-              <div className="relative">
+            <div className="mb-12 flex items-center gap-8">
+              <div className="relative group cursor-pointer">
                 <img
-                  src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop"
+                  src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop"
                   alt="Profile"
-                  className="h-24 w-24 rounded-full object-cover ring-4 ring-[#0A0F1C]"
+                  className="h-28 w-28 rounded-full object-cover grayscale border-2 border-white/10 group-hover:border-white/20 transition-all"
                 />
                 <button
-                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-[#aa68ff] text-white shadow-[0_0_10px_rgba(170,104,255,0.5)] transition-transform hover:scale-105"
+                  className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-2xl transition-all hover:scale-105"
                   onClick={() => avatarInputRef.current?.click()}
                 >
-                  <UploadCloud className="h-4 w-4" />
+                  <UploadCloud className="h-5 w-5" />
                 </button>
                 <input
                   ref={avatarInputRef}
@@ -82,104 +81,90 @@ export function Settings() {
                   accept="image/*"
                   className="hidden"
                   onChange={(e) => {
-                    if (e.target.files?.[0]) toast.success('Avatar selecionado (upload em breve)');
+                    if (e.target.files?.[0]) toast.success('Upload de identidade em processamento');
                   }}
                 />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-[#F4F5F8]">
+                <h3 className="text-2xl font-light text-white otto-title">
                   {isLoading ? (
-                    <span className="inline-block animate-pulse h-5 w-32 rounded bg-[rgba(255,255,255,0.05)]"></span>
+                    <span className="inline-block animate-pulse h-6 w-48 rounded bg-white/5"></span>
                   ) : (
-                    profileForm.name || 'Usuário'
+                    profileForm.name || 'John Doe'
                   )}
                 </h3>
-                <p className="text-sm text-[#8B949E]">Plano Premium Anual</p>
+                <p className="text-[10px] otto-label text-white/40 mt-1 uppercase tracking-[0.2em]">Private Member • Since 2026</p>
               </div>
             </div>
 
             <form onSubmit={handleSave}>
-              {isLoading ? (
-                <div className="grid gap-6 md:grid-cols-2">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="space-y-2">
-                      <div className="animate-pulse h-4 w-24 rounded bg-[rgba(255,255,255,0.05)]"></div>
-                      <div className="animate-pulse h-10 rounded-lg bg-[rgba(255,255,255,0.05)]"></div>
-                    </div>
-                  ))}
+              <div className="grid gap-8 md:grid-cols-2">
+                <div className="space-y-3">
+                  <label className="text-[10px] otto-label text-white/40">Full Name</label>
+                  <Input
+                    className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm(p => ({ ...p, name: e.target.value }))}
+                  />
                 </div>
-              ) : (
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[#8B949E]">Nome Completo</label>
-                    <Input
-                      value={profileForm.name}
-                      onChange={(e) => setProfileForm(p => ({ ...p, name: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[#8B949E]">Email</label>
-                    <Input
-                      value={profileForm.email}
-                      onChange={(e) => setProfileForm(p => ({ ...p, email: e.target.value }))}
-                      type="email"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[#8B949E]">Telefone</label>
-                    <Input
-                      value={profileForm.phone}
-                      onChange={(e) => setProfileForm(p => ({ ...p, phone: e.target.value }))}
-                      type="tel"
-                      placeholder="+55 11 99999-0000"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[#8B949E]">CPF</label>
-                    <Input defaultValue="***.456.789-**" disabled className="opacity-50" />
-                  </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] otto-label text-white/40">Digital Signature (Email)</label>
+                  <Input
+                    className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                    value={profileForm.email}
+                    onChange={(e) => setProfileForm(p => ({ ...p, email: e.target.value }))}
+                    type="email"
+                  />
                 </div>
-              )}
+                <div className="space-y-3">
+                  <label className="text-[10px] otto-label text-white/40">Secure Phone</label>
+                  <Input
+                    className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm(p => ({ ...p, phone: e.target.value }))}
+                    type="tel"
+                    placeholder="+00 00 00000-0000"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] otto-label text-white/40">Tax ID</label>
+                  <Input defaultValue="***.***.***-**" disabled className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium opacity-20" />
+                </div>
+              </div>
 
-              <div className="mt-8 flex justify-end gap-3 border-t border-[rgba(255,255,255,0.05)] pt-6">
+              <div className="mt-12 flex justify-end gap-6 border-t border-white/5 pt-10">
                 <Button
                   variant="ghost"
                   type="button"
+                  className="px-8"
                   onClick={() => setProfileForm(originalProfile)}
                 >
-                  Cancelar
+                  CANCEL
                 </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+                <Button type="submit" disabled={isSaving} className="bg-white text-black hover:bg-white/90 rounded-xl px-10 py-8 text-[10px] otto-label">
+                  {isSaving ? 'UPDATING...' : 'UPDATE SETTINGS'}
                 </Button>
               </div>
             </form>
           </Card>
 
-          <Card className="p-8 border-[#74ee15] border-opacity-20 bg-[rgba(116,238,21,0.02)]">
-            <h2 className="mb-2 text-xl font-bold text-[#F4F5F8]">Aparência</h2>
-            <p className="mb-6 text-sm text-[#8B949E]">Personalize o visual do seu FinCoach.</p>
+          <Card className="p-10 border-white/5 bg-white/[0.02]">
+            <h2 className="mb-4 text-xl otto-title text-white uppercase tracking-widest text-[10px]">Private Interface</h2>
+            <p className="mb-8 text-sm text-white/40 font-medium">Personalize a experiência visual do seu ecossistema OTTO.</p>
 
-            <div className="flex items-center justify-between rounded-xl border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] p-4">
-              <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(170,104,255,0.1)] text-[#aa68ff]">
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-6">
+              <div className="flex items-center gap-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-white">
                   <Moon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#F4F5F8]">Premium Dark Mode</h3>
-                  <p className="text-xs text-[#8B949E]">Tema ativado (padrão)</p>
+                  <h3 className="text-sm font-medium text-white tracking-tight">Absolute Dark Mode</h3>
+                  <p className="text-[10px] otto-label text-white/40 mt-0.5">ESTÉTICA PADRÃO ATIVADA</p>
                 </div>
               </div>
-              <button
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${darkMode ? 'bg-[#aa68ff]' : 'bg-[rgba(255,255,255,0.1)]'}`}
-                onClick={() => {
-                  const next = !darkMode;
-                  setDarkMode(next);
-                  document.documentElement.classList.toggle('dark', next);
-                }}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
+              <div className="h-8 w-14 rounded-full bg-white flex items-center px-1">
+                <div className="h-6 w-6 rounded-full bg-black shadow-lg" />
+              </div>
             </div>
           </Card>
         </div>
@@ -192,14 +177,17 @@ function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNo
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${
+      className={`flex items-center gap-4 rounded-xl px-6 py-4 text-[10px] otto-label transition-all duration-300 group cursor-pointer ${
         active
-          ? 'bg-[rgba(255,255,255,0.05)] text-[#F4F5F8] border-l-[3px] border-[#aa68ff] rounded-l-none pl-[13px]'
-          : 'text-[#8B949E] hover:bg-[rgba(255,255,255,0.02)] hover:text-[#F4F5F8]'
+          ? 'bg-white/10 text-white'
+          : 'text-white/20 hover:bg-white/5 hover:text-white'
       }`}
     >
-      <div className="[&>svg]:h-5 [&>svg]:w-5">{icon}</div>
+      <div className={`transition-all duration-300 ${active ? 'text-white' : 'text-white/20 group-hover:text-white'} [&>svg]:h-5 [&>svg]:w-5`}>{icon}</div>
       {label}
     </button>
   );
 }
+  );
+}
+

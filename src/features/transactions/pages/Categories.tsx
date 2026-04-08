@@ -7,7 +7,7 @@ import { toast } from "sonner";
 export function Categories() {
   const [categories, setCategories] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCat, setNewCat] = useState({ name: '', color_hex: '#aa68ff', emoji: '📂' });
+  const [newCat, setNewCat] = useState({ name: '', color_hex: '#FFFFFF', emoji: '📂' });
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
 
@@ -35,93 +35,94 @@ export function Categories() {
   };
 
   return (
-    <div className="flex flex-col gap-8 pt-4">
-      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+    <div className="flex flex-col gap-10 pt-6 max-w-7xl mx-auto px-6">
+      <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#F4F5F8]">Categorias</h1>
-          <p className="mt-1 text-sm text-[#8B949E]">Gerencie limites, personalize ícones e crie regras automáticas.</p>
+          <h1 className="text-4xl otto-title text-white">Taxonomia</h1>
+          <p className="mt-2 otto-label text-xs">Categorização de Ativos e Fluxos</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nova Categoria
+        <Button onClick={() => setIsModalOpen(true)} className="bg-white text-black hover:bg-white/90 rounded-xl px-6 py-6 text-[10px] otto-label transition-all">
+          <Plus className="mr-3 h-4 w-4" /> Definir Categoria
         </Button>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {categories.map((cat) => (
           <Card
             key={cat.id}
-            className={`p-6 transition-all hover:bg-[rgba(255,255,255,0.06)] ${cat.spent > cat.budget ? 'border-[rgba(239,68,68,0.3)]' : ''}`}
+            className="p-8 group cursor-pointer transition-all hover:bg-white/[0.02] border-white/5"
           >
-            <div className="mb-4 flex items-start justify-between">
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-xl text-2xl"
-                style={{ backgroundColor: `${cat.color_hex}22` }}
-              >
+            <div className="mb-8 flex items-start justify-between">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-white transition-all group-hover:bg-white/10 text-2xl grayscale">
                 {cat.emoji || '📂'}
               </div>
               <div className="relative group/menu">
-                <button className="text-[#8B949E] hover:text-[#F4F5F8]">
+                <button className="text-white/20 hover:text-white transition-colors">
                   <MoreVertical className="h-5 w-5" />
                 </button>
-                <div className="absolute right-0 top-6 z-10 hidden group-hover/menu:flex flex-col rounded-lg border border-[rgba(255,255,255,0.1)] bg-[#0D1526] shadow-xl min-w-[120px]">
+                <div className="absolute right-0 top-8 z-10 hidden group-hover/menu:flex flex-col rounded-xl border border-white/10 bg-black shadow-2xl min-w-[140px] overflow-hidden backdrop-blur-3xl">
                   <button
-                    className="px-4 py-2 text-sm text-left text-[#8B949E] hover:text-[#F4F5F8] hover:bg-[rgba(255,255,255,0.05)] disabled:opacity-50"
+                    className="px-4 py-3 text-[10px] otto-label text-left text-white/40 hover:text-white hover:bg-white/5 disabled:opacity-50 transition-all"
                     onClick={() => handleDelete(cat.id)}
                     disabled={isDeleting[cat.id]}
                   >
-                    {isDeleting[cat.id] ? 'Excluindo...' : 'Excluir'}
+                    {isDeleting[cat.id] ? 'ELIMINATING...' : 'ELIMINATE'}
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-[#F4F5F8]">{cat.name}</h3>
+            <div>
+              <h3 className="text-sm font-medium text-white tracking-tight uppercase mb-1">{cat.name}</h3>
+              <p className="text-[10px] otto-label text-white/20 uppercase tracking-widest">Active Class</p>
             </div>
           </Card>
         ))}
 
         <Card
-          className="flex h-full min-h-[220px] cursor-pointer flex-col items-center justify-center gap-3 border-dashed border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.01)] transition-all hover:border-[#aa68ff] hover:bg-[rgba(170,104,255,0.02)]"
+          className="flex h-full min-h-[240px] cursor-pointer flex-col items-center justify-center gap-4 border-dashed border-white/10 bg-transparent transition-all hover:border-white/40 hover:bg-white/[0.02] group"
           onClick={() => setIsModalOpen(true)}
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] text-[#8B949E]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 text-white/40 transition-all group-hover:bg-white/10 group-hover:text-white">
             <Plus className="h-6 w-6" />
           </div>
-          <span className="text-sm font-medium text-[#8B949E]">Criar nova categoria</span>
+          <span className="text-[10px] otto-label text-white/20 group-hover:text-white transition-all">Definir Nova Categoria</span>
         </Card>
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-[rgba(255,255,255,0.1)] bg-[#0D1526] p-8 shadow-2xl">
-            <h2 className="mb-6 text-xl font-bold text-[#F4F5F8]">Nova Categoria</h2>
-            <div className="space-y-4">
-              <Input
-                placeholder="Nome"
-                value={newCat.name}
-                onChange={e => setNewCat(p => ({ ...p, name: e.target.value }))}
-              />
-              <Input
-                placeholder="Emoji (ex: 🏠)"
-                value={newCat.emoji}
-                onChange={e => setNewCat(p => ({ ...p, emoji: e.target.value }))}
-              />
-              <Input
-                placeholder="Cor hex (#aa68ff)"
-                value={newCat.color_hex}
-                onChange={e => setNewCat(p => ({ ...p, color_hex: e.target.value }))}
-              />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl p-6">
+          <Card className="w-full max-w-md p-10 border-white/10 shadow-2xl bg-black">
+            <div className="mb-10 text-center">
+              <h2 className="text-2xl otto-title text-white mb-2">Nova Categoria</h2>
+              <p className="text-[10px] otto-label text-white/40 tracking-[0.2em]">Asset Classification</p>
             </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                variant="ghost"
-                onClick={() => setIsModalOpen(false)}
-              >
-                Cancelar
-              </Button>
+            
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="otto-label text-[9px]">Denominação</label>
+                <Input
+                  placeholder="Nome da Categoria"
+                  className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                  value={newCat.name}
+                  onChange={e => setNewCat(p => ({ ...p, name: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="otto-label text-[9px]">Símbolo Visual (Emoji)</label>
+                <Input
+                  placeholder="ex: 🏠"
+                  className="bg-white/5 border-white/10 rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                  value={newCat.emoji}
+                  onChange={e => setNewCat(p => ({ ...p, emoji: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="mt-12 flex flex-col gap-4">
               <Button
                 disabled={isSaving}
+                className="w-full bg-white text-black hover:bg-white/90 rounded-xl py-8 text-xs otto-label tracking-[0.2em] disabled:opacity-50"
                 onClick={async () => {
                   setIsSaving(true);
                   try {
@@ -129,7 +130,7 @@ export function Categories() {
                     const res = await apiGet('/api/categories');
                     setCategories(res.categories ?? []);
                     setIsModalOpen(false);
-                    setNewCat({ name: '', color_hex: '#aa68ff', emoji: '📂' });
+                    setNewCat({ name: '', color_hex: '#FFFFFF', emoji: '📂' });
                   } catch (e: any) {
                     toast.error(e.message || 'Erro ao criar categoria');
                   } finally {
@@ -137,10 +138,17 @@ export function Categories() {
                   }
                 }}
               >
-                {isSaving ? 'Salvando...' : 'Criar'}
+                {isSaving ? 'DEFINING...' : 'CONFIRM DEFINITION'}
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full py-6"
+                onClick={() => setIsModalOpen(false)}
+              >
+                CANCEL
               </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

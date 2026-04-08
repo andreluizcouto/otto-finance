@@ -178,10 +178,3 @@ export function Transactions() {
   );
 }
 
-function FilterSelect({ defaultValue }: { defaultValue: string }) {
-  return (
-    <select className="h-10 rounded-lg border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] px-3 text-sm text-[#F4F5F8] outline-none hover:bg-[rgba(255,255,255,0.05)] transition-colors">
-      <option>{defaultValue}</option>
-    </select>
-  );
-}
