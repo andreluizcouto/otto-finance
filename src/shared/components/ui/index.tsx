@@ -65,11 +65,10 @@ export const Badge = ({ children, className, variant = 'default' }: { children: 
     <span className={cn(
       "inline-flex items-center rounded-full px-2.5 py-1 text-[8px] otto-label uppercase tracking-widest transition-all",
       {
-        "bg-white/10 text-white border border-white/10": variant === 'default',
+        "bg-white/10 text-white border border-white/10": variant === 'default' || variant === 'purple',
         "bg-white/5 text-white/60 border border-white/5": variant === 'success',
         "bg-white/5 text-white/40 border border-white/5": variant === 'warning',
         "bg-red-500/10 text-red-400 border border-red-500/20": variant === 'danger',
-        "bg-white/10 text-white border border-white/10": variant === 'purple',
       },
       className
     )}>

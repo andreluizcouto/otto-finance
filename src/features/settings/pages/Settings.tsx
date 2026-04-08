@@ -188,6 +188,5 @@ function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNo
     </button>
   );
 }
-  );
-}
+
 
