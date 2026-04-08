@@ -5,6 +5,7 @@ from backend.modules.auth import router as auth_router
 from backend.modules.categories import router as categories_router
 from backend.modules.dashboard import router as dashboard_router
 from backend.modules.transactions import router as transactions_router
+from backend.modules.utils.router import router as utils_router
 
 app = FastAPI(
     title="FinCoach API",
@@ -24,6 +25,7 @@ app.include_router(auth_router)
 app.include_router(dashboard_router)
 app.include_router(transactions_router)
 app.include_router(categories_router)
+app.include_router(utils_router)
 
 
 @app.get("/health", tags=["health"])
