@@ -86,6 +86,10 @@ Recent decisions affecting current work:
 - [Phase 03]: Persist runtime schema evidence in 03-RESEARCH.md to keep AICL-06 auditable.
 - [Phase 03]: Enforce deterministic custom slug handling via canonical mapping or outros low-confidence fallback.
 
+### Roadmap Evolution
+
+- Phase 03.1 inserted after Phase 3: PDF Import (URGENT)
+
 ### Pending Todos
 
 None yet.
