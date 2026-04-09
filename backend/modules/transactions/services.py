@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any
+import unicodedata
 import httpx
 from supabase import Client
 from backend.core import get_make_webhook_url
@@ -169,6 +170,39 @@ def get_openai_json_schema() -> dict[str, Any]:
 # ==============================================================================
 # TRANSACTIONS SERVICE
 # ==============================================================================
+_ADMIN_TRANSACTION_TERMS = (
+    "saldo anterior",
+    "saldo fatura anterior",
+    "pgto. cash",
+    "pagamento de boleto",
+    "pagamento boleto",
+    "pagamento pix cartao",
+    "pagamento pix cartão",
+    "pagamento conta",
+    "pagamento fatura",
+    "juros saque pix",
+    "iof",
+    "anuidade",
+    "encargo",
+)
+
+
+def _normalize_text(value: str) -> str:
+    text = " ".join((value or "").split()).strip().lower()
+    return (
+        unicodedata.normalize("NFKD", text)
+        .encode("ascii", "ignore")
+        .decode("ascii")
+    )
+
+
+def _is_administrative_transaction(description: str) -> bool:
+    normalized = _normalize_text(description)
+    if normalized == "saldo":
+        return True
+    return any(term in normalized for term in _ADMIN_TRANSACTION_TERMS)
+
+
 def confidence_label(score: str | None) -> str:
     if score == "high":
         return "Alta"
@@ -277,7 +311,11 @@ def import_transactions_from_pdf(
             date_str = datetime.strptime(item["data"], "%d/%m/%Y").date().isoformat()
             raw_amount = float(item["valor"])
             amount = raw_amount if item["tipo"] == "credito" else -raw_amount
-            description = item["descricao"]
+            description = " ".join(str(item["descricao"]).split())
+
+            if _is_administrative_transaction(description):
+                skipped_count += 1
+                continue
 
             duplicate_resp = (
                 client.table("transactions")

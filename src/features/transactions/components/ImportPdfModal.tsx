@@ -26,14 +26,16 @@ export function ImportPdfModal({
   onOpenChange,
   onSuccess,
 }: ImportPdfModalProps) {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentFileIndex, setCurrentFileIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetState = () => {
-    setFile(null);
+    setFiles([]);
     setError(null);
+    setCurrentFileIndex(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -49,8 +51,39 @@ export function ImportPdfModal({
     onOpenChange(nextOpen);
   };
 
+  const processFile = async (file: File, token: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${BASE_URL}/api/analyze-pdf`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro na extração (${file.name}): HTTP ${response.status}`);
+    }
+
+    const analyzeData = await response.json();
+    if (!analyzeData?.result) {
+      throw new Error(`Resposta inválida na extração (${file.name}).`);
+    }
+
+    const importResult = await apiPost("/api/transactions/import", {
+      result: analyzeData.result,
+    });
+
+    return {
+      imported: Number(importResult?.imported ?? 0),
+      skipped: Number(importResult?.skipped ?? 0),
+    };
+  };
+
   const handleImport = async () => {
-    if (!file) {
+    if (files.length === 0) {
       return;
     }
 
@@ -63,39 +96,56 @@ export function ImportPdfModal({
         throw new Error("Sessão expirada. Faça login novamente.");
       }
 
-      const formData = new FormData();
-      formData.append("file", file);
+      let totalImported = 0;
+      let totalSkipped = 0;
+      const failedFiles: File[] = [];
+      const failedMessages: string[] = [];
 
-      const response = await fetch(`${BASE_URL}/api/analyze-pdf`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro na extração: HTTP ${response.status}`);
+      for (let i = 0; i < files.length; i += 1) {
+        const current = files[i];
+        setCurrentFileIndex(i);
+        try {
+          const result = await processFile(current, token);
+          totalImported += result.imported;
+          totalSkipped += result.skipped;
+        } catch (err) {
+          failedFiles.push(current);
+          const message =
+            err instanceof Error ? err.message : "Falha no processamento do arquivo.";
+          failedMessages.push(`${current.name}: ${message}`);
+        }
       }
 
-      const analyzeData = await response.json();
-      if (!analyzeData?.result) {
-        throw new Error("Resposta inválida na extração do PDF.");
+      if (failedFiles.length === 0) {
+        toast.success(
+          `${totalImported} transações importadas, ${totalSkipped} já existiam e foram ignoradas em ${files.length} arquivo(s).`,
+        );
+        onSuccess();
+        onOpenChange(false);
+        resetState();
+        return;
       }
 
-      const importResult = await apiPost("/api/transactions/import", {
-        result: analyzeData.result,
-      });
+      const processedCount = files.length - failedFiles.length;
+      if (processedCount > 0) {
+        toast.success(
+          `${totalImported} transações importadas, ${totalSkipped} já existiam e foram ignoradas. ${processedCount}/${files.length} arquivo(s) processados.`,
+        );
+        onSuccess();
+      }
 
-      const imported = Number(importResult?.imported ?? 0);
-      const skipped = Number(importResult?.skipped ?? 0);
-      toast.success(
-        `${imported} transações importadas, ${skipped} já existiam e foram ignoradas`,
+      const failureSummary = `Falha em ${failedFiles.length} arquivo(s).`;
+      const failureDetails = failedMessages.slice(0, 2).join(" | ");
+      setError(
+        failureDetails
+          ? `${failureSummary} Detalhes: ${failureDetails}`
+          : failureSummary,
       );
-
-      onSuccess();
-      onOpenChange(false);
-      resetState();
+      toast.error(`${failureSummary} Tente novamente.`);
+      setFiles(failedFiles);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (err) {
       const message =
         err instanceof Error
@@ -104,6 +154,7 @@ export function ImportPdfModal({
       setError(message);
       toast.error(message);
     } finally {
+      setCurrentFileIndex(null);
       setIsLoading(false);
     }
   };
@@ -131,11 +182,12 @@ export function ImportPdfModal({
             <input
               ref={fileInputRef}
               type="file"
+              multiple
               accept=".pdf,application/pdf"
               className="hidden"
               onChange={(event) => {
-                const selected = event.target.files?.[0] ?? null;
-                setFile(selected);
+                const selected = Array.from(event.target.files ?? []);
+                setFiles(selected);
                 setError(null);
               }}
             />
@@ -151,8 +203,28 @@ export function ImportPdfModal({
             </Button>
 
             <p className="text-xs text-muted-foreground">
-              {file ? `Arquivo selecionado: ${file.name}` : "Nenhum arquivo selecionado"}
+              {files.length === 0
+                ? "Nenhum arquivo selecionado"
+                : files.length === 1
+                  ? `Arquivo selecionado: ${files[0].name}`
+                  : `${files.length} arquivos selecionados`}
             </p>
+            {files.length > 1 && (
+              <ul className="max-h-24 overflow-auto rounded-md border border-border p-2 text-xs text-muted-foreground">
+                {files.slice(0, 5).map((file) => (
+                  <li key={`${file.name}-${file.size}-${file.lastModified}`}>
+                    - {file.name}
+                  </li>
+                ))}
+                {files.length > 5 && <li>- ... e mais {files.length - 5} arquivo(s)</li>}
+              </ul>
+            )}
+            {isLoading && currentFileIndex !== null && (
+              <p className="text-xs text-muted-foreground">
+                Processando {currentFileIndex + 1}/{files.length}:{" "}
+                {files[currentFileIndex]?.name}
+              </p>
+            )}
           </div>
 
           {error && <p className="text-xs text-red-400">{error}</p>}
@@ -167,9 +239,13 @@ export function ImportPdfModal({
           >
             Cancelar
           </Button>
-          <Button type="button" onClick={handleImport} disabled={!file || isLoading}>
+          <Button type="button" onClick={handleImport} disabled={files.length === 0 || isLoading}>
             {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Importar
+            {isLoading
+              ? "Importando..."
+              : files.length > 1
+                ? `Importar ${files.length} PDFs`
+                : "Importar"}
           </Button>
         </DialogFooter>
       </DialogContent>

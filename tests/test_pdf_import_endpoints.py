@@ -110,6 +110,42 @@ def test_import_transactions_inserts_and_skips_duplicates():
     assert table.inserted_rows[1]["amount"] == -220.5
 
 
+def test_import_transactions_skips_administrative_lines():
+    from backend.modules.transactions.services import import_transactions_from_pdf
+
+    table = _FakeTransactionsTable()
+    result = import_transactions_from_pdf(
+        _FakeClient(table),
+        "user-1",
+        [
+            {"data": "08/04/2026", "descricao": "SALDO FATURA ANTERIOR", "valor": 674.69, "tipo": "debito"},
+            {"data": "10/03/2026", "descricao": "PGTO. CASH AG. 0000 000000000 000", "valor": 674.69, "tipo": "credito"},
+            {"data": "11/03/2026", "descricao": "SUPERMERCADO IRMAOS", "valor": 50.03, "tipo": "debito"},
+        ],
+    )
+
+    assert result == {"imported": 1, "skipped": 2}
+    assert len(table.inserted_rows) == 1
+    assert table.inserted_rows[0]["description"] == "SUPERMERCADO IRMAOS"
+
+
+def test_import_transactions_normalizes_whitespace_for_dedupe():
+    from backend.modules.transactions.services import import_transactions_from_pdf
+
+    existing = {("user-1", "2024-03-15", -50.0, "Padaria Centro")}
+    table = _FakeTransactionsTable(existing_rows=existing)
+    result = import_transactions_from_pdf(
+        _FakeClient(table),
+        "user-1",
+        [
+            {"data": "15/03/2024", "descricao": "Padaria   Centro", "valor": 50.0, "tipo": "debito"},
+        ],
+    )
+
+    assert result == {"imported": 0, "skipped": 1}
+    assert len(table.inserted_rows) == 0
+
+
 def test_import_endpoint_uses_user_id_from_jwt():
     table = _FakeTransactionsTable()
     app = _app_with_transactions_router(fake_client=_FakeClient(table), user_id="jwt-user")
@@ -134,3 +170,51 @@ def test_import_endpoint_uses_user_id_from_jwt():
     assert response.status_code == 200
     assert response.json() == {"imported": 1, "skipped": 0}
     assert table.inserted_rows[0]["user_id"] == "jwt-user"
+
+
+def test_import_endpoint_accepts_markdown_wrapped_json():
+    table = _FakeTransactionsTable()
+    app = _app_with_transactions_router(fake_client=_FakeClient(table), user_id="jwt-user")
+    client = TestClient(app)
+
+    payload = {
+        "result": """```json
+{
+  "transacoes": [
+    {"data": "18/03/2024", "descricao": "Padaria", "valor": 19.9, "tipo": "debito"}
+  ]
+}
+```"""
+    }
+    response = client.post("/api/transactions/import", json=payload)
+
+    assert response.status_code == 200
+    assert response.json() == {"imported": 1, "skipped": 0}
+    assert table.inserted_rows[0]["description"] == "Padaria"
+
+
+def test_import_endpoint_accepts_iso_date_and_english_keys():
+    table = _FakeTransactionsTable()
+    app = _app_with_transactions_router(fake_client=_FakeClient(table), user_id="jwt-user")
+    client = TestClient(app)
+
+    payload = {
+        "result": json.dumps(
+            {
+                "transacoes": [
+                    {
+                        "date": "2024-03-19",
+                        "description": "Salary",
+                        "amount": 2500.0,
+                        "type": "credit",
+                    }
+                ]
+            }
+        )
+    }
+    response = client.post("/api/transactions/import", json=payload)
+
+    assert response.status_code == 200
+    assert response.json() == {"imported": 1, "skipped": 0}
+    assert table.inserted_rows[0]["date"] == "2024-03-19"
+    assert table.inserted_rows[0]["amount"] == 2500.0

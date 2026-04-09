@@ -1,5 +1,6 @@
 import json
-from typing import Annotated
+from datetime import datetime
+from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client
 
@@ -13,6 +14,108 @@ from .services import (
 )
 
 router = APIRouter(prefix="/api", tags=["transactions"])
+
+
+def _extract_json_payload(raw: str) -> str:
+    text = (raw or "").strip()
+    if not text:
+        raise ValueError("Conteudo vazio.")
+
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines and lines[0].strip().startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+
+    return text
+
+
+def _parse_transactions_from_result(raw: str) -> list[dict[str, Any]]:
+    text = _extract_json_payload(raw)
+    candidates = [text]
+
+    first_obj = text.find("{")
+    last_obj = text.rfind("}")
+    if first_obj >= 0 and last_obj > first_obj:
+        sliced = text[first_obj : last_obj + 1]
+        if sliced != text:
+            candidates.append(sliced)
+
+    for candidate in candidates:
+        try:
+            data = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+
+        if isinstance(data, list):
+            return data
+
+        if isinstance(data, dict):
+            transacoes = data.get("transacoes")
+            if transacoes is None:
+                transacoes = data.get("transações")
+            if isinstance(transacoes, list):
+                return transacoes
+
+    raise ValueError("JSON de extracao invalido.")
+
+
+def _normalize_tipo(value: Any) -> str:
+    raw = str(value or "").strip().lower()
+    if raw in {"debito", "débito", "debit", "saida", "expense"}:
+        return "debito"
+    if raw in {"credito", "crédito", "credit", "entrada", "income"}:
+        return "credito"
+    if raw in {"debito", "credito"}:
+        return raw
+    raise ValueError("Campo 'tipo' invalido.")
+
+
+def _normalize_data(value: Any) -> str:
+    raw = str(value or "").strip()
+    if "/" in raw:
+        return raw
+
+    # Accept ISO-like dates from model outputs.
+    try:
+        parsed = datetime.fromisoformat(raw[:10])
+        return parsed.strftime("%d/%m/%Y")
+    except ValueError as exc:
+        raise ValueError("Campo 'data' invalido.") from exc
+
+
+def _normalize_transaction_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    normalized: list[dict[str, Any]] = []
+
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError("Item de transacao invalido.")
+
+        data = _normalize_data(item.get("data") or item.get("date"))
+        descricao = item.get("descricao") or item.get("description")
+        if not descricao:
+            raise ValueError("Campo 'descricao' invalido.")
+
+        valor = item.get("valor")
+        if valor is None:
+            valor = item.get("amount")
+        if valor is None:
+            raise ValueError("Campo 'valor' invalido.")
+
+        tipo = _normalize_tipo(item.get("tipo") or item.get("type"))
+
+        normalized.append(
+            {
+                "data": data,
+                "descricao": str(descricao),
+                "valor": float(valor),
+                "tipo": tipo,
+            }
+        )
+
+    return normalized
 
 @router.get("/transactions")
 def get_transactions(
@@ -69,11 +172,9 @@ def import_pdf_transactions(
     client: Annotated[Client, Depends(get_current_client)] = None,
 ) -> dict:
     try:
-        data = json.loads(payload.result)
-        transacoes = data.get("transacoes", [])
-        if not isinstance(transacoes, list):
-            raise ValueError("Campo 'transacoes' invalido.")
-    except (json.JSONDecodeError, ValueError):
+        transacoes = _parse_transactions_from_result(payload.result)
+        transacoes = _normalize_transaction_items(transacoes)
+    except ValueError:
         raise HTTPException(status_code=422, detail="JSON de extracao invalido.")
 
     result = import_transactions_from_pdf(client, user["id"], transacoes)

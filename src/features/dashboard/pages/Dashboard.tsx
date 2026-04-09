@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Card, Button } from "@/shared/components/ui";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Wallet, CreditCard, Sparkles, List, TrendingUp, Plus, Settings, Target } from "lucide-react";
+import { Wallet, CreditCard, Sparkles, DollarSign, List, TrendingUp, Plus, Settings, Target } from "lucide-react";
 import { apiGet } from "@/shared/lib/api";
 import { toast } from "sonner";
 
