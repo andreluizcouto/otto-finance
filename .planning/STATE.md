@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-05-PLAN.md
-last_updated: "2026-04-08T00:42:00.000Z"
-last_activity: 2026-04-08
+stopped_at: Completed 03.1-pdf-import-01-PLAN.md
+last_updated: "2026-04-09T18:01:36.811Z"
+last_activity: 2026-04-09
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 3
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 13
+  completed_plans: 12
   percent: 40
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Classificacao automatica de gastos com IA + coach financeiro proativo que cutuca o usuario via WhatsApp para atingir metas
-**Current focus:** Phase 03 — ai-classification
+**Current focus:** Phase 03.1 — pdf-import
 
 ## Current Position
 
-Phase: 03 (ai-classification) — EXECUTING
-Plan: 3 of 6
+Phase: 03.1 (pdf-import) — EXECUTING
+Plan: 2 of 2
 Next: Phase 03 (AI Classification)
 Status: Ready to execute
-Last activity: 2026-04-07
+Last activity: 2026-04-09
 
 Progress: ████░░░░░░ 40%
 
@@ -59,6 +59,7 @@ Progress: ████░░░░░░ 40%
 | Phase 03-ai-classification P03 | 107 | 2 tasks | 2 files |
 | Phase 03-ai-classification P04 | -161 | 2 tasks | 5 files |
 | Phase 03 P05 | 2 | 2 tasks | 3 files |
+| Phase 03.1-pdf-import P01 | 2 | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-04 introduced regression tests ensuring RCHLO/PAG*/NF* merchant normalization and settings generation auto-trigger behavior.
 - [Phase 03]: Persist runtime schema evidence in 03-RESEARCH.md to keep AICL-06 auditable.
 - [Phase 03]: Enforce deterministic custom slug handling via canonical mapping or outros low-confidence fallback.
+- [Phase 03.1-pdf-import]: Protected /api/analyze-pdf and /api/transactions/import with JWT dependencies and server-sourced user_id.
+- [Phase 03.1-pdf-import]: PDF import normalizes DD/MM/YYYY and debit/credit signs, skipping duplicates by (user_id,date,amount,description).
 
 ### Roadmap Evolution
 
@@ -116,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T14:00:00.000Z
-Stopped at: Completed quick task 260408-erl (fix React page inconsistencies)
+Last session: 2026-04-09T18:01:36.807Z
+Stopped at: Completed 03.1-pdf-import-01-PLAN.md
 Resume file: None

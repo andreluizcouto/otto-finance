@@ -79,10 +79,10 @@ Plans:
 **Goal:** Users can upload a bank statement PDF from the Transactions page and have transactions extracted by AI and saved automatically to their account
 **Requirements**: PDF-01, PDF-02, PDF-03
 **Depends on:** Phase 3
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 03.1-01-PLAN.md -- Backend: auth on analyze-pdf + /api/transactions/import endpoint with deduplication
+- [x] 03.1-01-PLAN.md -- Backend: auth on analyze-pdf + /api/transactions/import endpoint with deduplication
 - [ ] 03.1-02-PLAN.md -- Frontend: ImportPdfModal component + wire Importar button in Transactions page
 
 ### Phase 4: Budgets & WhatsApp Alerts
