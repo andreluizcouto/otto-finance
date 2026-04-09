@@ -81,8 +81,8 @@ async def analyze_pdf(
                         "type": "text",
                         "text": (
                             "Extraia todas as transações deste extrato bancário. "
-                            "Retorne SOMENTE um JSON válido, sem texto adicional, "
-                            "no formato: "
+                            "Retorne SOMENTE o JSON puro, sem markdown, sem ```json, sem nenhum texto antes ou depois. "
+                            "Formato exato: "
                             '{\"transacoes\": [{\"data\": \"DD/MM/AAAA\", '
                             '"descricao\": \"...\", \"valor\": 0.00, '
                             '"tipo\": \"debito\" ou \"credito\"}]}'
