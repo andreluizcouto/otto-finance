@@ -12,7 +12,9 @@ Classificação automática de gastos com IA + coach financeiro proativo que cut
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] PDF import flow on Transactions page with modal upload UX and import feedback toast (validated in Phase 03.1: PDF Import)
+- [x] Authenticated backend ingestion for PDF extraction + transaction import endpoints (validated in Phase 03.1: PDF Import)
+- [x] Duplicate transaction protection during PDF imports with imported/skipped counters (validated in Phase 03.1: PDF Import)
 
 ### Active
 
@@ -78,5 +80,9 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
+## Current State
+
+Phase 03.1 complete: PDF import is available from the Transactions page, integrated with authenticated backend extraction/import endpoints, and refreshes the list after successful import.
+
 ---
-*Last updated: 2026-04-05 after initialization*
+*Last updated: 2026-04-09 after Phase 03.1 completion*
