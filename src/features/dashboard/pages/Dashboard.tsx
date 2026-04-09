@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Card, Button, Badge } from "@/shared/components/ui";
+import { Card, Button } from "@/shared/components/ui";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Wallet, CreditCard, Sparkles, HeartPulse, DollarSign, TrendingUp, Plus, List, Settings, Target } from "lucide-react";
+import { Wallet, CreditCard, Sparkles, List, TrendingUp, Plus, Settings, Target } from "lucide-react";
 import { apiGet } from "@/shared/lib/api";
 import { toast } from "sonner";
 
@@ -29,6 +29,13 @@ export function Dashboard() {
 
   const chartData = data?.trend ?? [];
   const recentTxs = data?.recent_transactions?.slice(0, 3) ?? [];
+  const hasDashboardData = Boolean(
+    data && !data?.empty_state && (data?.kpis?.txn_count ?? 0) > 0,
+  );
+  const deltaLabel =
+    data?.kpis?.delta_pct != null
+      ? `${data.kpis.delta_pct >= 0 ? "+" : ""}${data.kpis.delta_pct}%`
+      : "—";
 
   return (
     <div className="flex flex-col gap-8 pt-6 max-w-7xl mx-auto px-6">
@@ -73,9 +80,7 @@ export function Dashboard() {
                   </div>
                   <div className="mt-4 flex items-center gap-3">
                     <div className="text-[10px] font-bold text-primary-foreground bg-primary px-2 py-1 rounded">
-                      {data?.kpis?.delta_pct != null
-                        ? `${data.kpis.delta_pct >= 0 ? '+' : ''}${data.kpis.delta_pct}%`
-                        : '+0%'}
+                      {deltaLabel}
                     </div>
                     <span className="text-muted-foreground text-[10px] uppercase tracking-widest font-medium">vs. mês anterior</span>
                   </div>
@@ -96,10 +101,9 @@ export function Dashboard() {
                   <div className="text-5xl font-light tracking-tight text-foreground otto-title">
                     {data?.kpis?.total_spent_label ?? '—'}
                   </div>
-                  <div className="mt-6 w-full">
-                    <div className="h-1 w-full rounded-full bg-secondary overflow-hidden">
-                      <div className="h-full w-[65%] rounded-full bg-primary"></div>
-                    </div>
+                  <div className="mt-6 space-y-1 text-[10px] otto-label text-muted-foreground">
+                    <p>{data?.kpis?.txn_count ?? 0} transações no período</p>
+                    <p>Média diária: {data?.kpis?.daily_avg_label ?? "—"}</p>
                   </div>
                 </>
               )}
@@ -112,27 +116,35 @@ export function Dashboard() {
                 <TrendingUp className="h-4 w-4" /> Tendência de Patrimônio
               </div>
             </div>
-            <div className="flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorAtual" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-foreground)" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="var(--color-foreground)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="0" vertical={false} stroke="var(--color-border)" />
-                  <XAxis dataKey="period_label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-secondary)', fontWeight: 500 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-secondary)', fontWeight: 500 }} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', color: 'var(--color-foreground)' }}
-                    itemStyle={{ color: 'var(--color-foreground)' }}
-                    cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }}
-                  />
-                  <Area type="monotone" dataKey="total_amount" stroke="var(--color-foreground)" strokeWidth={2} fillOpacity={1} fill="url(#colorAtual)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            {isLoading ? (
+              <div className="animate-pulse h-full rounded-xl bg-secondary" />
+            ) : chartData.length === 0 ? (
+              <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-border text-[10px] otto-label text-muted-foreground">
+                Sem dados reais suficientes para tendência no período selecionado.
+              </div>
+            ) : (
+              <div className="flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorAtual" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-foreground)" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="var(--color-foreground)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="0" vertical={false} stroke="var(--color-border)" />
+                    <XAxis dataKey="period_label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-secondary)', fontWeight: 500 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-secondary)', fontWeight: 500 }} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', color: 'var(--color-foreground)' }}
+                      itemStyle={{ color: 'var(--color-foreground)' }}
+                      cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }}
+                    />
+                    <Area type="monotone" dataKey="total_amount" stroke="var(--color-foreground)" strokeWidth={2} fillOpacity={1} fill="url(#colorAtual)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </Card>
         </div>
 
@@ -141,37 +153,59 @@ export function Dashboard() {
           <Card className="relative overflow-hidden p-8 border-border bg-secondary">
             <div className="relative h-full">
               <div className="mb-6 flex items-center gap-3 otto-label text-[10px] text-foreground">
-                <Sparkles className="h-4 w-4" /> FINCOACH AI
+                <Sparkles className="h-4 w-4" /> INSIGHTS DA CONTA
               </div>
-              <h3 className="mb-4 text-xl otto-title text-foreground">Oportunidade de Patrimônio</h3>
-              <p className="mb-8 text-sm text-muted-foreground leading-relaxed font-medium">
-                Notamos ativos com performance abaixo do esperado. Recomendamos uma rebalanceamento estratégico para otimização de liquidez.
-              </p>
-              <div className="mb-8 flex items-center justify-between rounded-xl bg-background/50 p-5 border border-border">
-                <span className="text-[10px] otto-label">Otimização</span>
-                <span className="text-lg font-light text-foreground otto-title">+ R$ 12.450<span className="text-[10px] font-medium ml-1">EST.</span></span>
-              </div>
-              <Button className="w-full font-medium tracking-tight" onClick={() => toast.info('Insights personalizados em breve')}>
-                Analisar Portfólio
-              </Button>
+              {isLoading ? (
+                <div className="animate-pulse h-32 rounded-xl bg-background/50" />
+              ) : hasDashboardData ? (
+                <>
+                  <h3 className="mb-4 text-xl otto-title text-foreground">Resumo do período</h3>
+                  <p className="mb-8 text-sm text-muted-foreground leading-relaxed font-medium">
+                    Categoria de maior impacto: <strong className="text-foreground">{data?.kpis?.top_category ?? "—"}</strong>.
+                    Total da categoria: <strong className="text-foreground">{data?.kpis?.top_category_total_label ?? "—"}</strong>.
+                  </p>
+                  <Button className="w-full font-medium tracking-tight" onClick={() => navigate('/transactions')}>
+                    Ver Transações
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <h3 className="mb-4 text-xl otto-title text-foreground">Sem dados financeiros reais</h3>
+                  <p className="mb-8 text-sm text-muted-foreground leading-relaxed font-medium">
+                    Assim que houver transações reais importadas, esta área mostrará insights automaticamente.
+                  </p>
+                  <Button className="w-full font-medium tracking-tight" onClick={() => navigate('/transactions')}>
+                    Importar Transações
+                  </Button>
+                </>
+              )}
             </div>
           </Card>
 
           <Card className="p-8">
             <div className="mb-8 flex items-center gap-3 otto-label text-[10px] text-foreground">
-              <HeartPulse className="h-4 w-4" /> Health Score
+              <CreditCard className="h-4 w-4" /> Indicadores do Período
             </div>
-
-            <div className="flex flex-col items-center justify-center py-6 relative">
-              <svg width="160" height="160" viewBox="0 0 140 140" className="relative z-10">
-                <circle cx="70" cy="70" r="60" fill="none" stroke="var(--color-border)" strokeWidth="8" />
-                <circle cx="70" cy="70" r="60" fill="none" stroke="var(--color-foreground)" strokeWidth="8" strokeDasharray="377" strokeDashoffset="67" strokeLinecap="round" transform="rotate(-90 70 70)" />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                <span className="text-4xl font-light text-foreground otto-title">82</span>
-                <span className="text-[9px] otto-label mt-1">OPTIMIZED</span>
+            {isLoading ? (
+              <div className="animate-pulse h-24 rounded-xl bg-secondary" />
+            ) : (
+              <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-5 text-[10px] otto-label">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Transações</span>
+                  <span className="text-foreground">{data?.kpis?.txn_count ?? 0}</span>
+                </div>
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Média diária</span>
+                  <span className="text-foreground">{data?.kpis?.daily_avg_label ?? "—"}</span>
+                </div>
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Período</span>
+                  <span className="text-foreground">
+                    {data?.start_date && data?.end_date ? `${data.start_date} a ${data.end_date}` : "—"}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
           </Card>
 
           <Card className="p-8">
