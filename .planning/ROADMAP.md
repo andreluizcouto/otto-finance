@@ -74,6 +74,17 @@ Plans:
 - [x] 03-03-PLAN.md -- Wave 2b: Category CRUD (categories.py + Settings Categorias section)
 **UI hint**: yes
 
+### Phase 03.1: PDF Import (INSERTED)
+
+**Goal:** Users can upload a bank statement PDF from the Transactions page and have transactions extracted by AI and saved automatically to their account
+**Requirements**: PDF-01, PDF-02, PDF-03
+**Depends on:** Phase 3
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03.1-01-PLAN.md -- Backend: auth on analyze-pdf + /api/transactions/import endpoint with deduplication
+- [ ] 03.1-02-PLAN.md -- Frontend: ImportPdfModal component + wire Importar button in Transactions page
+
 ### Phase 4: Budgets & WhatsApp Alerts
 **Goal**: Users can set spending limits and receive WhatsApp alerts when approaching or exceeding them
 **Depends on**: Phase 3
@@ -99,7 +110,7 @@ Plans:
   2. User can create a financial goal with name, target amount, and deadline in the app
   3. User receives WhatsApp reminders about their goals at strategic times (Thursday/Friday evenings)
   4. Goal reminders are personalized -- they mention the goal name, progress, amount remaining, and deadline
-  5. Monthly insight is also viewable in the app dashboard (not just WhatsApp)
+  5. Monthly insight summary sent via WhatsApp with key findings
 **Plans**: TBD
 
 Plans:
@@ -116,5 +127,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation | 0/2 | Planning complete | - |
 | 2. Data & Dashboard | 0/3 | Planning complete | - |
 | 3. AI Classification | 0/4 | Planning complete | - |
+| 3.1. PDF Import | 0/2 | Planning complete | - |
 | 4. Budgets & WhatsApp Alerts | 0/0 | Not started | - |
 | 5. AI Coach & Goals | 0/0 | Not started | - |
