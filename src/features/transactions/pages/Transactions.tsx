@@ -4,6 +4,7 @@ import { Card, Button, Input, Badge } from "@/shared/components/ui";
 import { Download, Plus, ArrowDown, ArrowUp, SlidersHorizontal, MoreHorizontal, Loader2 } from "lucide-react";
 import { apiGet } from "@/shared/lib/api";
 import { toast } from "sonner";
+import { ImportPdfModal } from "../components/ImportPdfModal";
 
 export function Transactions() {
   const navigate = useNavigate();
@@ -11,6 +12,8 @@ export function Transactions() {
   const [isFetching, setIsFetching] = useState(true);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [importOpen, setImportOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -33,7 +36,9 @@ export function Transactions() {
       })
       .catch(() => toast.error('Erro ao carregar transações'))
       .finally(() => setIsFetching(false));
-  }, [debouncedSearch]);
+  }, [debouncedSearch, refreshKey]);
+
+  const handleImportSuccess = () => setRefreshKey((k) => k + 1);
 
   const totalIn = transactions
     .filter(t => t.amount > 0)
@@ -53,7 +58,11 @@ export function Transactions() {
           <p className="mt-2 otto-serif text-sm text-muted-foreground">Quietly wealthy.</p>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="secondary" className="px-6 py-6 text-[10px] otto-label transition-all">
+          <Button
+            variant="secondary"
+            className="px-6 py-6 text-[10px] otto-label transition-all"
+            onClick={() => setImportOpen(true)}
+          >
             <Download className="mr-3 h-4 w-4" /> Importar
           </Button>
           <Button className="px-6 py-6 text-[10px] otto-label transition-all">
@@ -174,6 +183,12 @@ export function Transactions() {
           </div>
         </div>
       </Card>
+
+      <ImportPdfModal
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onSuccess={handleImportSuccess}
+      />
     </div>
   );
 }
