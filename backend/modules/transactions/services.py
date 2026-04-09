@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 import httpx
 from supabase import Client
@@ -261,3 +262,54 @@ def correct_transaction_category(
         return {"success": True}
     except Exception:
         return {"success": False, "error": "Erro ao atualizar categoria da transacao."}
+
+
+def import_transactions_from_pdf(
+    client: Client,
+    user_id: str,
+    transacoes: list[dict[str, Any]],
+) -> dict[str, Any]:
+    imported_count = 0
+    skipped_count = 0
+
+    try:
+        for item in transacoes:
+            date_str = datetime.strptime(item["data"], "%d/%m/%Y").date().isoformat()
+            raw_amount = float(item["valor"])
+            amount = raw_amount if item["tipo"] == "credito" else -raw_amount
+            description = item["descricao"]
+
+            duplicate_resp = (
+                client.table("transactions")
+                .select("id")
+                .eq("user_id", user_id)
+                .eq("date", date_str)
+                .eq("amount", amount)
+                .eq("description", description)
+                .execute()
+            )
+            if duplicate_resp.data:
+                skipped_count += 1
+                continue
+
+            (
+                client.table("transactions")
+                .insert(
+                    {
+                        "date": date_str,
+                        "description": description,
+                        "amount": amount,
+                        "user_id": user_id,
+                        "category_id": None,
+                        "merchant_name": None,
+                        "confidence_score": None,
+                        "manually_reviewed": False,
+                    }
+                )
+                .execute()
+            )
+            imported_count += 1
+    except Exception as e:
+        return {"imported": 0, "skipped": 0, "error": str(e)}
+
+    return {"imported": imported_count, "skipped": skipped_count}

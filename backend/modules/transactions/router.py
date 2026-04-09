@@ -1,12 +1,14 @@
+import json
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client
 
 from backend.core import get_current_client, get_current_user
-from backend.schemas import CorrectTransactionRequest
+from backend.schemas import CorrectTransactionRequest, ImportPdfRequest
 from .services import (
     classify_transactions,
     correct_transaction_category,
+    import_transactions_from_pdf,
     list_transactions,
 )
 
@@ -56,5 +58,28 @@ def correct_category(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=result.get("error", "Falha ao corrigir categoria."),
+        )
+    return result
+
+
+@router.post("/transactions/import")
+def import_pdf_transactions(
+    payload: ImportPdfRequest,
+    user: Annotated[dict, Depends(get_current_user)] = None,
+    client: Annotated[Client, Depends(get_current_client)] = None,
+) -> dict:
+    try:
+        data = json.loads(payload.result)
+        transacoes = data.get("transacoes", [])
+        if not isinstance(transacoes, list):
+            raise ValueError("Campo 'transacoes' invalido.")
+    except (json.JSONDecodeError, ValueError):
+        raise HTTPException(status_code=422, detail="JSON de extracao invalido.")
+
+    result = import_transactions_from_pdf(client, user["id"], transacoes)
+    if "error" in result:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=result["error"],
         )
     return result

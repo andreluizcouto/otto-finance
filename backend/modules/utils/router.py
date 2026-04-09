@@ -1,11 +1,13 @@
 import base64
 import os
 from io import BytesIO
+from typing import Annotated
 
 import anthropic
 import pikepdf
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
+from backend.core import get_current_user
 
 router = APIRouter(prefix="/api", tags=["utils"])
 
@@ -48,11 +50,13 @@ async def decrypt_pdf(
 @router.post("/analyze-pdf")
 async def analyze_pdf(
     file: UploadFile = File(...),
+    user: Annotated[dict, Depends(get_current_user)] = None,
 ):
     """
     Recebe um PDF já descriptografado, envia para o Claude Haiku
     e retorna as transações extraídas em JSON.
     """
+    _ = user
     pdf_content = await file.read()
     pdf_base64 = base64.standard_b64encode(pdf_content).decode("utf-8")
 

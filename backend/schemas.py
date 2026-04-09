@@ -30,3 +30,7 @@ class RenameCategoryRequest(BaseModel):
 
 class CorrectTransactionRequest(BaseModel):
     category_id: str
+
+
+class ImportPdfRequest(BaseModel):
+    result: str
