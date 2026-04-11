@@ -257,3 +257,134 @@ def test_dashboard_payload_includes_flow_and_budget_progress(monkeypatch: pytest
     assert payload["flow"]["outflow_total"] == 100.0
     assert payload["flow"]["net_flow"] == 700.0
     assert payload["flow"]["net_flow_status"] == "positive"
+
+
+def test_build_flow_summary_negative_flow_status():
+    from backend.modules.dashboard.services import _build_flow_summary
+
+    df = pd.DataFrame(
+        [
+            {"amount": 500.0},
+            {"amount": -850.0},
+            {"amount": -50.0},
+        ]
+    )
+
+    flow = _build_flow_summary(df)
+
+    assert flow["inflow_total"] == 500.0
+    assert flow["outflow_total"] == 900.0
+    assert flow["net_flow"] == -400.0
+    assert flow["net_flow_status"] == "negative"
+
+
+def test_build_actionable_alerts_flags_high_for_exceeded_and_growth():
+    from backend.modules.dashboard.services import _build_actionable_alerts
+
+    category_insights = [
+        {
+            "category_id": "cat_food",
+            "category_name": "Alimentacao",
+            "current_amount": 120.0,
+            "delta_pct": 30.0,
+        },
+        {
+            "category_id": "cat_transport",
+            "category_name": "Transporte",
+            "current_amount": 80.0,
+            "delta_pct": 15.0,
+        },
+    ]
+    budget_progress = [
+        {"category_id": "cat_food", "status": "exceeded", "spent_amount": 120.0, "monthly_limit": 100.0},
+        {"category_id": "cat_transport", "status": "warning", "spent_amount": 80.0, "monthly_limit": 90.0},
+    ]
+
+    alerts = _build_actionable_alerts(category_insights, budget_progress)
+
+    assert alerts
+    assert alerts[0]["severity"] in {"high", "medium", "low"}
+    assert any(alert["severity"] == "high" for alert in alerts)
+
+
+def test_build_cut_recommendations_caps_at_three_with_labels():
+    from backend.modules.dashboard.services import _build_cut_recommendations
+
+    category_insights = [
+        {"category_id": "cat_a", "category_name": "A", "current_amount": 300.0},
+        {"category_id": "cat_b", "category_name": "B", "current_amount": 240.0},
+        {"category_id": "cat_c", "category_name": "C", "current_amount": 180.0},
+        {"category_id": "cat_d", "category_name": "D", "current_amount": 90.0},
+    ]
+    budget_progress = [
+        {"category_id": "cat_a", "status": "exceeded", "spent_amount": 300.0, "monthly_limit": 200.0},
+        {"category_id": "cat_b", "status": "warning", "spent_amount": 240.0, "monthly_limit": 220.0},
+        {"category_id": "cat_c", "status": "no_limit", "spent_amount": 180.0, "monthly_limit": 0.0},
+        {"category_id": "cat_d", "status": "no_limit", "spent_amount": 90.0, "monthly_limit": 0.0},
+    ]
+
+    cuts = _build_cut_recommendations(category_insights, budget_progress)
+
+    assert len(cuts) <= 3
+    assert all("suggested_cut_amount_label" in cut for cut in cuts)
+
+
+def test_dashboard_payload_includes_alerts_cuts_summary_and_disclaimer(monkeypatch: pytest.MonkeyPatch):
+    from backend.modules.dashboard import services
+
+    def _fake_load_dashboard_data(_client, _user_id, _start_date, _end_date):
+        categories = {
+            "alimentacao": {
+                "id": "cat_food",
+                "name": "Alimentacao",
+                "emoji": "A",
+                "color_hex": "#111111",
+            },
+            "lazer": {
+                "id": "cat_fun",
+                "name": "Lazer",
+                "emoji": "L",
+                "color_hex": "#333333",
+            },
+        }
+        return {
+            "transactions": [
+                {
+                    "id": "txn-1",
+                    "amount": -300.0,
+                    "date": "2026-04-10",
+                    "description": "Restaurante",
+                    "merchant_name": "Restaurante",
+                    "category_id": "cat_food",
+                },
+                {
+                    "id": "txn-2",
+                    "amount": -200.0,
+                    "date": "2026-04-11",
+                    "description": "Cinema",
+                    "merchant_name": "Cinema",
+                    "category_id": "cat_fun",
+                },
+            ],
+            "all_transactions": [
+                {"id": "old-1", "amount": -100.0, "date": "2026-03-25", "category_id": "cat_food"},
+                {"id": "new-1", "amount": -300.0, "date": "2026-04-10", "category_id": "cat_food"},
+                {"id": "new-2", "amount": -200.0, "date": "2026-04-11", "category_id": "cat_fun"},
+            ],
+            "categories": categories,
+        }
+
+    monkeypatch.setattr(services, "load_dashboard_data", _fake_load_dashboard_data)
+    monkeypatch.setattr(
+        services,
+        "_load_user_budgets",
+        lambda _client, _user_id: {"cat_food": 150.0, "cat_fun": 190.0},
+    )
+
+    payload = services.get_dashboard_payload(client=object(), user_id="user-1", period="Este mes")
+
+    assert "alerts" in payload
+    assert "cuts" in payload
+    assert "narrative_summary" in payload
+    assert payload["disclaimer"] == "Nao inclui saldo anterior da conta."
+    assert len(payload["cuts"]) <= 3
