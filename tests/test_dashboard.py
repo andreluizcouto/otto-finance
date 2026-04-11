@@ -1,27 +1,16 @@
-"""Tests for dashboard date filter logic.
-
-These tests validate the calculate_date_range utility that maps
-user-facing period labels to (start_date, end_date) tuples.
-All tests are marked as skip until the function is implemented in Plan 03.
-"""
-
 from datetime import date
-from types import SimpleNamespace
 
-import pandas as pd
 import pytest
 
+
 def test_date_filter_this_week():
-    """'Esta semana' returns Monday of current week through today."""
     from backend.modules.dashboard.services import calculate_date_range
 
-    # Monday 2026-04-06
     today_monday = date(2026, 4, 6)
     start, end = calculate_date_range("Esta semana", today_monday)
     assert start == date(2026, 4, 6)
     assert end == date(2026, 4, 6)
 
-    # Wednesday 2026-04-08 -- start should still be Monday
     today_wednesday = date(2026, 4, 8)
     start, end = calculate_date_range("Esta semana", today_wednesday)
     assert start == date(2026, 4, 6)
@@ -29,7 +18,6 @@ def test_date_filter_this_week():
 
 
 def test_date_filter_this_month():
-    """'Este mes' returns 1st of current month through today."""
     from backend.modules.dashboard.services import calculate_date_range
 
     today = date(2026, 4, 15)
@@ -39,7 +27,6 @@ def test_date_filter_this_month():
 
 
 def test_date_filter_last_3_months():
-    """'Ultimos 3 meses' returns 1st of month 2 months prior through today."""
     from backend.modules.dashboard.services import calculate_date_range
 
     today = date(2026, 4, 15)
@@ -48,343 +35,190 @@ def test_date_filter_last_3_months():
     assert end == date(2026, 4, 15)
 
 
-def test_compute_kpis_handles_transactions_without_category():
-    """KPI calculation should not fail when category_id is missing/null."""
-    from backend.modules.dashboard.services import compute_kpis
-
-    df = pd.DataFrame(
-        [
-            {"amount": 10.0, "date": pd.Timestamp("2026-04-10"), "category_id": None},
-            {"amount": 20.0, "date": pd.Timestamp("2026-04-11"), "category_id": None},
-        ]
-    )
-    kpis = compute_kpis(
-        df=df,
-        categories={},
-        start_date=date(2026, 4, 1),
-        end_date=date(2026, 4, 11),
-        all_transactions=[],
-    )
-
-    assert kpis["total_spent"] == 30.0
-    assert kpis["top_category"] == "-"
-    assert kpis["top_category_total"] == 0.0
-
-
-def test_build_flow_summary_calculates_totals_and_status():
-    from backend.modules.dashboard.services import _build_flow_summary
-
-    df = pd.DataFrame(
-        [
-            {"amount": 1200.0},
-            {"amount": -350.0},
-            {"amount": -150.0},
-        ]
-    )
-
-    flow = _build_flow_summary(df)
-
-    assert flow["inflow_total"] == 1200.0
-    assert flow["outflow_total"] == 500.0
-    assert flow["net_flow"] == 700.0
-    assert flow["net_flow_status"] == "positive"
-    assert flow["inflow_total_label"] == "R$ 1.200,00"
-    assert flow["outflow_total_label"] == "R$ 500,00"
-    assert flow["net_flow_label"] == "R$ 700,00"
-
-
-def test_build_category_insights_calculates_share_delta_and_trend():
-    from backend.modules.dashboard.services import _build_category_insights
-
-    start_date = date(2026, 4, 8)
-    end_date = date(2026, 4, 14)
-    df = pd.DataFrame(
-        [
-            {"amount": -100.0, "category_id": "cat_food", "date": pd.Timestamp("2026-04-10")},
-            {"amount": -50.0, "category_id": "cat_transport", "date": pd.Timestamp("2026-04-11")},
-            {"amount": 300.0, "category_id": "cat_salary", "date": pd.Timestamp("2026-04-12")},
-        ]
-    )
-    all_transactions = [
-        {"amount": -80.0, "category_id": "cat_food", "date": "2026-04-02"},
-        {"amount": -50.0, "category_id": "cat_transport", "date": "2026-04-04"},
-        {"amount": -100.0, "category_id": "cat_food", "date": "2026-04-10"},
-        {"amount": -50.0, "category_id": "cat_transport", "date": "2026-04-11"},
-        {"amount": 300.0, "category_id": "cat_salary", "date": "2026-04-12"},
-    ]
-    cat_by_id = {
-        "cat_food": {"id": "cat_food", "name": "Alimentacao", "emoji": "A"},
-        "cat_transport": {"id": "cat_transport", "name": "Transporte", "emoji": "T"},
+def _build_fake_dashboard_data():
+    categories = {
+        "alimentacao": {
+            "id": "cat_food",
+            "name": "Alimentacao",
+            "emoji": "A",
+            "color_hex": "#111111",
+        },
+        "transporte": {
+            "id": "cat_transport",
+            "name": "Transporte",
+            "emoji": "T",
+            "color_hex": "#222222",
+        },
+        "lazer": {
+            "id": "cat_fun",
+            "name": "Lazer",
+            "emoji": "L",
+            "color_hex": "#333333",
+        },
+        "saude": {
+            "id": "cat_health",
+            "name": "Saude",
+            "emoji": "S",
+            "color_hex": "#444444",
+        },
     }
 
-    insights = _build_category_insights(
-        df=df,
-        all_transactions=all_transactions,
-        start_date=start_date,
-        end_date=end_date,
-        cat_by_id=cat_by_id,
-    )
-
-    assert len(insights) == 2
-    assert insights[0]["category_id"] == "cat_food"
-    assert insights[0]["share_pct"] == 66.7
-    assert insights[0]["delta_pct"] == 25.0
-    assert insights[0]["trend"] == "up"
-    assert insights[1]["category_id"] == "cat_transport"
-    assert insights[1]["share_pct"] == 33.3
-    assert insights[1]["delta_pct"] == 0.0
-    assert insights[1]["trend"] == "flat"
-
-
-def test_build_budget_progress_calculates_statuses():
-    from backend.modules.dashboard.services import _build_budget_progress
-
-    category_insights = [
-        {"category_id": "cat_a", "category_name": "A", "current_amount": 50.0},
-        {"category_id": "cat_b", "category_name": "B", "current_amount": 85.0},
-        {"category_id": "cat_c", "category_name": "C", "current_amount": 120.0},
-        {"category_id": "cat_d", "category_name": "D", "current_amount": 40.0},
-    ]
-    budgets_by_category = {
-        "cat_a": 100.0,
-        "cat_b": 100.0,
-        "cat_c": 100.0,
-    }
-
-    progress = _build_budget_progress(category_insights, budgets_by_category)
-    by_id = {item["category_id"]: item for item in progress}
-
-    assert by_id["cat_a"]["status"] == "on_track"
-    assert by_id["cat_a"]["progress_pct"] == 50.0
-    assert by_id["cat_b"]["status"] == "warning"
-    assert by_id["cat_b"]["progress_pct"] == 85.0
-    assert by_id["cat_c"]["status"] == "exceeded"
-    assert by_id["cat_c"]["progress_pct"] == 120.0
-    assert by_id["cat_d"]["status"] == "no_limit"
-    assert by_id["cat_d"]["progress_pct"] == 0.0
-
-
-class _BudgetQuery:
-    def __init__(self, rows):
-        self.rows = rows
-
-    def select(self, *_args, **_kwargs):
-        return self
-
-    def eq(self, *_args, **_kwargs):
-        return self
-
-    def execute(self):
-        return SimpleNamespace(data=self.rows)
-
-
-class _BudgetClient:
-    def __init__(self, rows):
-        self.rows = rows
-
-    def table(self, _name):
-        return _BudgetQuery(self.rows)
-
-
-def test_load_user_budgets_returns_category_limit_map():
-    from backend.modules.dashboard.services import _load_user_budgets
-
-    client = _BudgetClient(
-        [
-            {"category_id": "cat_a", "monthly_limit": 120.5},
-            {"category_id": "cat_b", "monthly_limit": 350},
-        ]
-    )
-
-    budgets = _load_user_budgets(client, "user-1")
-
-    assert budgets == {"cat_a": 120.5, "cat_b": 350.0}
-
-
-def test_dashboard_payload_includes_flow_and_budget_progress(monkeypatch: pytest.MonkeyPatch):
-    from backend.modules.dashboard import services
-
-    def _fake_load_dashboard_data(_client, _user_id, _start_date, _end_date):
-        categories = {
-            "alimentacao": {
-                "id": "cat_food",
-                "name": "Alimentacao",
-                "emoji": "A",
-                "color_hex": "#111111",
-            },
-            "transporte": {
-                "id": "cat_transport",
-                "name": "Transporte",
-                "emoji": "T",
-                "color_hex": "#222222",
-            },
-        }
-        return {
-            "transactions": [
-                {
-                    "id": "txn-1",
-                    "amount": -100.0,
-                    "date": "2026-04-10",
-                    "description": "Mercado",
-                    "merchant_name": "Mercado",
-                    "category_id": "cat_food",
-                },
-                {
-                    "id": "txn-2",
-                    "amount": 800.0,
-                    "date": "2026-04-11",
-                    "description": "Salario",
-                    "merchant_name": "Empresa",
-                    "category_id": None,
-                },
-            ],
-            "all_transactions": [
-                {"id": "old-1", "amount": -80.0, "date": "2026-03-25", "category_id": "cat_food"},
-                {"id": "new-1", "amount": -100.0, "date": "2026-04-10", "category_id": "cat_food"},
-            ],
-            "categories": categories,
-        }
-
-    monkeypatch.setattr(services, "load_dashboard_data", _fake_load_dashboard_data)
-    monkeypatch.setattr(services, "_load_user_budgets", lambda _client, _user_id: {"cat_food": 90.0})
-
-    payload = services.get_dashboard_payload(client=object(), user_id="user-1", period="Este mes")
-
-    assert "flow" in payload
-    assert "category_insights" in payload
-    assert "budget_progress" in payload
-    assert payload["flow"]["inflow_total"] == 800.0
-    assert payload["flow"]["outflow_total"] == 100.0
-    assert payload["flow"]["net_flow"] == 700.0
-    assert payload["flow"]["net_flow_status"] == "positive"
-
-
-def test_build_flow_summary_negative_flow_status():
-    from backend.modules.dashboard.services import _build_flow_summary
-
-    df = pd.DataFrame(
-        [
-            {"amount": 500.0},
-            {"amount": -850.0},
-            {"amount": -50.0},
-        ]
-    )
-
-    flow = _build_flow_summary(df)
-
-    assert flow["inflow_total"] == 500.0
-    assert flow["outflow_total"] == 900.0
-    assert flow["net_flow"] == -400.0
-    assert flow["net_flow_status"] == "negative"
-
-
-def test_build_actionable_alerts_flags_high_for_exceeded_and_growth():
-    from backend.modules.dashboard.services import _build_actionable_alerts
-
-    category_insights = [
+    transactions = [
         {
+            "id": "txn-1",
+            "amount": -300.0,
+            "date": "2026-04-10",
+            "description": "Mercado",
+            "merchant_name": "Mercado",
             "category_id": "cat_food",
-            "category_name": "Alimentacao",
-            "current_amount": 120.0,
-            "delta_pct": 30.0,
         },
         {
+            "id": "txn-2",
+            "amount": -120.0,
+            "date": "2026-04-11",
+            "description": "Uber",
+            "merchant_name": "Uber",
             "category_id": "cat_transport",
-            "category_name": "Transporte",
-            "current_amount": 80.0,
-            "delta_pct": 15.0,
+        },
+        {
+            "id": "txn-3",
+            "amount": -80.0,
+            "date": "2026-04-12",
+            "description": "Cinema",
+            "merchant_name": "Cinema",
+            "category_id": "cat_fun",
+        },
+        {
+            "id": "txn-4",
+            "amount": -40.0,
+            "date": "2026-04-13",
+            "description": "Farmacia",
+            "merchant_name": "Farmacia",
+            "category_id": "cat_health",
+        },
+        {
+            "id": "txn-5",
+            "amount": 3000.0,
+            "date": "2026-04-14",
+            "description": "Salario",
+            "merchant_name": "Empresa",
+            "category_id": None,
         },
     ]
-    budget_progress = [
-        {"category_id": "cat_food", "status": "exceeded", "spent_amount": 120.0, "monthly_limit": 100.0},
-        {"category_id": "cat_transport", "status": "warning", "spent_amount": 80.0, "monthly_limit": 90.0},
+
+    all_transactions = [
+        {"id": "old-1", "amount": -200.0, "date": "2026-04-01", "category_id": "cat_food"},
+        {"id": "old-2", "amount": -150.0, "date": "2026-04-02", "category_id": "cat_transport"},
+        {"id": "old-3", "amount": -40.0, "date": "2026-04-03", "category_id": "cat_health"},
+        {"id": "new-1", "amount": -300.0, "date": "2026-04-10", "category_id": "cat_food"},
+        {"id": "new-2", "amount": -120.0, "date": "2026-04-11", "category_id": "cat_transport"},
+        {"id": "new-3", "amount": -80.0, "date": "2026-04-12", "category_id": "cat_fun"},
+        {"id": "new-4", "amount": -40.0, "date": "2026-04-13", "category_id": "cat_health"},
     ]
 
-    alerts = _build_actionable_alerts(category_insights, budget_progress)
-
-    assert alerts
-    assert alerts[0]["severity"] in {"high", "medium", "low"}
-    assert any(alert["severity"] == "high" for alert in alerts)
-
-
-def test_build_cut_recommendations_caps_at_three_with_labels():
-    from backend.modules.dashboard.services import _build_cut_recommendations
-
-    category_insights = [
-        {"category_id": "cat_a", "category_name": "A", "current_amount": 300.0},
-        {"category_id": "cat_b", "category_name": "B", "current_amount": 240.0},
-        {"category_id": "cat_c", "category_name": "C", "current_amount": 180.0},
-        {"category_id": "cat_d", "category_name": "D", "current_amount": 90.0},
-    ]
-    budget_progress = [
-        {"category_id": "cat_a", "status": "exceeded", "spent_amount": 300.0, "monthly_limit": 200.0},
-        {"category_id": "cat_b", "status": "warning", "spent_amount": 240.0, "monthly_limit": 220.0},
-        {"category_id": "cat_c", "status": "no_limit", "spent_amount": 180.0, "monthly_limit": 0.0},
-        {"category_id": "cat_d", "status": "no_limit", "spent_amount": 90.0, "monthly_limit": 0.0},
-    ]
-
-    cuts = _build_cut_recommendations(category_insights, budget_progress)
-
-    assert len(cuts) <= 3
-    assert all("suggested_cut_amount_label" in cut for cut in cuts)
+    return {
+        "transactions": transactions,
+        "all_transactions": all_transactions,
+        "categories": categories,
+    }
 
 
-def test_dashboard_payload_includes_alerts_cuts_summary_and_disclaimer(monkeypatch: pytest.MonkeyPatch):
+def test_dashboard_payload_contract_is_v1_core_only(monkeypatch: pytest.MonkeyPatch):
     from backend.modules.dashboard import services
 
-    def _fake_load_dashboard_data(_client, _user_id, _start_date, _end_date):
-        categories = {
-            "alimentacao": {
-                "id": "cat_food",
-                "name": "Alimentacao",
-                "emoji": "A",
-                "color_hex": "#111111",
-            },
-            "lazer": {
-                "id": "cat_fun",
-                "name": "Lazer",
-                "emoji": "L",
-                "color_hex": "#333333",
-            },
-        }
-        return {
-            "transactions": [
-                {
-                    "id": "txn-1",
-                    "amount": -300.0,
-                    "date": "2026-04-10",
-                    "description": "Restaurante",
-                    "merchant_name": "Restaurante",
-                    "category_id": "cat_food",
-                },
-                {
-                    "id": "txn-2",
-                    "amount": -200.0,
-                    "date": "2026-04-11",
-                    "description": "Cinema",
-                    "merchant_name": "Cinema",
-                    "category_id": "cat_fun",
-                },
-            ],
-            "all_transactions": [
-                {"id": "old-1", "amount": -100.0, "date": "2026-03-25", "category_id": "cat_food"},
-                {"id": "new-1", "amount": -300.0, "date": "2026-04-10", "category_id": "cat_food"},
-                {"id": "new-2", "amount": -200.0, "date": "2026-04-11", "category_id": "cat_fun"},
-            ],
-            "categories": categories,
-        }
-
-    monkeypatch.setattr(services, "load_dashboard_data", _fake_load_dashboard_data)
+    monkeypatch.setattr(
+        services, "calculate_date_range", lambda _period: (date(2026, 4, 8), date(2026, 4, 14))
+    )
+    monkeypatch.setattr(services, "load_dashboard_data", lambda *_args, **_kwargs: _build_fake_dashboard_data())
     monkeypatch.setattr(
         services,
         "_load_user_budgets",
-        lambda _client, _user_id: {"cat_food": 150.0, "cat_fun": 190.0},
+        lambda _client, _user_id: {
+            "cat_food": 180.0,
+            "cat_transport": 150.0,
+            "cat_fun": 50.0,
+            "cat_health": 20.0,
+        },
     )
 
     payload = services.get_dashboard_payload(client=object(), user_id="user-1", period="Este mes")
 
-    assert "alerts" in payload
-    assert "cuts" in payload
-    assert "narrative_summary" in payload
-    assert payload["disclaimer"] == "Nao inclui saldo anterior da conta."
-    assert len(payload["cuts"]) <= 3
+    assert set(payload.keys()) == {
+        "upload",
+        "classification",
+        "categories",
+        "comparison",
+        "saving_tips",
+    }
+    assert payload["upload"]["cta_label"]
+    assert payload["classification"]["cta_label"]
+
+
+def test_dashboard_payload_categories_returns_ranked_spend_with_share(monkeypatch: pytest.MonkeyPatch):
+    from backend.modules.dashboard import services
+
+    monkeypatch.setattr(
+        services, "calculate_date_range", lambda _period: (date(2026, 4, 8), date(2026, 4, 14))
+    )
+    monkeypatch.setattr(services, "load_dashboard_data", lambda *_args, **_kwargs: _build_fake_dashboard_data())
+    monkeypatch.setattr(services, "_load_user_budgets", lambda *_args, **_kwargs: {})
+
+    payload = services.get_dashboard_payload(client=object(), user_id="user-1", period="Este mes")
+    categories = payload["categories"]
+
+    assert [item["category_id"] for item in categories] == [
+        "cat_food",
+        "cat_transport",
+        "cat_fun",
+        "cat_health",
+    ]
+    assert categories[0]["amount_label"] == "R$ 300,00"
+    assert categories[0]["share_pct"] == 55.6
+    assert categories[1]["share_pct"] == 22.2
+
+
+def test_dashboard_payload_comparison_returns_trend_and_delta(monkeypatch: pytest.MonkeyPatch):
+    from backend.modules.dashboard import services
+
+    monkeypatch.setattr(
+        services, "calculate_date_range", lambda _period: (date(2026, 4, 8), date(2026, 4, 14))
+    )
+    monkeypatch.setattr(services, "load_dashboard_data", lambda *_args, **_kwargs: _build_fake_dashboard_data())
+    monkeypatch.setattr(services, "_load_user_budgets", lambda *_args, **_kwargs: {})
+
+    payload = services.get_dashboard_payload(client=object(), user_id="user-1", period="Este mes")
+    by_id = {item["category_id"]: item for item in payload["comparison"]}
+
+    assert by_id["cat_food"]["trend"] == "up"
+    assert by_id["cat_food"]["delta_pct"] == 50.0
+    assert by_id["cat_transport"]["trend"] == "down"
+    assert by_id["cat_transport"]["delta_pct"] == -20.0
+    assert by_id["cat_fun"]["trend"] == "flat"
+    assert by_id["cat_fun"]["delta_pct"] is None
+
+
+def test_dashboard_payload_saving_tips_caps_at_three_and_prioritizes(monkeypatch: pytest.MonkeyPatch):
+    from backend.modules.dashboard import services
+
+    monkeypatch.setattr(
+        services, "calculate_date_range", lambda _period: (date(2026, 4, 8), date(2026, 4, 14))
+    )
+    monkeypatch.setattr(services, "load_dashboard_data", lambda *_args, **_kwargs: _build_fake_dashboard_data())
+    monkeypatch.setattr(
+        services,
+        "_load_user_budgets",
+        lambda _client, _user_id: {
+            "cat_food": 180.0,
+            "cat_transport": 150.0,
+            "cat_fun": 50.0,
+            "cat_health": 20.0,
+        },
+    )
+
+    payload = services.get_dashboard_payload(client=object(), user_id="user-1", period="Este mes")
+    tips = payload["saving_tips"]
+
+    assert len(tips) <= 3
+    assert [item["category_id"] for item in tips] == ["cat_food", "cat_fun", "cat_health"]
+    assert tips[0]["potential_saving_label"] == "R$ 120,00"
+    assert all(isinstance(item["rationale"], str) and item["rationale"] for item in tips)
