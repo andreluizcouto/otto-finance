@@ -140,4 +140,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 Plans:
 - [x] 06-01-PLAN.md -- Backend: contrato analitico de fluxo, exageros por categoria, progresso de orcamento, alertas e cortes recomendados
-- [ ] 06-02-PLAN.md -- Frontend: redesign do dashboard para responder 3 perguntas de decisao com linguagem acionavel
+- [x] 06-02-PLAN.md -- Frontend: redesign do dashboard para responder 3 perguntas de decisao com linguagem acionavel

@@ -29,7 +29,7 @@
 
 ### Dashboard
 
-- [ ] **DASH-01**: User can view spending breakdown by category with charts
+- [x] **DASH-01**: User can view spending breakdown by category with charts
 - [x] **DASH-02**: User can view spending by time period (week, month)
 - [x] **DASH-03**: User can see spending trend charts over time
 - [x] **DASH-04**: User can compare current month vs previous month
@@ -43,7 +43,7 @@
 
 ### AI Coach (WhatsApp)
 
-- [ ] **COACH-01**: System generates monthly AI-powered spending insights in Portuguese
+- [x] **COACH-01**: System generates monthly AI-powered spending insights in Portuguese
 - [ ] **COACH-02**: User can create financial goals/plans (e.g., trip, emergency fund)
 - [ ] **COACH-03**: System sends proactive WhatsApp reminders about goals at strategic times (Thu/Fri evening)
 - [ ] **COACH-04**: Reminders are contextual and personalized (mention goal name, amount needed, deadline)
@@ -110,7 +110,7 @@
 | AICL-04 | Phase 3 | Complete |
 | AICL-05 | Phase 3 | Complete |
 | AICL-06 | Phase 3 | Complete |
-| DASH-01 | Phase 2 | Pending |
+| DASH-01 | Phase 2 | Complete |
 | DASH-02 | Phase 2 | Complete |
 | DASH-03 | Phase 2 | Complete |
 | DASH-04 | Phase 2 | Complete |
@@ -118,7 +118,7 @@
 | BUDG-02 | Phase 4 | Complete |
 | BUDG-03 | Phase 4 | Pending |
 | BUDG-04 | Phase 4 | Pending |
-| COACH-01 | Phase 5 | Pending |
+| COACH-01 | Phase 5 | Complete |
 | COACH-02 | Phase 5 | Pending |
 | COACH-03 | Phase 5 | Pending |
 | COACH-04 | Phase 5 | Pending |
