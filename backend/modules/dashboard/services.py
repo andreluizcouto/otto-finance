@@ -38,13 +38,183 @@ def load_dashboard_data(
         .eq("user_id", user_id)
         .execute()
     )
-    cat_resp = client.table("categories").select("*").eq("is_default", True).execute()
+    categories_query = client.table("categories").select("*")
+    if hasattr(categories_query, "or_"):
+        cat_resp = categories_query.or_(f"is_default.eq.true,user_id.eq.{user_id}").execute()
+    else:
+        default_resp = client.table("categories").select("*").eq("is_default", True).execute()
+        user_resp = client.table("categories").select("*").eq("user_id", user_id).execute()
+        merged_categories = {
+            cat.get("id"): cat for cat in [*(default_resp.data or []), *(user_resp.data or [])]
+        }
+        cat_resp = type("Response", (), {"data": list(merged_categories.values())})()
+
     categories = {cat["slug"]: cat for cat in cat_resp.data}
     return {
         "transactions": txn_resp.data,
         "all_transactions": all_txn_resp.data,
         "categories": categories,
     }
+
+
+def _build_flow_summary(df: pd.DataFrame) -> dict[str, Any]:
+    if df.empty or "amount" not in df.columns:
+        inflow_total = 0.0
+        outflow_total = 0.0
+    else:
+        amounts = pd.to_numeric(df["amount"], errors="coerce").fillna(0.0)
+        inflow_total = float(amounts[amounts > 0].sum())
+        outflow_total = abs(float(amounts[amounts < 0].sum()))
+
+    net_flow = inflow_total - outflow_total
+    if net_flow > 0:
+        net_flow_status = "positive"
+    elif net_flow < 0:
+        net_flow_status = "negative"
+    else:
+        net_flow_status = "neutral"
+
+    return {
+        "inflow_total": inflow_total,
+        "outflow_total": outflow_total,
+        "net_flow": net_flow,
+        "net_flow_status": net_flow_status,
+        "inflow_total_label": format_brl(inflow_total),
+        "outflow_total_label": format_brl(outflow_total),
+        "net_flow_label": format_brl(net_flow),
+    }
+
+
+def _build_category_insights(
+    df: pd.DataFrame,
+    all_transactions: list[dict],
+    start_date: date,
+    end_date: date,
+    cat_by_id: dict[str, Any],
+) -> list[dict[str, Any]]:
+    if df.empty or "amount" not in df.columns or "category_id" not in df.columns:
+        return []
+
+    current_outflows = df.copy()
+    current_outflows = current_outflows.dropna(subset=["category_id"])
+    if current_outflows.empty:
+        return []
+
+    current_outflows["amount"] = pd.to_numeric(current_outflows["amount"], errors="coerce").fillna(0.0)
+    current_outflows = current_outflows[current_outflows["amount"] < 0]
+    if current_outflows.empty:
+        return []
+
+    current_totals = current_outflows.groupby("category_id")["amount"].sum().abs().sort_values(ascending=False)
+    total_outflow = float(current_totals.sum())
+
+    duration = (end_date - start_date).days
+    prior_end = start_date - timedelta(days=1)
+    prior_start = prior_end - timedelta(days=duration)
+
+    prior_totals_map: dict[str, float] = {}
+    if all_transactions:
+        prior_df = pd.DataFrame(all_transactions)
+        if not prior_df.empty and {"amount", "date", "category_id"}.issubset(prior_df.columns):
+            prior_df["amount"] = pd.to_numeric(prior_df["amount"], errors="coerce").fillna(0.0)
+            prior_df["date"] = pd.to_datetime(prior_df["date"], errors="coerce").dt.date
+            prior_df = prior_df.dropna(subset=["date", "category_id"])
+            prior_df = prior_df[
+                (prior_df["date"] >= prior_start)
+                & (prior_df["date"] <= prior_end)
+                & (prior_df["amount"] < 0)
+            ]
+            if not prior_df.empty:
+                prior_totals_map = prior_df.groupby("category_id")["amount"].sum().abs().to_dict()
+
+    insights: list[dict[str, Any]] = []
+    for category_id, current_amount in current_totals.items():
+        current_amount_value = float(current_amount)
+        prior_amount = float(prior_totals_map.get(category_id, 0.0))
+
+        if prior_amount > 0:
+            delta_pct = round(((current_amount_value - prior_amount) / prior_amount) * 100, 1)
+        else:
+            delta_pct = None
+
+        if delta_pct is None or delta_pct == 0:
+            trend = "flat"
+        elif delta_pct > 0:
+            trend = "up"
+        else:
+            trend = "down"
+
+        category = cat_by_id.get(category_id, {})
+        share_pct = round((current_amount_value / total_outflow) * 100, 1) if total_outflow > 0 else 0.0
+        insights.append(
+            {
+                "category_id": category_id,
+                "category_name": category.get("name", "Outros"),
+                "emoji": category.get("emoji", ""),
+                "current_amount": current_amount_value,
+                "current_amount_label": format_brl(current_amount_value),
+                "share_pct": share_pct,
+                "delta_pct": delta_pct,
+                "trend": trend,
+            }
+        )
+
+    return insights
+
+
+def _load_user_budgets(client: Client, user_id: str) -> dict[str, float]:
+    budgets_resp = (
+        client.table("budgets")
+        .select("category_id, monthly_limit")
+        .eq("user_id", user_id)
+        .eq("is_active", True)
+        .execute()
+    )
+    budgets_by_category: dict[str, float] = {}
+    for row in budgets_resp.data or []:
+        category_id = row.get("category_id")
+        monthly_limit = row.get("monthly_limit")
+        if not category_id:
+            continue
+        limit_value = float(monthly_limit) if monthly_limit is not None else 0.0
+        budgets_by_category[category_id] = limit_value
+    return budgets_by_category
+
+
+def _build_budget_progress(
+    category_insights: list[dict], budgets_by_category: dict[str, float]
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for insight in category_insights:
+        category_id = insight.get("category_id")
+        spent_amount = float(insight.get("current_amount", 0.0))
+        monthly_limit = float(budgets_by_category.get(category_id, 0.0))
+
+        if monthly_limit > 0:
+            progress_pct = round((spent_amount / monthly_limit) * 100, 1)
+            if progress_pct >= 100:
+                status = "exceeded"
+            elif progress_pct >= 80:
+                status = "warning"
+            else:
+                status = "on_track"
+        else:
+            progress_pct = 0.0
+            status = "no_limit"
+
+        rows.append(
+            {
+                "category_id": category_id,
+                "category_name": insight.get("category_name", "Outros"),
+                "monthly_limit": monthly_limit,
+                "monthly_limit_label": format_brl(monthly_limit),
+                "spent_amount": spent_amount,
+                "spent_amount_label": format_brl(spent_amount),
+                "progress_pct": progress_pct,
+                "status": status,
+            }
+        )
+    return rows
 
 def compute_kpis(
     df: pd.DataFrame,
@@ -57,14 +227,20 @@ def compute_kpis(
     total_spent = float(df["amount"].sum()) if not df.empty else 0.0
     txn_count = len(df)
 
-    if not df.empty:
-        cat_totals = df.groupby("category_id")["amount"].sum()
-        top_cat_id = cat_totals.idxmax()
-        top_cat = cat_by_id.get(top_cat_id, {})
-        emoji = top_cat.get("emoji", "")
-        name = top_cat.get("name", "Outros")
-        top_category = f"{emoji} {name}".strip()
-        top_category_total = float(cat_totals.max())
+    if not df.empty and "category_id" in df.columns:
+        cat_totals = (
+            df.dropna(subset=["category_id"]).groupby("category_id")["amount"].sum()
+        )
+        if not cat_totals.empty:
+            top_cat_id = cat_totals.idxmax()
+            top_cat = cat_by_id.get(top_cat_id, {})
+            emoji = top_cat.get("emoji", "")
+            name = top_cat.get("name", "Outros")
+            top_category = f"{emoji} {name}".strip()
+            top_category_total = float(cat_totals.max())
+        else:
+            top_category = "-"
+            top_category_total = 0.0
     else:
         top_category = "-"
         top_category_total = 0.0
@@ -81,8 +257,9 @@ def compute_kpis(
         prior_start = prior_end - timedelta(days=duration)
         if all_transactions:
             all_df = pd.DataFrame(all_transactions)
-            all_df["amount"] = all_df["amount"].astype(float)
-            all_df["date"] = pd.to_datetime(all_df["date"]).dt.date
+            all_df["amount"] = pd.to_numeric(all_df["amount"], errors="coerce").fillna(0.0)
+            all_df["date"] = pd.to_datetime(all_df["date"], errors="coerce").dt.date
+            all_df = all_df.dropna(subset=["date"])
             prior_df = all_df[
                 (all_df["date"] >= prior_start) & (all_df["date"] <= prior_end)
             ]
@@ -103,7 +280,10 @@ def _serialize_trend_data(df: pd.DataFrame, period: str) -> list[dict[str, Any]]
     if df.empty:
         return []
 
-    df_trend = df.copy()
+    df_trend = df.dropna(subset=["date"]).copy()
+    if df_trend.empty:
+        return []
+
     if period == "Ultimos 3 meses":
         df_trend["period_label"] = df_trend["date"].dt.to_period("W").astype(str)
     else:
@@ -117,7 +297,12 @@ def _serialize_category_totals(df: pd.DataFrame, cat_by_id: dict[str, Any]) -> l
     if df.empty:
         return []
 
-    category_totals = df.groupby("category_id")["amount"].sum().reset_index()
+    category_totals = (
+        df.dropna(subset=["category_id"]).groupby("category_id")["amount"].sum().reset_index()
+    )
+    if category_totals.empty:
+        return []
+
     category_totals["category_name"] = category_totals["category_id"].map(
         lambda cid: cat_by_id.get(cid, {}).get("name", "Outros")
     )
@@ -133,7 +318,10 @@ def _serialize_recent_transactions(df: pd.DataFrame, cat_by_id: dict[str, Any]) 
     if df.empty:
         return []
 
-    table_df = df.head(20).copy()
+    table_df = df.dropna(subset=["date"]).head(20).copy()
+    if table_df.empty:
+        return []
+
     rows: list[dict] = []
     for _, row in table_df.iterrows():
         category = cat_by_id.get(row.get("category_id"), {})
@@ -182,8 +370,9 @@ def _serialize_comparison(
         else pd.DataFrame(columns=["amount", "date", "category_id"])
     )
     if not all_df.empty:
-        all_df["amount"] = all_df["amount"].astype(float)
-        all_df["date"] = pd.to_datetime(all_df["date"]).dt.date
+        all_df["amount"] = pd.to_numeric(all_df["amount"], errors="coerce").fillna(0.0)
+        all_df["date"] = pd.to_datetime(all_df["date"], errors="coerce").dt.date
+        all_df = all_df.dropna(subset=["date"])
 
     curr_df = (
         all_df[(all_df["date"] >= current_month_start) & (all_df["date"] <= end_date)]
@@ -242,14 +431,25 @@ def get_dashboard_payload(client: Client, user_id: str, period: str) -> dict[str
     )
 
     if not df.empty:
-        df["amount"] = df["amount"].astype(float)
-        df["date"] = pd.to_datetime(df["date"])
+        df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0.0)
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        df = df.dropna(subset=["date"])
 
     kpis = compute_kpis(df, categories, start_date, end_date, all_transactions)
     trend = _serialize_trend_data(df, period)
     category_totals = _serialize_category_totals(df, cat_by_id)
     recent_transactions = _serialize_recent_transactions(df, cat_by_id)
     comparison = _serialize_comparison(all_transactions, end_date, cat_by_id, period)
+    flow = _build_flow_summary(df)
+    category_insights = _build_category_insights(
+        df=df,
+        all_transactions=all_transactions,
+        start_date=start_date,
+        end_date=end_date,
+        cat_by_id=cat_by_id,
+    )[:5]
+    budgets_by_category = _load_user_budgets(client, user_id)
+    budget_progress = _build_budget_progress(category_insights, budgets_by_category)
 
     return {
         "period": period,
@@ -266,4 +466,7 @@ def get_dashboard_payload(client: Client, user_id: str, period: str) -> dict[str
         "category_totals": category_totals,
         "comparison": comparison,
         "recent_transactions": recent_transactions,
+        "flow": flow,
+        "category_insights": category_insights,
+        "budget_progress": budget_progress,
     }
