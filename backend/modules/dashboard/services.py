@@ -216,6 +216,160 @@ def _build_budget_progress(
         )
     return rows
 
+
+def _build_actionable_alerts(
+    category_insights: list[dict], budget_progress: list[dict]
+) -> list[dict[str, Any]]:
+    severity_rank = {"high": 0, "medium": 1, "low": 2}
+    progress_by_category = {
+        row.get("category_id"): row for row in budget_progress if row.get("category_id")
+    }
+
+    alerts: list[dict[str, Any]] = []
+    for index, insight in enumerate(category_insights):
+        category_id = insight.get("category_id")
+        if not category_id:
+            continue
+
+        category_name = insight.get("category_name", "Outros")
+        delta_pct = insight.get("delta_pct")
+        progress = progress_by_category.get(category_id, {})
+        budget_status = progress.get("status")
+
+        severity = None
+        title = ""
+        message = ""
+
+        if budget_status == "exceeded":
+            severity = "high"
+            title = f"Orcamento estourado em {category_name}"
+            message = (
+                f"Gasto atual {progress.get('spent_amount_label', format_brl(progress.get('spent_amount', 0.0)))} "
+                f"acima do limite mensal {progress.get('monthly_limit_label', format_brl(progress.get('monthly_limit', 0.0)))}."
+            )
+        elif isinstance(delta_pct, (int, float)) and delta_pct >= 25:
+            severity = "high"
+            title = f"Alta acentuada em {category_name}"
+            message = f"{category_name} subiu {delta_pct:.1f}% vs periodo anterior."
+        elif budget_status == "warning":
+            severity = "medium"
+            title = f"Atenção ao limite de {category_name}"
+            message = (
+                f"Consumo em {progress.get('spent_amount_label', format_brl(progress.get('spent_amount', 0.0)))} "
+                "proximo do limite mensal."
+            )
+        elif (
+            isinstance(delta_pct, (int, float))
+            and 10 <= delta_pct < 25
+        ):
+            severity = "medium"
+            title = f"Crescimento relevante em {category_name}"
+            message = f"{category_name} aumentou {delta_pct:.1f}% vs periodo anterior."
+        elif index == 0 and float(insight.get("current_amount", 0.0)) > 0:
+            severity = "low"
+            title = f"Maior gasto atual: {category_name}"
+            message = (
+                f"Categoria lidera o periodo com {insight.get('current_amount_label', format_brl(insight.get('current_amount', 0.0)))}."
+            )
+
+        if severity:
+            alerts.append(
+                {
+                    "id": f"alert-{category_id}-{severity}",
+                    "severity": severity,
+                    "title": title,
+                    "message": message,
+                }
+            )
+
+    alerts.sort(key=lambda row: severity_rank.get(row["severity"], 3))
+    return alerts
+
+
+def _build_cut_recommendations(
+    category_insights: list[dict], budget_progress: list[dict]
+) -> list[dict[str, Any]]:
+    progress_by_category = {
+        row.get("category_id"): row for row in budget_progress if row.get("category_id")
+    }
+    amounts = [float(row.get("current_amount", 0.0)) for row in category_insights]
+    median_spent = float(pd.Series(amounts).median()) if amounts else 0.0
+
+    cuts: list[dict[str, Any]] = []
+    for insight in category_insights:
+        category_id = insight.get("category_id")
+        if not category_id:
+            continue
+
+        category_name = insight.get("category_name", "Outros")
+        current_amount = float(insight.get("current_amount", 0.0))
+        progress = progress_by_category.get(category_id, {})
+        spent_amount = float(progress.get("spent_amount", current_amount))
+        monthly_limit = float(progress.get("monthly_limit", 0.0))
+
+        suggested_cut_amount = 0.0
+        rationale = ""
+
+        if monthly_limit > 0:
+            suggested_cut_amount = round(max(spent_amount - monthly_limit, 0.0), 2)
+            if suggested_cut_amount > 0:
+                rationale = "Ajuste para voltar ao limite mensal da categoria."
+        elif current_amount > median_spent and current_amount > 0:
+            suggested_cut_amount = round(current_amount * 0.15, 2)
+            rationale = "Sem limite definido; aplicar corte conservador de 15%."
+
+        if suggested_cut_amount <= 0:
+            continue
+
+        cuts.append(
+            {
+                "category_id": category_id,
+                "category_name": category_name,
+                "suggested_cut_amount": suggested_cut_amount,
+                "suggested_cut_amount_label": format_brl(suggested_cut_amount),
+                "rationale": rationale,
+            }
+        )
+
+    cuts.sort(key=lambda row: row["suggested_cut_amount"], reverse=True)
+    return cuts[:3]
+
+
+def _build_narrative_summary(
+    flow: dict[str, Any], cuts: list[dict], category_insights: list[dict]
+) -> str:
+    net_flow_label = flow.get("net_flow_label", format_brl(float(flow.get("net_flow", 0.0))))
+    net_flow_status = flow.get("net_flow_status", "neutral")
+
+    if cuts:
+        top_categories = ", ".join(cut.get("category_name", "Outros") for cut in cuts[:2])
+        total_cut = sum(float(cut.get("suggested_cut_amount", 0.0)) for cut in cuts)
+        total_cut_label = format_brl(total_cut)
+        if net_flow_status == "negative":
+            return (
+                f"Fluxo liquido atual {net_flow_label}. Exageros em {top_categories}; "
+                f"reduza cerca de {total_cut_label} para melhorar o fechamento do periodo."
+            )
+        return (
+            f"Fluxo liquido atual {net_flow_label}. Ajustes em {top_categories} podem "
+            f"gerar folga adicional de {total_cut_label}."
+        )
+
+    if category_insights:
+        top_category = category_insights[0].get("category_name", "Outros")
+        if net_flow_status == "negative":
+            return (
+                f"Fluxo liquido atual {net_flow_label}. Priorize reduzir {top_category} "
+                "para voltar ao azul."
+            )
+        if net_flow_status == "positive":
+            return (
+                f"Fluxo liquido atual {net_flow_label}. Mantenha controle em {top_category} "
+                "para preservar a tendencia positiva."
+            )
+
+    return f"Fluxo liquido atual {net_flow_label}. Sem alertas relevantes no periodo."
+
 def compute_kpis(
     df: pd.DataFrame,
     categories: dict,
@@ -450,6 +604,9 @@ def get_dashboard_payload(client: Client, user_id: str, period: str) -> dict[str
     )[:5]
     budgets_by_category = _load_user_budgets(client, user_id)
     budget_progress = _build_budget_progress(category_insights, budgets_by_category)
+    alerts = _build_actionable_alerts(category_insights, budget_progress)
+    cuts = _build_cut_recommendations(category_insights, budget_progress)
+    narrative_summary = _build_narrative_summary(flow, cuts, category_insights)
 
     return {
         "period": period,
@@ -469,4 +626,8 @@ def get_dashboard_payload(client: Client, user_id: str, period: str) -> dict[str
         "flow": flow,
         "category_insights": category_insights,
         "budget_progress": budget_progress,
+        "alerts": alerts,
+        "cuts": cuts,
+        "narrative_summary": narrative_summary,
+        "disclaimer": "Nao inclui saldo anterior da conta.",
     }
