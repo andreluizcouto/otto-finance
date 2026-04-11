@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: verifying
 stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-04-11T13:51:52.941Z"
+last_updated: "2026-04-11T15:37:33.756Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 7
@@ -94,6 +94,8 @@ Recent decisions affecting current work:
 - [Phase 06]: Cut recommendations now prioritize budget excess and fallback to 15% reduction only for above-median no-limit categories.
 - [Phase 06]: Fluxo do periodo ganhou semantica explicita com badge de status e disclaimer para evitar confusao com saldo.
 - [Phase 06]: Orcamento, alertas e cortes usam estados visuais legiveis com risco por severidade e progresso capado em 100%.
+- [Quick 260411-ha4]: Dashboard contract reduced to core-v1 keys only (`upload`, `classification`, `categories`, `comparison`, `saving_tips`).
+- [Quick 260411-ha4]: Dashboard UI now prioritizes action flow (upload PDF + classify IA) and refreshes data after each action.
 
 ### Roadmap Evolution
 
@@ -124,9 +126,10 @@ None yet.
 | 260408-d9g | Convert sidebar to top navbar | 2026-04-08 | c8b98e1 | [260408-d9g-convert-sidebar-to-top-navbar](./quick/260408-d9g-convert-sidebar-to-top-navbar/) |
 | 260408-erl | Fix React page inconsistencies (error handling, API, components, dead code) | 2026-04-08 | 351cae4 | [260408-erl-analise-todo-o-projeto-e-procure-por-inc](./quick/260408-erl-analise-todo-o-projeto-e-procure-por-inc/) |
 | 260409-lu3 | Auditoria e limpeza completa de dados fake/mock no frontend React, removendo mocks financeiros e mantendo só consumo real de API, com relatório final de arquivos alterados/removidos/estáticos e validação manual. | 2026-04-09 | 7bf4ed8 | [260409-lu3-auditoria-e-limpeza-completa-de-dados-fa](./quick/260409-lu3-auditoria-e-limpeza-completa-de-dados-fa/) |
+| 260411-ha4 | Recentrar Dashboard no núcleo v1 simplificado com contrato mínimo e UI orientada a ação. | 2026-04-11 | 7c38a8d | [260411-ha4-o-produto-desviou-do-n-cleo-v1-simplific](./quick/260411-ha4-o-produto-desviou-do-n-cleo-v1-simplific/) |
 
 ## Session Continuity
 
-Last session: 2026-04-11T13:51:15.142Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-04-11T15:37:33.756Z
+Stopped at: Completed 260411-ha4 quick task
 Resume file: None
