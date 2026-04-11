@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03.1-pdf-import-01-PLAN.md
-last_updated: "2026-04-09T18:12:52.621Z"
-last_activity: 2026-04-09
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-04-11T13:41:05.576Z"
+last_activity: 2026-04-11
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 15
+  completed_plans: 14
   percent: 40
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Classificacao automatica de gastos com IA + coach financeiro proativo que cutuca o usuario via WhatsApp para atingir metas
-**Current focus:** Phase 03.1 — pdf-import
+**Current focus:** Phase 06 — dashboard-ui-ux-pro-max-fluxo-liquido-top-categorias-orcamento-por-categoria-alertas-acionaveis-e-cortes-recomendados
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 06 (dashboard-ui-ux-pro-max-fluxo-liquido-top-categorias-orcamento-por-categoria-alertas-acionaveis-e-cortes-recomendados) — EXECUTING
+Plan: 2 of 2
 Next: Phase 03 (AI Classification)
 Status: Ready to execute
-Last activity: 2026-04-09 - Completed quick task 260409-lu3: Auditoria e limpeza completa de dados fake/mock no frontend React
+Last activity: 2026-04-11
 
 Progress: ████░░░░░░ 40%
 
@@ -60,6 +60,7 @@ Progress: ████░░░░░░ 40%
 | Phase 03-ai-classification P04 | -161 | 2 tasks | 5 files |
 | Phase 03 P05 | 2 | 2 tasks | 3 files |
 | Phase 03.1-pdf-import P01 | 2 | 1 tasks | 5 files |
+| Phase 06 P01 | 6 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -88,10 +89,13 @@ Recent decisions affecting current work:
 - [Phase 03]: Enforce deterministic custom slug handling via canonical mapping or outros low-confidence fallback.
 - [Phase 03.1-pdf-import]: Protected /api/analyze-pdf and /api/transactions/import with JWT dependencies and server-sourced user_id.
 - [Phase 03.1-pdf-import]: PDF import normalizes DD/MM/YYYY and debit/credit signs, skipping duplicates by (user_id,date,amount,description).
+- [Phase 06]: Dashboard analytics moved to backend helper contract with deterministic thresholds for flow, budget, alerts, and cuts.
+- [Phase 06]: Cut recommendations now prioritize budget excess and fallback to 15% reduction only for above-median no-limit categories.
 
 ### Roadmap Evolution
 
 - Phase 03.1 inserted after Phase 3: PDF Import (URGENT)
+- Phase 6 added: Dashboard UI/UX pro max: fluxo liquido, top categorias, orcamento por categoria, alertas acionaveis e cortes recomendados
 
 ### Pending Todos
 
@@ -120,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T18:01:36.807Z
-Stopped at: Completed 03.1-pdf-import-01-PLAN.md
+Last session: 2026-04-11T13:41:05.572Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None

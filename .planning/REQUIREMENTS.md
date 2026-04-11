@@ -30,14 +30,14 @@
 ### Dashboard
 
 - [ ] **DASH-01**: User can view spending breakdown by category with charts
-- [ ] **DASH-02**: User can view spending by time period (week, month)
-- [ ] **DASH-03**: User can see spending trend charts over time
-- [ ] **DASH-04**: User can compare current month vs previous month
+- [x] **DASH-02**: User can view spending by time period (week, month)
+- [x] **DASH-03**: User can see spending trend charts over time
+- [x] **DASH-04**: User can compare current month vs previous month
 
 ### Budget and Alerts
 
 - [ ] **BUDG-01**: User can set a spending limit per category
-- [ ] **BUDG-02**: Dashboard shows visual progress of spending vs limit per category
+- [x] **BUDG-02**: Dashboard shows visual progress of spending vs limit per category
 - [ ] **BUDG-03**: User receives WhatsApp alert when spending exceeds category limit
 - [ ] **BUDG-04**: User receives preventive WhatsApp alert at 80% of category limit
 
@@ -111,11 +111,11 @@
 | AICL-05 | Phase 3 | Complete |
 | AICL-06 | Phase 3 | Complete |
 | DASH-01 | Phase 2 | Pending |
-| DASH-02 | Phase 2 | Pending |
-| DASH-03 | Phase 2 | Pending |
-| DASH-04 | Phase 2 | Pending |
+| DASH-02 | Phase 2 | Complete |
+| DASH-03 | Phase 2 | Complete |
+| DASH-04 | Phase 2 | Complete |
 | BUDG-01 | Phase 4 | Pending |
-| BUDG-02 | Phase 4 | Pending |
+| BUDG-02 | Phase 4 | Complete |
 | BUDG-03 | Phase 4 | Pending |
 | BUDG-04 | Phase 4 | Pending |
 | COACH-01 | Phase 5 | Pending |

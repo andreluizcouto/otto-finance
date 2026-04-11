@@ -130,3 +130,14 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 3.1. PDF Import | 0/2 | Planning complete | - |
 | 4. Budgets & WhatsApp Alerts | 0/0 | Not started | - |
 | 5. AI Coach & Goals | 0/0 | Not started | - |
+
+### Phase 6: Dashboard UI/UX pro max: fluxo liquido, top categorias, orcamento por categoria, alertas acionaveis e cortes recomendados
+
+**Goal:** Dashboard orientado a decisao financeira, deixando claro se o usuario melhora ou piora no periodo, onde exagera e quais cortes priorizar
+**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, BUDG-02, COACH-01
+**Depends on:** Phase 5
+**Plans:** 2 plans
+
+Plans:
+- [x] 06-01-PLAN.md -- Backend: contrato analitico de fluxo, exageros por categoria, progresso de orcamento, alertas e cortes recomendados
+- [ ] 06-02-PLAN.md -- Frontend: redesign do dashboard para responder 3 perguntas de decisao com linguagem acionavel
