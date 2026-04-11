@@ -22,6 +22,9 @@
   --color-accent: #E8E4DC;
   --color-accent-foreground: #0A0A0A;
   --color-destructive: #ef4444;
+  --color-risk-high: #fb7185;
+  --color-risk-medium: #fbbf24;
+  --color-risk-low: #34d399;
   --color-border: rgba(200, 200, 200, 0.1);
   --color-input: #1C1C1E;
   --color-input-background: #0A0A0A;
