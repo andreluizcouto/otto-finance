@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from typing import Annotated, Any
+import unicodedata
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client
 
@@ -86,6 +87,20 @@ def _normalize_data(value: Any) -> str:
         raise ValueError("Campo 'data' invalido.") from exc
 
 
+def _normalize_source(value: Any) -> str | None:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return None
+    normalized = (
+        unicodedata.normalize("NFKD", raw).encode("ascii", "ignore").decode("ascii")
+    )
+    if normalized in {"bank_statement", "statement", "extrato", "banco", "bank"}:
+        return "bank_statement"
+    if normalized in {"credit_card", "card", "fatura", "cartao", "cartao_credito", "invoice"}:
+        return "credit_card"
+    return None
+
+
 def _normalize_transaction_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     normalized: list[dict[str, Any]] = []
 
@@ -105,6 +120,7 @@ def _normalize_transaction_items(items: list[dict[str, Any]]) -> list[dict[str, 
             raise ValueError("Campo 'valor' invalido.")
 
         tipo = _normalize_tipo(item.get("tipo") or item.get("type"))
+        origem = _normalize_source(item.get("origem") or item.get("source"))
 
         normalized.append(
             {
@@ -112,6 +128,7 @@ def _normalize_transaction_items(items: list[dict[str, Any]]) -> list[dict[str, 
                 "descricao": str(descricao),
                 "valor": float(valor),
                 "tipo": tipo,
+                "origem": origem,
             }
         )
 
@@ -151,11 +168,11 @@ def correct_category(
     user: Annotated[dict, Depends(get_current_user)] = None,
     client: Annotated[Client, Depends(get_current_client)] = None,
 ) -> dict:
-    _ = user
     result = correct_transaction_category(
         client=client,
         transaction_id=transaction_id,
-        category_id=payload.category_id,
+        category_id=str(payload.category_id),
+        user_id=user["id"],
     )
     if not result.get("success"):
         raise HTTPException(

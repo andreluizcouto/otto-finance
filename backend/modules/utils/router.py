@@ -1,4 +1,6 @@
 import base64
+import json
+import logging
 import os
 from io import BytesIO
 from typing import Annotated
@@ -8,66 +10,86 @@ import pikepdf
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from backend.core import get_current_user
+from backend.modules.transactions.router import (
+    _normalize_transaction_items,
+    _parse_transactions_from_result,
+)
+from .pdf_text_extraction import (
+    extract_text_from_pdf_bytes,
+    has_meaningful_financial_text,
+    infer_source_from_text,
+    truncate_text_for_llm,
+)
 
 router = APIRouter(prefix="/api", tags=["utils"])
-
-@router.post("/decrypt")
-async def decrypt_pdf(
-    file: UploadFile = File(...),
-    password: str = Form(...)
-):
-    """
-    Descriptografa um PDF (ex: fatura do BB) usando a senha fornecida.
-    Retorna o PDF sem criptografia para processamento posterior.
-    """
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="O arquivo deve ser um PDF.")
-
-    try:
-        pdf_content = await file.read()
-
-        with pikepdf.open(BytesIO(pdf_content), password=password) as pdf:
-            output_buffer = BytesIO()
-            pdf.save(output_buffer)
-            output_buffer.seek(0)
-
-            filename = f"decrypted_{file.filename}"
-
-            return StreamingResponse(
-                output_buffer,
-                media_type="application/pdf",
-                headers={"Content-Disposition": f"attachment; filename={filename}"}
-            )
-
-    except pikepdf.PasswordError:
-        raise HTTPException(status_code=401, detail="Senha incorreta para o PDF.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao processar PDF: {str(e)}")
-    finally:
-        await file.close()
+logger = logging.getLogger(__name__)
 
 
-@router.post("/analyze-pdf")
-async def analyze_pdf(
-    file: UploadFile = File(...),
-    user: Annotated[dict, Depends(get_current_user)] = None,
-):
-    """
-    Recebe um PDF já descriptografado, envia para o Claude Haiku
-    e retorna as transações extraídas em JSON.
-    """
-    _ = user
-    pdf_content = await file.read()
-    pdf_base64 = base64.standard_b64encode(pdf_content).decode("utf-8")
+def _build_text_extraction_prompt(extracted_text: str, source_hint: str | None) -> str:
+    source_instruction = (
+        (
+            f'Use origem="{source_hint}" como padrao para as transacoes deste documento. '
+            "Se houver evidencia clara de linha no debito, use origem=\"bank_statement\" nessa linha."
+        )
+        if source_hint
+        else (
+            "Identifique a origem de cada transacao: "
+            '"bank_statement" para extrato/conta e "credit_card" para fatura.'
+        )
+    )
 
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY não configurada.")
+    return (
+        "Voce recebera TEXTO bruto extraido de um PDF financeiro brasileiro (extrato ou fatura).\n"
+        "Nao invente nenhuma transacao. Use apenas linhas explicitamente presentes no texto.\n"
+        "Ignore linhas administrativas (saldo anterior, saldo do dia, limite, vencimento, resumo, pagamento de fatura, encargos).\n"
+        "Retorne SOMENTE JSON puro no formato:\n"
+        '{"transacoes":[{"data":"DD/MM/AAAA","descricao":"...","valor":0.00,"tipo":"debito|credito","origem":"bank_statement|credit_card"}]}\n'
+        "Regras:\n"
+        "1) campo valor sempre positivo\n"
+        "2) tipo indica direcao (debito = saida, credito = entrada)\n"
+        "3) normalize datas para DD/MM/AAAA\n"
+        f"4) {source_instruction}\n\n"
+        "TEXTO EXTRAIDO:\n"
+        f"{extracted_text}"
+    )
 
-    client = anthropic.Anthropic(api_key=api_key)
 
+def _coerce_transactions_json_result(raw_result: str) -> str:
+    items = _parse_transactions_from_result(raw_result)
+    normalized = _normalize_transaction_items(items)
+    return json.dumps({"transacoes": normalized}, ensure_ascii=False)
+
+
+def _run_anthropic_text_analysis(
+    client: anthropic.Anthropic,
+    model_name: str,
+    extracted_text: str,
+) -> str:
+    prompt = _build_text_extraction_prompt(
+        extracted_text=truncate_text_for_llm(extracted_text),
+        source_hint=infer_source_from_text(extracted_text),
+    )
     message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model=model_name,
+        max_tokens=4096,
+        messages=[
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": prompt}],
+            }
+        ],
+    )
+    return message.content[0].text
+
+
+def _run_anthropic_document_analysis(
+    client: anthropic.Anthropic,
+    model_name: str,
+    pdf_content: bytes,
+) -> str:
+    pdf_base64 = base64.standard_b64encode(pdf_content).decode("utf-8")
+    message = client.messages.create(
+        model=model_name,
         max_tokens=4096,
         messages=[
             {
@@ -84,17 +106,118 @@ async def analyze_pdf(
                     {
                         "type": "text",
                         "text": (
-                            "Extraia todas as transações deste extrato bancário. "
+                            "Extraia todas as transacoes deste PDF financeiro (extrato bancario ou fatura de cartao). "
                             "Retorne SOMENTE o JSON puro, sem markdown, sem ```json, sem nenhum texto antes ou depois. "
+                            "Cada transacao deve incluir a origem no campo origem: "
+                            '"bank_statement" para extrato bancario e compras no debito; '
+                            '"credit_card" para compras da fatura do cartao. '
+                            'Se uma compra estiver explicitamente no debito, use origem="bank_statement". '
+                            "Ignore linhas administrativas (ex.: saldo anterior, saldo do dia, limite, vencimento, pagamento de fatura). "
                             "Formato exato: "
-                            '{\"transacoes\": [{\"data\": \"DD/MM/AAAA\", '
-                            '"descricao\": \"...\", \"valor\": 0.00, '
-                            '"tipo\": \"debito\" ou \"credito\"}]}'
+                            '{"transacoes": [{"data": "DD/MM/AAAA", '
+                            '"descricao": "...", "valor": 0.00, '
+                            '"tipo": "debito" ou "credito", '
+                            '"origem": "bank_statement" ou "credit_card"}]}'
                         ),
                     },
                 ],
             }
         ],
     )
+    return message.content[0].text
 
-    return {"result": message.content[0].text}
+MAX_PDF_BYTES = 20 * 1024 * 1024  # 20 MB
+
+
+@router.post("/decrypt")
+async def decrypt_pdf(
+    file: UploadFile = File(...),
+    password: str = Form(...),
+    user: Annotated[dict, Depends(get_current_user)] = None,
+):
+    """
+    Descriptografa um PDF (ex: fatura do BB) usando a senha fornecida.
+    Retorna o PDF sem criptografia para processamento posterior.
+    """
+    _ = user
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="O arquivo deve ser um PDF.")
+
+    try:
+        pdf_content = await file.read(MAX_PDF_BYTES + 1)
+        if len(pdf_content) > MAX_PDF_BYTES:
+            raise HTTPException(status_code=413, detail="PDF muito grande. Limite: 20 MB.")
+
+        with pikepdf.open(BytesIO(pdf_content), password=password) as pdf:
+            output_buffer = BytesIO()
+            pdf.save(output_buffer)
+            output_buffer.seek(0)
+
+            import os as _os
+            safe_filename = "decrypted_" + _os.path.basename(file.filename or "file.pdf").replace('"', "")
+
+            return StreamingResponse(
+                output_buffer,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{safe_filename}"'},
+            )
+
+    except HTTPException:
+        raise
+    except pikepdf.PasswordError:
+        raise HTTPException(status_code=401, detail="Senha incorreta para o PDF.")
+    except Exception:
+        logger.exception("Erro ao descriptografar PDF")
+        raise HTTPException(status_code=500, detail="Erro ao processar PDF.")
+    finally:
+        await file.close()
+
+
+@router.post("/analyze-pdf")
+async def analyze_pdf(
+    file: UploadFile = File(...),
+    user: Annotated[dict, Depends(get_current_user)] = None,
+):
+    """
+    Recebe um PDF ja descriptografado, prioriza extracao textual do PDF
+    e usa IA apenas para estruturar os dados em JSON.
+    """
+    _ = user
+    pdf_content = await file.read(MAX_PDF_BYTES + 1)
+    if len(pdf_content) > MAX_PDF_BYTES:
+        raise HTTPException(status_code=413, detail="PDF muito grande. Limite: 20 MB.")
+
+    extracted_text = ""
+    try:
+        extracted_text = extract_text_from_pdf_bytes(pdf_content)
+    except Exception:
+        logger.exception("Falha ao extrair texto do PDF via camada textual.")
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY não configurada.")
+
+    model_name = os.getenv("ANTHROPIC_PDF_MODEL", "claude-sonnet-4-6").strip()
+
+    client = anthropic.Anthropic(api_key=api_key)
+
+    if has_meaningful_financial_text(extracted_text):
+        try:
+            raw_result = _run_anthropic_text_analysis(client, model_name, extracted_text)
+            return {
+                "result": _coerce_transactions_json_result(raw_result),
+                "mode": "text-first",
+                "text_chars": len(extracted_text),
+            }
+        except Exception:
+            logger.exception("Falha no modo text-first. Tentando fallback com documento.")
+
+    try:
+        raw_result = _run_anthropic_document_analysis(client, model_name, pdf_content)
+        return {
+            "result": _coerce_transactions_json_result(raw_result),
+            "mode": "document-fallback",
+            "text_chars": len(extracted_text),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Falha ao analisar PDF: {str(exc)}")

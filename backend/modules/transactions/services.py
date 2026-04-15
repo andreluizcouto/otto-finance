@@ -1,9 +1,12 @@
+import logging
 from datetime import datetime
 from typing import Any
 import unicodedata
 import httpx
 from supabase import Client
 from backend.core import get_make_webhook_url
+
+logger = logging.getLogger(__name__)
 
 # ==============================================================================
 # CLASSIFICATION LOGIC
@@ -31,6 +34,18 @@ _MERCHANT_PREFIX_LOOKUP: list[tuple[str, str]] = [
     ("VTEX", "loja virtual"),
     ("LOJA", "loja virtual"),
 ]
+
+_CATEGORY_HINTS: dict[str, tuple[str, ...]] = {
+    "alimentacao": ("mercado", "supermercado", "padaria", "restaurante", "lanchonete"),
+    "delivery": ("ifood", "rappi", "uber eats", "entrega"),
+    "transporte": ("uber", "99", "taxi", "combustivel", "posto", "estacionamento", "metrô", "metro"),
+    "moradia": ("aluguel", "condominio", "energia", "luz", "agua", "saneamento", "gas", "internet"),
+    "saude": ("farmacia", "hospital", "consulta", "plano de saude", "laboratorio"),
+    "lazer": ("cinema", "show", "bar", "viagem", "hotel"),
+    "educacao": ("curso", "faculdade", "escola", "livro"),
+    "compras": ("amazon", "mercado livre", "riachuelo", "shopping", "loja"),
+    "assinaturas": ("netflix", "spotify", "prime video", "youtube", "assinatura"),
+}
 
 def resolve_merchant_name(merchant: str) -> str:
     normalized = merchant.upper().strip()
@@ -78,10 +93,83 @@ def get_unclassified_transactions(client: Any, user_id: str) -> list[dict[str, A
     )
     return resp.data or []
 
+
+def _infer_category_slug(description: str, merchant_name: str) -> tuple[str, str]:
+    text = _normalize_text(f"{description} {merchant_name}")
+    for slug, hints in _CATEGORY_HINTS.items():
+        if any(hint in text for hint in hints):
+            if slug in {"delivery", "assinaturas", "compras"}:
+                return (slug, "high")
+            return (slug, "medium")
+    return ("outros", "low")
+
+
+def _slug_to_category_id(categories: list[dict[str, Any]]) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for category in categories:
+        slug = str(category.get("slug") or "").strip()
+        category_id = str(category.get("id") or "").strip()
+        if slug and category_id:
+            result[slug] = category_id
+    return result
+
+
+def _fallback_local_classification(
+    client: Any,
+    user_id: str,
+    unclassified: list[dict[str, Any]],
+    categories: list[dict[str, Any]],
+) -> dict[str, Any]:
+    slug_map = _slug_to_category_id(categories)
+    fallback_category_id = slug_map.get("outros") or next(iter(slug_map.values()), None)
+
+    if not fallback_category_id:
+        return {"success": False, "classified_count": 0, "skipped_count": len(unclassified)}
+
+    classified_count = 0
+    skipped_count = 0
+
+    for transaction in unclassified:
+        try:
+            transaction_id = transaction.get("id")
+            if not transaction_id:
+                skipped_count += 1
+                continue
+
+            raw_description = str(transaction.get("description") or "")
+            resolved_merchant = resolve_merchant_name(str(transaction.get("merchant_name") or raw_description))
+            slug, confidence = _infer_category_slug(raw_description, resolved_merchant)
+            category_id = slug_map.get(slug, fallback_category_id)
+
+            (
+                client.table("transactions")
+                .update(
+                    {
+                        "merchant_name": resolved_merchant or None,
+                        "category_id": category_id,
+                        "confidence_score": confidence,
+                        "manually_reviewed": False,
+                    }
+                )
+                .eq("id", transaction_id)
+                .eq("user_id", user_id)
+                .execute()
+            )
+            classified_count += 1
+        except Exception:
+            skipped_count += 1
+
+    return {
+        "success": True,
+        "classified_count": classified_count,
+        "skipped_count": skipped_count,
+        "fallback_used": True,
+    }
+
 def trigger_classification(client: Any, user_id: str) -> dict[str, Any]:
     unclassified = get_unclassified_transactions(client, user_id)
     if not unclassified:
-        return {"success": True, "classified_count": 0}
+        return {"success": True, "classified_count": 0, "skipped_count": 0}
 
     cat_resp = (
         client.table("categories")
@@ -98,14 +186,27 @@ def trigger_classification(client: Any, user_id: str) -> dict[str, Any]:
         response = httpx.post(webhook_url, json=payload, timeout=60.0)
         response.raise_for_status()
         result = response.json()
-        count = result.get("classified_count", len(unclassified))
-        return {"success": True, "classified_count": count}
+        count = int(result.get("classified_count", len(unclassified)))
+        skipped_count = max(len(unclassified) - count, 0)
+        return {"success": True, "classified_count": count, "skipped_count": skipped_count}
     except httpx.TimeoutException:
+        fallback = _fallback_local_classification(client, user_id, unclassified, categories)
+        if fallback.get("success"):
+            fallback["warning"] = (
+                "Classificacao em modo local aplicada porque o servico externo nao respondeu."
+            )
+            return fallback
         return {
             "success": False,
             "error": "O servico de classificacao nao respondeu. Tente novamente em alguns minutos.",
         }
     except Exception:
+        fallback = _fallback_local_classification(client, user_id, unclassified, categories)
+        if fallback.get("success"):
+            fallback["warning"] = (
+                "Classificacao em modo local aplicada porque o servico externo estava indisponivel."
+            )
+            return fallback
         return {
             "success": False,
             "error": "Erro ao conectar com o servico de classificacao. Tente novamente.",
@@ -172,18 +273,40 @@ def get_openai_json_schema() -> dict[str, Any]:
 # ==============================================================================
 _ADMIN_TRANSACTION_TERMS = (
     "saldo anterior",
+    "saldo do dia",
     "saldo fatura anterior",
+    "resumo da fatura",
+    "compras nacionais",
+    "compras internacionais",
+    "tarifas, encargos e multas",
+    "limite unico",
+    "limite único",
+    "vencimento",
     "pgto. cash",
-    "pagamento de boleto",
-    "pagamento boleto",
     "pagamento pix cartao",
     "pagamento pix cartão",
-    "pagamento conta",
     "pagamento fatura",
+    "pagamento de fatura",
+    "banco bradescard",
+    "ourocard",
+    "cartao de credito",
+    "cartão de crédito",
+    "pagamento minimo",
+    "pagamento mínimo",
     "juros saque pix",
     "iof",
     "anuidade",
     "encargo",
+    "tarifa",
+)
+
+_DEBIT_CARD_TERMS = (
+    "compra no debito",
+    "compra debito",
+    "cartao de debito",
+    "cartao debito",
+    "via debito",
+    "debito a vista",
 )
 
 
@@ -196,11 +319,42 @@ def _normalize_text(value: str) -> str:
     )
 
 
+def _normalize_source(value: Any) -> str | None:
+    normalized = _normalize_text(str(value or ""))
+    if normalized in {"bank_statement", "statement", "extrato", "banco", "bank"}:
+        return "bank_statement"
+    if normalized in {"credit_card", "card", "fatura", "cartao", "cartao_credito", "invoice"}:
+        return "credit_card"
+    return None
+
+
+def _canonical_description(value: str) -> str:
+    normalized = _normalize_text(value)
+    for noisy_term in (
+        "cartao de debito",
+        "cartao debito",
+        "compra no debito",
+        "compra debito",
+        "cartao de credito",
+        "cartao credito",
+    ):
+        normalized = normalized.replace(noisy_term, " ")
+    cleaned = []
+    for ch in normalized:
+        cleaned.append(ch if ch.isalnum() else " ")
+    return " ".join("".join(cleaned).split())
+
+
 def _is_administrative_transaction(description: str) -> bool:
     normalized = _normalize_text(description)
     if normalized == "saldo":
         return True
     return any(term in normalized for term in _ADMIN_TRANSACTION_TERMS)
+
+
+def _is_debit_card_purchase(description: str) -> bool:
+    normalized = _normalize_text(description)
+    return any(term in normalized for term in _DEBIT_CARD_TERMS)
 
 
 def confidence_label(score: str | None) -> str:
@@ -279,6 +433,7 @@ def correct_transaction_category(
     client: Client,
     transaction_id: str,
     category_id: str,
+    user_id: str,
 ) -> dict[str, Any]:
     try:
         (
@@ -291,6 +446,7 @@ def correct_transaction_category(
                 }
             )
             .eq("id", transaction_id)
+            .eq("user_id", user_id)
             .execute()
         )
         return {"success": True}
@@ -312,21 +468,32 @@ def import_transactions_from_pdf(
             raw_amount = float(item["valor"])
             amount = raw_amount if item["tipo"] == "credito" else -raw_amount
             description = " ".join(str(item["descricao"]).split())
+            source = _normalize_source(item.get("origem") or item.get("source"))
 
             if _is_administrative_transaction(description):
                 skipped_count += 1
                 continue
 
+            if source == "credit_card" and _is_debit_card_purchase(description):
+                skipped_count += 1
+                continue
+
             duplicate_resp = (
                 client.table("transactions")
-                .select("id")
+                .select("id, description")
                 .eq("user_id", user_id)
                 .eq("date", date_str)
                 .eq("amount", amount)
-                .eq("description", description)
                 .execute()
             )
-            if duplicate_resp.data:
+            canonical_incoming = _canonical_description(description)
+            existing_rows = duplicate_resp.data or []
+            has_duplicate = any(
+                _canonical_description(str(row.get("description", "")))
+                == canonical_incoming
+                for row in existing_rows
+            )
+            if has_duplicate:
                 skipped_count += 1
                 continue
 
@@ -347,7 +514,8 @@ def import_transactions_from_pdf(
                 .execute()
             )
             imported_count += 1
-    except Exception as e:
-        return {"imported": 0, "skipped": 0, "error": str(e)}
+    except Exception:
+        logger.exception("Erro ao importar transacoes do PDF para user_id=%s", user_id)
+        return {"imported": 0, "skipped": 0, "error": "Erro interno ao importar transacoes."}
 
     return {"imported": imported_count, "skipped": skipped_count}

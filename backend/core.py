@@ -64,6 +64,8 @@ def get_access_token(
 def get_refresh_token(
     refresh_token: Annotated[str | None, Header(alias="X-Refresh-Token")] = None,
 ) -> str | None:
+    if refresh_token and len(refresh_token) > 2048:
+        raise HTTPException(status_code=400, detail="Refresh token invalido.")
     return refresh_token
 
 def get_current_user(access_token: Annotated[str, Depends(get_access_token)]) -> dict:

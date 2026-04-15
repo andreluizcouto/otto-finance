@@ -1,9 +1,10 @@
 from supabase import Client
 
-def list_categories(client: Client) -> list[dict]:
+def list_categories(client: Client, user_id: str) -> list[dict]:
     response = (
         client.table("categories")
-        .select("id, name, slug, emoji, color_hex, is_default, user_id")
+        .select("id, name, slug, emoji, color_hex, is_default")
+        .or_(f"is_default.eq.true,user_id.eq.{user_id}")
         .order("is_default", desc=True)
         .order("name")
         .execute()
@@ -21,7 +22,13 @@ def add_category(
     if not name:
         return {"success": False, "error": "O nome da categoria nao pode estar vazio."}
 
-    existing = client.table("categories").select("id").ilike("name", name).execute()
+    existing = (
+        client.table("categories")
+        .select("id")
+        .ilike("name", name)
+        .or_(f"is_default.eq.true,user_id.eq.{user_id}")
+        .execute()
+    )
     if existing.data:
         return {"success": False, "error": "Ja existe uma categoria com esse nome."}
 

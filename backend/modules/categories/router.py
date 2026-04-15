@@ -18,8 +18,7 @@ def get_categories(
     user: Annotated[dict, Depends(get_current_user)] = None,
     client: Annotated[Client, Depends(get_current_client)] = None,
 ) -> dict:
-    _ = user
-    return {"categories": list_categories(client)}
+    return {"categories": list_categories(client, user_id=user["id"])}
 
 @router.post("/categories")
 def create_category(
