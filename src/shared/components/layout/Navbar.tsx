@@ -17,6 +17,13 @@ export function Navbar() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<{ email: string } | null>(null);
+
+  useEffect(() => {
+    apiFetch('/api/auth/me')
+      .then((data) => setUser(data.user ?? data))
+      .catch(() => {});
+  }, []);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -78,7 +85,7 @@ export function Navbar() {
               onClick={() => setDropdownOpen((prev) => !prev)}
             >
               <div className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] otto-label text-foreground grayscale transition-all group-hover:border-white/20">
-                JD
+                {user?.email ? user.email.slice(0, 2).toUpperCase() : '..'}
               </div>
               <ChevronDown size={14} className="text-muted-foreground group-hover:text-foreground transition-colors" />
             </div>
@@ -86,8 +93,8 @@ export function Navbar() {
             {dropdownOpen && (
               <div className="absolute top-[52px] right-0 w-48 glass-card bg-card/90 border border-border rounded-xl py-3 z-50 shadow-2xl backdrop-blur-3xl">
                 <div className="px-4 py-2 mb-2 border-b border-border">
-                  <p className="text-[10px] otto-label text-muted-foreground">John Doe</p>
-                  <p className="text-[9px] text-muted-foreground/50 truncate">john@otto.private</p>
+                  <p className="text-[10px] otto-label text-muted-foreground">{user?.email ? user.email.split('@')[0] : '...'}</p>
+                  <p className="text-[9px] text-muted-foreground/50 truncate">{user?.email ?? '...'}</p>
                 </div>
                 <NavLink
                   to="/settings"

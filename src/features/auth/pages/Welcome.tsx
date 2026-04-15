@@ -18,7 +18,7 @@ export function Welcome() {
         <Button
           size="lg"
           className="w-full rounded-xl py-8 text-xs otto-label tracking-[0.2em]"
-          onClick={() => navigate('/onboarding/1')}
+          onClick={() => navigate('/signup')}
         >
           Secure Access
         </Button>

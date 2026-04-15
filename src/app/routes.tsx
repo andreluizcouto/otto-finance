@@ -1,7 +1,8 @@
 import { createBrowserRouter } from "react-router";
-import { AuthLayout, MainLayout } from "@/shared/components/layout";
+import { AuthLayout, MainLayout, ProtectedAuthLayout } from "@/shared/components/layout";
 import { Welcome } from "@/features/auth/pages/Welcome";
 import { Login } from "@/features/auth/pages/Login";
+import { Signup } from "@/features/auth/pages/Signup";
 import { Onboarding1 } from "@/features/onboarding/pages/Onboarding1";
 import { Onboarding2 } from "@/features/onboarding/pages/Onboarding2";
 import { Onboarding3 } from "@/features/onboarding/pages/Onboarding3";
@@ -19,6 +20,13 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Welcome },
       { path: "login", Component: Login },
+      { path: "signup", Component: Signup },
+    ],
+  },
+  {
+    path: "/",
+    Component: ProtectedAuthLayout,
+    children: [
       { path: "onboarding/1", Component: Onboarding1 },
       { path: "onboarding/2", Component: Onboarding2 },
       { path: "onboarding/3", Component: Onboarding3 },

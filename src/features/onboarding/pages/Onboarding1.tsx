@@ -8,12 +8,8 @@ export function Onboarding1() {
   const [selectedGoal, setSelectedGoal] = useState<string | null>("economizar");
   const [frequency, setFrequency] = useState("diario");
   const [aiEnabled, setAiEnabled] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleNext = () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    localStorage.setItem('onboarding_step1', JSON.stringify({ selectedGoal, frequency, aiEnabled }));
     navigate('/onboarding/2');
   };
 
@@ -114,7 +110,6 @@ export function Onboarding1() {
           <Button
             size="lg"
             onClick={handleNext}
-            disabled={isSubmitting}
             className="w-full md:w-auto px-12 py-8 text-[10px] otto-label tracking-[0.2em]"
           >
             CONFIRM & CONTINUE →

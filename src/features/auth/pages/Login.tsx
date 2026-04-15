@@ -88,7 +88,7 @@ export function Login() {
         </form>
 
         <p className="text-center text-[10px] otto-label text-muted-foreground">
-          New to OTTO? <button onClick={() => navigate('/onboarding/1')} className="text-foreground hover:underline transition-all font-medium">Request Access</button>
+          New to OTTO? <button onClick={() => navigate('/signup')} className="text-foreground hover:underline transition-all font-medium">Request Access</button>
         </p>
       </div>
     </div>

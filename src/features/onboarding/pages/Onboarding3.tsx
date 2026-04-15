@@ -12,12 +12,6 @@ export function Onboarding3() {
   const [alertLeisure, setAlertLeisure] = useState(true);
 
   const handleFinish = () => {
-    const step1 = JSON.parse(localStorage.getItem('onboarding_step1') || '{}');
-    localStorage.setItem('onboarding_complete', JSON.stringify({
-      ...step1,
-      budgets: { essentials, leisure },
-      alerts: { essentials: alertEssentials, leisure: alertLeisure },
-    }));
     navigate('/dashboard');
   };
 

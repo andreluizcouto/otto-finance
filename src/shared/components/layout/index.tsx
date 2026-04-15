@@ -33,3 +33,19 @@ export function AuthLayout() {
     </div>
   );
 }
+
+export function ProtectedAuthLayout() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <Outlet />
+    </div>
+  );
+}

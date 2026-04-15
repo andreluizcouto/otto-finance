@@ -7,7 +7,6 @@ export function Onboarding2() {
   const navigate = useNavigate();
 
   const handleNext = () => {
-    localStorage.setItem('onboarding_step', '2');
     navigate('/onboarding/3');
   };
 
