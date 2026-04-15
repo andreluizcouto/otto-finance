@@ -142,7 +142,9 @@ def get_transactions(
 ) -> dict:
     try:
         return list_transactions(client, user["id"], limit=limit)
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).exception("Erro em GET /api/transactions user=%s", user.get("id") if user else "unknown")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erro ao carregar transacoes.",
