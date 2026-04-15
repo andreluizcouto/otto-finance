@@ -54,8 +54,16 @@ interface DashboardPayload {
 }
 
 const CHART_COLORS = [
-  '#FFFFFF', '#A3A3A3', '#737373', '#525252',
-  '#38bdf8', '#a78bfa', '#34d399', '#fb923c', '#f472b6',
+  '#38bdf8', // sky
+  '#a78bfa', // violet
+  '#34d399', // emerald
+  '#fb923c', // orange
+  '#f472b6', // pink
+  '#facc15', // yellow
+  '#60a5fa', // blue
+  '#f87171', // red
+  '#4ade80', // green
+  '#e879f9', // fuchsia
 ];
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
