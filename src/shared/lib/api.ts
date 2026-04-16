@@ -49,6 +49,9 @@ export const apiGet = (path: string): Promise<any> =>
 export const apiPost = (path: string, body?: unknown): Promise<any> =>
   apiFetch(path, body === undefined ? { method: 'POST' } : { method: 'POST', body: JSON.stringify(body) });
 
+export const apiPatch = (path: string, body: unknown): Promise<any> =>
+  apiFetch(path, { method: 'PATCH', body: JSON.stringify(body) });
+
 export const apiPut = (path: string, body: unknown): Promise<any> =>
   apiFetch(path, { method: 'PUT', body: JSON.stringify(body) });
 
@@ -77,4 +80,15 @@ export function formatDate(dateStr: string): string {
   } catch {
     return dateStr;
   }
+}
+
+export function formatDateOnly(dateStr: string): string {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-').map(Number);
+  if (!year || !month || !day) return dateStr;
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(year, month - 1, day));
 }

@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.modules.auth import router as auth_router
 from backend.modules.categories import router as categories_router
 from backend.modules.dashboard import router as dashboard_router
+from backend.modules.goals import router as goals_router
+from backend.modules.profile import router as profile_router
 from backend.modules.transactions import router as transactions_router
 from backend.modules.utils.router import router as utils_router
 
@@ -34,6 +36,8 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(dashboard_router)
+app.include_router(goals_router)
+app.include_router(profile_router)
 app.include_router(transactions_router)
 app.include_router(categories_router)
 app.include_router(utils_router)

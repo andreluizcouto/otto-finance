@@ -13,8 +13,9 @@ import {
   UploadCloud,
   Moon,
   Loader2,
+  AlertCircle,
 } from 'lucide-react';
-import { apiGet } from '@/shared/lib/api';
+import { apiGet, apiPatch } from '@/shared/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
 
@@ -54,19 +55,51 @@ function NavItem({ icon: Icon, label, active, onClick }: { icon: any; label: str
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState('perfil');
-  const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '', cpf: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const formatCpf = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  };
+
+  const isValidCpf = (value: string) => {
+    const cpf = value.replace(/\D/g, '');
+    if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+    let sum = 0;
+    for (let i = 0; i < 9; i += 1) sum += Number(cpf[i]) * (10 - i);
+    let check = (sum * 10) % 11;
+    if (check === 10) check = 0;
+    if (check !== Number(cpf[9])) return false;
+    sum = 0;
+    for (let i = 0; i < 10; i += 1) sum += Number(cpf[i]) * (11 - i);
+    check = (sum * 10) % 11;
+    if (check === 10) check = 0;
+    return check === Number(cpf[10]);
+  };
+
   useEffect(() => {
-    apiGet('/api/auth/me')
-      .then(res => {
-        const u = res.user ?? res;
+    Promise.all([apiGet('/api/auth/me'), apiGet('/api/profile')])
+      .then(([authRes, profileRes]) => {
+        const u = authRes.user ?? authRes;
+        const profile = profileRes.profile ?? {};
         setProfileForm({
-          name: u.email?.split('@')[0] ?? 'Usuário',
-          email: u.email ?? '',
-          phone: '',
+          name: profile.name || u.email?.split('@')[0] || 'Usuário',
+          email: profile.email || u.email || '',
+          phone: profile.phone || '',
+          cpf: profile.cpf || '',
         });
       })
       .catch(() => toast.error('Erro ao sincronizar identidade.'))
@@ -75,12 +108,26 @@ export function Settings() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidCpf(profileForm.cpf)) {
+      toast.error('Informe um CPF válido.');
+      return;
+    }
     setIsSaving(true);
-    // Simulating save
-    await new Promise(r => setTimeout(r, 1200));
-    setIsSaving(false);
-    toast.success('Protocolos de identidade atualizados.');
+    try {
+      await apiPatch('/api/profile', {
+        name: profileForm.name,
+        phone: profileForm.phone,
+        cpf: profileForm.cpf,
+      });
+      toast.success('Protocolos de identidade atualizados.');
+    } catch (err: any) {
+      toast.error(err?.message || 'Falha ao salvar perfil.');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const shouldShowCompleteProfile = !profileForm.phone || !profileForm.cpf;
 
   return (
     <div className="w-full relative z-10 animate-in fade-in duration-700 max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-10">
@@ -121,6 +168,18 @@ export function Settings() {
           
           {activeTab === 'perfil' && (
             <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+
+              {shouldShowCompleteProfile && !isLoading && (
+                <div className="bg-white/[0.04] border border-white/[0.08] rounded-[2rem] p-6 flex items-start gap-4">
+                  <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/[0.08]">
+                    <AlertCircle className="w-5 h-5 text-white/70" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg text-white/90 font-medium mb-1">Complete seu cadastro</h2>
+                    <p className="text-sm text-white/40">Adicione seu CPF e telefone para aproveitar todos os recursos do OTTO.</p>
+                  </div>
+                </div>
+              )}
               
               {/* Identity Card */}
               <div className="bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.08] backdrop-blur-2xl rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl">
@@ -184,17 +243,18 @@ export function Settings() {
                       <input
                         className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-5 text-sm text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
                         value={profileForm.phone}
-                        onChange={(e) => setProfileForm(p => ({ ...p, phone: e.target.value }))}
+                        onChange={(e) => setProfileForm(p => ({ ...p, phone: formatPhone(e.target.value) }))}
                         type="tel"
-                        placeholder="+55 00 00000-0000"
+                        placeholder="(00) 00000-0000"
                       />
                     </div>
                     <div className="space-y-3">
-                      <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest pl-1">Tax ID / Registro</label>
-                      <input 
-                        defaultValue="***.***.***-**" 
-                        disabled 
-                        className="w-full bg-white/[0.02] border border-white/[0.05] rounded-2xl py-4 px-5 text-sm text-white/20 cursor-not-allowed" 
+                      <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest pl-1">Tax ID / CPF</label>
+                      <input
+                        value={profileForm.cpf}
+                        onChange={(e) => setProfileForm(p => ({ ...p, cpf: formatCpf(e.target.value) }))}
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-5 text-sm text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
+                        placeholder="000.000.000-00"
                       />
                     </div>
                   </div>

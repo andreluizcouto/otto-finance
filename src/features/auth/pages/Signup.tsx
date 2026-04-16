@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Input } from "@/shared/components/ui";
-import { Mail, Lock } from "lucide-react";
+import { ArrowRight, Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
 import { apiPost } from "@/shared/lib/api";
 import { setToken } from "@/shared/lib/auth";
 
@@ -40,95 +39,120 @@ export function Signup() {
 
   if (needsConfirmation) {
     return (
-      <div className="flex w-full flex-col items-center justify-center min-h-[80vh]">
-        <div className="w-full max-w-sm flex flex-col gap-10 text-center">
-          <span className="text-4xl font-light tracking-[0.3em] text-foreground otto-title">OTTO</span>
-          <div className="rounded-xl bg-secondary border border-border px-6 py-8 flex flex-col gap-4">
-            <p className="text-sm font-medium text-foreground">Verifique seu e-mail</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Enviamos um link de confirmação para <span className="text-foreground">{credentials.email}</span>.<br />
+      <div className="min-h-screen bg-black text-white flex items-center justify-center relative overflow-hidden font-sans">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[800px] h-[800px] bg-white/[0.03] blur-[150px] rounded-full" />
+        </div>
+        <div className="relative z-10 w-full max-w-md px-6 py-6 md:py-10">
+          <div className="bg-white/[0.04] backdrop-blur-2xl border border-white/[0.08] rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden text-center">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/[0.02] blur-[40px] rounded-full pointer-events-none" />
+            <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] mx-auto mb-6 flex items-center justify-center">
+              <ShieldCheck className="w-6 h-6 text-white/70" />
+            </div>
+            <h2 className="text-2xl font-light mb-3">Verifique seu e-mail</h2>
+            <p className="text-sm text-white/40 leading-relaxed">
+              Enviamos um link de confirmação para <span className="text-white">{credentials.email}</span>.
               Clique no link para ativar sua conta.
             </p>
+            <button onClick={() => navigate('/login')} className="mt-8 min-h-[44px] text-[10px] font-medium tracking-[0.2em] text-white/40 uppercase hover:text-white transition-colors">
+              Voltar ao login
+            </button>
           </div>
-          <button
-            onClick={() => navigate('/login')}
-            className="text-[10px] otto-label text-muted-foreground hover:text-foreground transition-all"
-          >
-            Voltar ao login
-          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex w-full flex-col items-center justify-center min-h-[80vh] py-6 md:py-10">
-      <div className="w-full max-w-sm flex flex-col gap-8 md:gap-12">
-        <div className="flex flex-col items-center text-center gap-4">
-          <span className="text-3xl md:text-4xl font-light tracking-[0.3em] text-foreground otto-title">OTTO</span>
-          <p className="otto-label text-[10px] text-muted-foreground tracking-[0.2em]">Criar Conta</p>
+    <div className="min-h-screen bg-black text-white flex items-center justify-center relative overflow-hidden font-sans">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-[800px] h-[800px] bg-white/[0.03] blur-[150px] rounded-full" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md px-6 py-6 md:py-10">
+        <div className="flex flex-col items-center mb-8 md:mb-12">
+          <span className="text-3xl md:text-4xl tracking-[0.3em] font-medium mb-4">OTTO</span>
+          <h1 className="text-xs font-medium tracking-[0.2em] text-white/40 uppercase">Criar conta</h1>
         </div>
 
-        <form className="space-y-6 md:space-y-8" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="otto-label text-[9px] text-muted-foreground pl-1">Email</label>
-              <Input
-                placeholder="Endereço de e-mail"
-                type="email"
-                required
-                className="bg-card border-border rounded-xl py-4 md:py-6 px-4 min-h-[48px] text-xs font-medium focus:border-white/20 transition-all shadow-none"
-                value={credentials.email}
-                onChange={(e) => setCredentials(p => ({ ...p, email: e.target.value }))}
-              />
-            </div>
+        <div className="bg-white/[0.04] backdrop-blur-2xl border border-white/[0.08] rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/[0.02] blur-[40px] rounded-full pointer-events-none" />
 
-            <div className="space-y-2">
-              <label className="otto-label text-[9px] text-muted-foreground pl-1">Senha</label>
-              <Input
-                placeholder="••••••••"
-                type="password"
-                required
-                minLength={6}
-                className="bg-card border-border rounded-xl py-4 md:py-6 px-4 min-h-[48px] text-xs font-medium focus:border-white/20 transition-all shadow-none"
-                value={credentials.password}
-                onChange={(e) => setCredentials(p => ({ ...p, password: e.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="otto-label text-[9px] text-muted-foreground pl-1">Confirmar Senha</label>
-              <Input
-                placeholder="••••••••"
-                type="password"
-                required
-                className="bg-card border-border rounded-xl py-4 md:py-6 px-4 min-h-[48px] text-xs font-medium focus:border-white/20 transition-all shadow-none"
-                value={credentials.confirm}
-                onChange={(e) => setCredentials(p => ({ ...p, confirm: e.target.value }))}
-              />
-            </div>
+          <div className="text-center mb-8">
+            <h2 className="text-xl md:text-2xl font-light mb-2">Abra seu acesso</h2>
+            <p className="text-white/40 text-sm">Use o mesmo padrão visual do login, mantendo a lógica de cadastro.</p>
           </div>
 
-          {error && (
-            <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-[10px] otto-label text-red-400 text-center">
-              {error}
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium tracking-widest text-white/40 uppercase pl-1">E-mail</label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    required
+                    placeholder="nome@dominio.com"
+                    value={credentials.email}
+                    onChange={(e) => setCredentials((prev) => ({ ...prev, email: e.target.value }))}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 min-h-[48px] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
+                  />
+                  <Mail className="w-4 h-4 text-white/20 absolute right-4 top-1/2 -translate-y-1/2" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium tracking-widest text-white/40 uppercase pl-1">Senha</label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="••••••••"
+                    value={credentials.password}
+                    onChange={(e) => setCredentials((prev) => ({ ...prev, password: e.target.value }))}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 min-h-[48px] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all pr-10"
+                  />
+                  <Lock className="w-4 h-4 text-white/20 absolute right-4 top-1/2 -translate-y-1/2" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium tracking-widest text-white/40 uppercase pl-1">Confirmar senha</label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={credentials.confirm}
+                    onChange={(e) => setCredentials((prev) => ({ ...prev, confirm: e.target.value }))}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 min-h-[48px] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all pr-10"
+                  />
+                  <Lock className="w-4 h-4 text-white/20 absolute right-4 top-1/2 -translate-y-1/2" />
+                </div>
+              </div>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full h-14 min-h-[48px] rounded-xl bg-white text-black font-medium flex items-center justify-center gap-2 hover:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,255,255,0.15)] text-sm tracking-widest uppercase"
-          >
-            {isSubmitting ? 'Criando conta...' : 'Criar Conta'}
-          </button>
-        </form>
+            {error && (
+              <div className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-xs text-red-400 text-center">
+                {error}
+              </div>
+            )}
 
-        <p className="text-center text-[10px] otto-label text-muted-foreground">
-          Já tem conta?{' '}
-          <button onClick={() => navigate('/login')} className="text-foreground hover:underline transition-all font-medium">
-            Entrar
-          </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-14 min-h-[48px] rounded-xl bg-white text-black font-medium flex items-center justify-center gap-2 hover:bg-white/90 transition-all group disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+            >
+              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>
+                Criar conta
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </>}
+            </button>
+          </form>
+        </div>
+
+        <p className="text-center mt-10 text-white/30 text-xs tracking-wide">
+          Já tem conta? <button onClick={() => navigate('/login')} className="text-white/60 hover:text-white transition-all font-medium border-b border-white/20 hover:border-white pb-0.5">Entrar</button>
         </p>
       </div>
     </div>

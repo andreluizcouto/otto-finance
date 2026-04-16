@@ -27,6 +27,12 @@ class _FakeTransactionsTable:
         self._filters[field] = value
         return self
 
+    def or_(self, *_args, **_kwargs):
+        return self
+
+    def order(self, *_args, **_kwargs):
+        return self
+
     def insert(self, row):
         self._mode = "insert"
         self._pending_insert = row
@@ -34,29 +40,65 @@ class _FakeTransactionsTable:
 
     def execute(self):
         if self._mode == "select":
+            if "amount" not in self._filters:
+                return SimpleNamespace(data=[])
             user_id = self._filters["user_id"]
             date = self._filters["date"]
             amount = float(self._filters["amount"])
             data = [
-                {"id": "existing", "description": key[3]}
+                {
+                    "id": "existing",
+                    "description": key[3],
+                    "raw_text": key[4] if len(key) > 4 else None,
+                    "transaction_time": key[5] if len(key) > 5 else None,
+                }
                 for key in self._existing_rows
                 if key[0] == user_id and key[1] == date and float(key[2]) == amount
             ]
             return SimpleNamespace(data=data)
 
         row = self._pending_insert
-        key = (row["user_id"], row["date"], float(row["amount"]), row["description"])
+        key = (
+            row["user_id"],
+            row["date"],
+            float(row["amount"]),
+            row["description"],
+            row.get("raw_text"),
+            row.get("transaction_time"),
+        )
         self._existing_rows.add(key)
         self.inserted_rows.append(row)
         return SimpleNamespace(data=[row])
 
 
-class _FakeClient:
-    def __init__(self, table):
-        self._table = table
+class _FakeCategoriesTable:
+    def __init__(self, rows=None):
+        self._rows = list(rows or [])
 
-    def table(self, _name):
-        return self._table
+    def select(self, *_args, **_kwargs):
+        return self
+
+    def or_(self, *_args, **_kwargs):
+        return self
+
+    def order(self, *_args, **_kwargs):
+        return self
+
+    def execute(self):
+        return SimpleNamespace(data=self._rows)
+
+
+class _FakeClient:
+    def __init__(self, transactions_table, categories_rows=None):
+        self._transactions_table = transactions_table
+        self._categories_table = _FakeCategoriesTable(categories_rows)
+
+    def table(self, name):
+        if name == "transactions":
+            return self._transactions_table
+        if name == "categories":
+            return self._categories_table
+        raise AssertionError(f"Unexpected table: {name}")
 
 
 def _app_with_utils_router(authenticated=False):
@@ -404,4 +446,80 @@ def test_import_endpoint_skips_debit_purchase_tagged_as_credit_card():
 
     assert response.status_code == 200
     assert response.json() == {"imported": 0, "skipped": 1}
+    assert len(table.inserted_rows) == 0
+
+
+def test_import_endpoint_accepts_structured_ai_fields_and_matches_category():
+    table = _FakeTransactionsTable()
+    categories = [{"id": "cat-1", "name": "Alimentação", "slug": "alimentacao"}]
+    app = _app_with_transactions_router(
+        fake_client=_FakeClient(table, categories_rows=categories),
+        user_id="jwt-user",
+    )
+    client = TestClient(app)
+
+    payload = {
+        "result": json.dumps(
+            {
+                "transacoes": [
+                    {
+                        "date": "2026-04-08",
+                        "time": "08:45",
+                        "merchant_name": "Super Mercado Irmãos",
+                        "description": "Super Mercado Irmãos",
+                        "amount": -42.75,
+                        "category_hint": "Alimentação",
+                        "raw_text": "Compra com cartão 08/04 08:45 SUPER MERCADO IRMAOS",
+                        "source": "credit_card",
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        )
+    }
+
+    response = client.post("/api/transactions/import", json=payload)
+
+    assert response.status_code == 200
+    assert response.json() == {"imported": 1, "skipped": 0}
+    assert table.inserted_rows[0]["date"] == "2026-04-08"
+    assert table.inserted_rows[0]["transaction_time"] == "08:45"
+    assert table.inserted_rows[0]["merchant_name"] == "Super Mercado Irmãos"
+    assert table.inserted_rows[0]["description"] == "Super Mercado Irmãos"
+    assert table.inserted_rows[0]["raw_text"] == "Compra com cartão 08/04 08:45 SUPER MERCADO IRMAOS"
+    assert table.inserted_rows[0]["category_id"] == "cat-1"
+
+
+def test_import_transactions_skips_duplicate_when_raw_text_date_and_time_match():
+    from backend.modules.transactions.services import import_transactions_from_pdf
+
+    existing = {
+        (
+            "user-1",
+            "2026-04-08",
+            -42.75,
+            "Super Mercado Irmãos",
+            "Compra com cartão 08/04 08:45 SUPER MERCADO IRMAOS",
+            "08:45",
+        )
+    }
+    table = _FakeTransactionsTable(existing_rows=existing)
+
+    result = import_transactions_from_pdf(
+        _FakeClient(table),
+        "user-1",
+        [
+            {
+                "data": "08/04/2026",
+                "descricao": "Super Mercado Irmãos",
+                "merchant_name": "Super Mercado Irmãos",
+                "valor": 42.75,
+                "tipo": "debito",
+                "time": "08:45",
+                "raw_text": "Compra com cartão 08/04 08:45 SUPER MERCADO IRMAOS",
+            }
+        ],
+    )
+
+    assert result == {"imported": 0, "skipped": 1}
     assert len(table.inserted_rows) == 0

@@ -347,6 +347,69 @@ def _canonical_description(value: str) -> str:
     return " ".join("".join(cleaned).split())
 
 
+def _normalize_category_key(value: str) -> str:
+    normalized = _normalize_text(value).replace("&", " e ")
+    parts = []
+    for ch in normalized:
+        parts.append(ch if ch.isalnum() else " ")
+    return " ".join("".join(parts).split())
+
+
+def _build_category_match_index(categories: list[dict[str, Any]]) -> dict[str, str]:
+    index: dict[str, str] = {}
+
+    for category in categories:
+        category_id = str(category.get("id") or "").strip()
+        if not category_id:
+            continue
+
+        for raw_key in (category.get("name"), category.get("slug")):
+            key = _normalize_category_key(str(raw_key or ""))
+            if key:
+                index[key] = category_id
+
+    alias_map = {
+        "alimentacao": ("alimentacao", "alimentacao e bebidas", "mercado", "supermercado", "restaurante"),
+        "transporte": ("transporte", "mobilidade", "combustivel"),
+        "moradia": ("moradia", "casa", "contas da casa"),
+        "saude": ("saude", "farmacia", "medico"),
+        "lazer": ("lazer", "entretenimento", "diversao"),
+        "educacao": ("educacao", "estudos"),
+        "compras": ("compras", "shopping", "varejo"),
+        "assinaturas": ("assinaturas", "servicos recorrentes", "streaming"),
+        "delivery": ("delivery", "entregas"),
+        "outros": ("outros", "sem categoria"),
+    }
+
+    for target, aliases in alias_map.items():
+        target_id = index.get(_normalize_category_key(target))
+        if not target_id:
+            continue
+        for alias in aliases:
+            index.setdefault(_normalize_category_key(alias), target_id)
+
+    return index
+
+
+def _match_category_id_from_hint(
+    categories: list[dict[str, Any]],
+    category_hint: str | None,
+) -> str | None:
+    hint_key = _normalize_category_key(str(category_hint or ""))
+    if not hint_key:
+        return None
+
+    index = _build_category_match_index(categories)
+    if hint_key in index:
+        return index[hint_key]
+
+    for key, category_id in index.items():
+        if hint_key in key or key in hint_key:
+            return category_id
+
+    return None
+
+
 def _is_administrative_transaction(description: str) -> bool:
     normalized = _normalize_text(description)
     if normalized == "saldo":
@@ -412,8 +475,16 @@ def list_transactions(client: Client, user_id: str, limit: int = 200) -> dict[st
                 "merchant_name": transaction.get("merchant_name"),
                 "amount": float(transaction["amount"]),
                 "category_id": transaction.get("category_id"),
-                "category_name": category.get("name", "Outros"),
+                "category_name": category.get("name", "Sem categoria"),
                 "category_emoji": category.get("emoji", ""),
+                "categories": (
+                    {
+                        "name": category.get("name", "Sem categoria"),
+                        "emoji": category.get("emoji", ""),
+                    }
+                    if transaction.get("category_id")
+                    else None
+                ),
                 "confidence_score": transaction.get("confidence_score"),
                 "confidence_label": confidence_label(transaction.get("confidence_score")),
                 "manually_reviewed": bool(transaction.get("manually_reviewed", False)),
@@ -465,12 +536,35 @@ def import_transactions_from_pdf(
     skipped_count = 0
 
     try:
+        categories_resp = (
+            client.table("categories")
+            .select("id, name, slug")
+            .or_(f"is_default.eq.true,user_id.eq.{user_id}")
+            .order("is_default", desc=True)
+            .order("name")
+            .execute()
+        )
+        categories = categories_resp.data or []
+
         for item in transacoes:
             date_str = datetime.strptime(item["data"], "%d/%m/%Y").date().isoformat()
             raw_amount = float(item["valor"])
             amount = raw_amount if item["tipo"] == "credito" else -raw_amount
-            description = " ".join(str(item["descricao"]).split())
+            merchant_name = resolve_merchant_name(
+                " ".join(
+                    str(
+                        item.get("merchant_name")
+                        or item.get("descricao")
+                        or item.get("description")
+                        or ""
+                    ).split()
+                )
+            )
+            description = merchant_name or " ".join(str(item["descricao"]).split())
             source = _normalize_source(item.get("origem") or item.get("source"))
+            transaction_time = str(item.get("time") or "").strip() or None
+            raw_text = " ".join(str(item.get("raw_text") or description).split())
+            category_id = _match_category_id_from_hint(categories, item.get("category_hint"))
 
             if _is_administrative_transaction(description):
                 skipped_count += 1
@@ -482,7 +576,7 @@ def import_transactions_from_pdf(
 
             duplicate_resp = (
                 client.table("transactions")
-                .select("id, description")
+                .select("id, description, raw_text, transaction_time")
                 .eq("user_id", user_id)
                 .eq("date", date_str)
                 .eq("amount", amount)
@@ -495,6 +589,12 @@ def import_transactions_from_pdf(
                 == canonical_incoming
                 for row in existing_rows
             )
+            if not has_duplicate and raw_text and transaction_time:
+                has_duplicate = any(
+                    " ".join(str(row.get("raw_text") or "").split()) == raw_text
+                    and str(row.get("transaction_time") or "").strip() == transaction_time
+                    for row in existing_rows
+                )
             if has_duplicate:
                 skipped_count += 1
                 continue
@@ -507,8 +607,10 @@ def import_transactions_from_pdf(
                         "description": description,
                         "amount": amount,
                         "user_id": user_id,
-                        "category_id": None,
-                        "merchant_name": None,
+                        "category_id": category_id,
+                        "merchant_name": merchant_name or None,
+                        "raw_text": raw_text,
+                        "transaction_time": transaction_time,
                         "confidence_score": None,
                         "manually_reviewed": False,
                     }

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { toast } from 'sonner';
-import { apiGet, apiPost, formatBRL, formatDate } from '@/shared/lib/api';
+import { apiGet, apiPost, formatBRL, formatDateOnly } from '@/shared/lib/api';
 import { ImportPdfModal } from '@/features/transactions/components/ImportPdfModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -28,6 +28,8 @@ interface ApiTransaction {
   merchant_name?: string;
   amount: number;
   categories: { name: string; emoji: string } | null;
+  category_name?: string;
+  category_emoji?: string;
 }
 
 interface MonthlySummary {
@@ -387,14 +389,14 @@ export function Dashboard() {
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="w-10 h-10 rounded-full bg-white/[0.02] border border-white/[0.05] flex items-center justify-center group-hover:bg-white/[0.06] transition-colors shrink-0 text-base shadow-inner">
-                        {tx.categories?.emoji ?? (isIncome ? '💰' : '💳')}
+                        {tx.categories?.emoji ?? tx.category_emoji ?? (isIncome ? '💰' : '💳')}
                       </div>
                       <div className="min-w-0">
                         <div className="font-medium text-white/90 text-sm group-hover:text-white transition-colors truncate">
                           {tx.merchant_name || tx.description}
                         </div>
                         <div className="text-[10px] text-white/30 mt-0.5 uppercase tracking-widest truncate">
-                          {tx.categories?.name ?? 'Sem categoria'}
+                          {tx.categories?.name ?? tx.category_name ?? 'Sem categoria'}
                         </div>
                       </div>
                     </div>
@@ -405,7 +407,7 @@ export function Dashboard() {
                       )}>
                         {isIncome ? '+' : '-'}{formatBRL(Math.abs(tx.amount))}
                       </div>
-                      <div className="text-[10px] text-white/20 mt-0.5">{formatDate(tx.date)}</div>
+                      <div className="text-[10px] text-white/20 mt-0.5">{formatDateOnly(tx.date)}</div>
                     </div>
                   </Link>
                 );

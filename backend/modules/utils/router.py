@@ -43,12 +43,16 @@ def _build_text_extraction_prompt(extracted_text: str, source_hint: str | None) 
         "Nao invente nenhuma transacao. Use apenas linhas explicitamente presentes no texto.\n"
         "Ignore linhas administrativas (saldo anterior, saldo do dia, limite, vencimento, resumo, pagamento de fatura, encargos).\n"
         "Retorne SOMENTE JSON puro no formato:\n"
-        '{"transacoes":[{"data":"DD/MM/AAAA","descricao":"...","valor":0.00,"tipo":"debito|credito","origem":"bank_statement|credit_card"}]}\n'
+        '{"transacoes":[{"date":"AAAA-MM-DD","time":"HH:MM ou null","merchant_name":"...","description":"...","amount":-12.34,"category_hint":"...","raw_text":"linha original","origem":"bank_statement|credit_card"}]}\n'
         "Regras:\n"
-        "1) campo valor sempre positivo\n"
-        "2) tipo indica direcao (debito = saida, credito = entrada)\n"
-        "3) normalize datas para DD/MM/AAAA\n"
-        f"4) {source_instruction}\n\n"
+        "1) date deve ser ISO 8601 (AAAA-MM-DD). Se no texto vier apenas DD/MM, use o ano corrente.\n"
+        "2) time deve conter HH:MM quando houver horario explicito; caso contrario use null.\n"
+        '3) merchant_name deve vir limpo, sem prefixos como "Compra com cartao", "Compra no debito", "Pix", "Pagamento".\n'
+        "4) description deve repetir merchant_name limpo, nunca o texto bruto completo.\n"
+        "5) amount deve ser numerico e negativo para debito, positivo para credito.\n"
+        "6) category_hint deve ser uma categoria curta e plausivel em portugues (ex.: Alimentacao, Transporte, Saude) ou null.\n"
+        "7) raw_text deve preservar a linha original usada para extrair a transacao.\n"
+        f"8) {source_instruction}\n\n"
         "TEXTO EXTRAIDO:\n"
         f"{extracted_text}"
     )
@@ -108,15 +112,27 @@ def _run_anthropic_document_analysis(
                         "text": (
                             "Extraia todas as transacoes deste PDF financeiro (extrato bancario ou fatura de cartao). "
                             "Retorne SOMENTE o JSON puro, sem markdown, sem ```json, sem nenhum texto antes ou depois. "
+                            "Cada transacao deve incluir date, time, merchant_name, description, amount, category_hint, raw_text e origem. "
+                            "Use date em formato AAAA-MM-DD; se o documento trouxer apenas DD/MM, use o ano corrente. "
+                            "Use time no formato HH:MM quando houver horario explicito; senao null. "
+                            "merchant_name deve vir limpo, removendo prefixos operacionais como compra com cartao, compra no debito, pix e pagamento. "
+                            "description deve repetir merchant_name, nao o texto bruto. "
+                            "amount deve ser negativo para debitos e positivo para creditos. "
+                            "category_hint deve ser uma categoria curta inferida pelo contexto do merchant em portugues ou null. "
+                            "raw_text deve preservar a linha original usada na extracao. "
                             "Cada transacao deve incluir a origem no campo origem: "
                             '"bank_statement" para extrato bancario e compras no debito; '
                             '"credit_card" para compras da fatura do cartao. '
                             'Se uma compra estiver explicitamente no debito, use origem="bank_statement". '
                             "Ignore linhas administrativas (ex.: saldo anterior, saldo do dia, limite, vencimento, pagamento de fatura). "
                             "Formato exato: "
-                            '{"transacoes": [{"data": "DD/MM/AAAA", '
-                            '"descricao": "...", "valor": 0.00, '
-                            '"tipo": "debito" ou "credito", '
+                            '{"transacoes": [{"date": "AAAA-MM-DD", '
+                            '"time": "HH:MM ou null", '
+                            '"merchant_name": "...", '
+                            '"description": "...", '
+                            '"amount": -12.34, '
+                            '"category_hint": "...", '
+                            '"raw_text": "...", '
                             '"origem": "bank_statement" ou "credit_card"}]}'
                         ),
                     },

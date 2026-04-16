@@ -14,6 +14,7 @@ import {
 import { apiGet, apiPost, apiDelete, formatBRL } from '@/shared/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
+import { EmojiPickerGrid } from '@/shared/components/EmojiPickerGrid';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -221,8 +222,6 @@ export function Categories() {
 
   const maxSpent     = Math.max(...categories.map(c => c.totalSpent ?? 0), 0);
   const totalSpent   = categories.reduce((s, c) => s + (c.totalSpent ?? 0), 0);
-  const totalTxCount = categories.reduce((s, c) => s + (c.transactionCount ?? 0), 0);
-
   return (
     <div className="w-full relative z-10 animate-in fade-in duration-500 max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
 
@@ -349,12 +348,10 @@ export function Categories() {
               <div className="grid grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest pl-1">Símbolo</label>
-                  <input
-                    placeholder="ex: 🏠"
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-5 min-h-[48px] text-xl text-center focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
-                    value={newCat.emoji}
-                    onChange={e => setNewCat(p => ({ ...p, emoji: e.target.value }))}
-                  />
+                  <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4">
+                    <div className="text-center text-3xl mb-4">{newCat.emoji}</div>
+                    <EmojiPickerGrid selected={newCat.emoji} onSelect={(emoji) => setNewCat((prev) => ({ ...prev, emoji }))} />
+                  </div>
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest pl-1">Acento</label>

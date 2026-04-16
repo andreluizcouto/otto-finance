@@ -14,15 +14,20 @@ import {
   Calendar,
   Share2,
 } from 'lucide-react';
-import { apiGet, formatBRL, formatDate } from '@/shared/lib/api';
+import { apiGet, formatBRL, formatDateOnly } from '@/shared/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function ConfidenceBar({ score }: { score: number | null }) {
+function ConfidenceBar({ score }: { score: string | number | null }) {
   if (score === null) return null;
-  const pct    = score > 1 ? Math.round(score) : Math.round(score * 100);
+  const normalizedScore =
+    score === 'high' ? 95 :
+    score === 'medium' ? 75 :
+    score === 'low' ? 40 :
+    score;
+  const pct    = normalizedScore > 1 ? Math.round(normalizedScore) : Math.round(normalizedScore * 100);
   const label  = pct >= 90 ? 'Alta' : pct >= 70 ? 'Média' : 'Baixa';
   const glow   = pct >= 90
     ? 'bg-white shadow-[0_0_12px_rgba(255,255,255,0.4)]'
@@ -135,7 +140,7 @@ export function TransactionDetail() {
                 </h1>
                 <div className="flex items-center gap-3 text-white/40 text-[10px] md:text-xs font-medium uppercase tracking-[0.15em]">
                   <Calendar className="w-3.5 h-3.5" />
-                  <span>{formatDate(tx.date)}</span>
+                  <span>{formatDateOnly(tx.date)}</span>
                 </div>
               </div>
             </div>
@@ -176,7 +181,7 @@ export function TransactionDetail() {
                 {(tx.confidence_score !== null) &&
                   ` Nível de precisão analítica: ${tx.confidence_score > 1
                     ? Math.round(tx.confidence_score)
-                    : Math.round((tx.confidence_score as number) * 100)}%.`
+                    : Math.round(((tx.confidence_score === 'high' ? 0.95 : tx.confidence_score === 'medium' ? 0.75 : tx.confidence_score === 'low' ? 0.4 : tx.confidence_score) as number) * 100)}%.`
                 }
               </p>
               {!tx.manually_reviewed && (

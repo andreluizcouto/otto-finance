@@ -26,8 +26,10 @@ CREATE TABLE transactions (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     amount DECIMAL(12,2) NOT NULL,
     date DATE NOT NULL,
+    transaction_time TIME,
     description VARCHAR(255) NOT NULL,
     merchant_name VARCHAR(100),
+    raw_text TEXT,
     category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
     confidence_score VARCHAR(10) CHECK (confidence_score IN ('high', 'medium', 'low')),
     payment_method VARCHAR(20) CHECK (payment_method IN ('credito', 'debito', 'pix', 'dinheiro', 'transferencia')),
@@ -40,6 +42,8 @@ CREATE TABLE transactions (
 
 -- Applied via ALTER TABLE (not in original CREATE):
 -- ALTER TABLE transactions ADD COLUMN IF NOT EXISTS manually_reviewed BOOLEAN DEFAULT false;
+-- ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transaction_time TIME;
+-- ALTER TABLE transactions ADD COLUMN IF NOT EXISTS raw_text TEXT;
 
 -- ============================================================
 -- Table: budgets
@@ -64,10 +68,23 @@ CREATE TABLE goals (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
+    emoji VARCHAR(10) NOT NULL DEFAULT '🎯',
+    type VARCHAR(20) NOT NULL DEFAULT 'savings' CHECK (type IN ('savings', 'spending')),
     target_amount DECIMAL(12,2) NOT NULL,
     current_amount DECIMAL(12,2) DEFAULT 0,
-    deadline DATE,
+    deadline VARCHAR(20),
+    color CHAR(7) NOT NULL DEFAULT '#FFFFFF',
+    category VARCHAR(50),
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'cancelled')),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE profiles (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    name VARCHAR(100),
+    phone VARCHAR(15),
+    cpf VARCHAR(14),
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -127,6 +144,8 @@ CREATE POLICY "budgets_delete_own" ON budgets
 -- Goals: strict per-user isolation
 ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
 CREATE POLICY "goals_select_own" ON goals
     FOR SELECT USING (auth.uid() = user_id);
 
@@ -140,6 +159,19 @@ CREATE POLICY "goals_update_own" ON goals
 CREATE POLICY "goals_delete_own" ON goals
     FOR DELETE USING (auth.uid() = user_id);
 
+CREATE POLICY "profiles_select_own" ON profiles
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "profiles_insert_own" ON profiles
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "profiles_update_own" ON profiles
+    FOR UPDATE USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "profiles_delete_own" ON profiles
+    FOR DELETE USING (auth.uid() = user_id);
+
 -- ============================================================
 -- Indexes for performance
 -- ============================================================
@@ -148,3 +180,4 @@ CREATE INDEX idx_transactions_date ON transactions(date);
 CREATE INDEX idx_transactions_category_id ON transactions(category_id);
 CREATE INDEX idx_budgets_user_id ON budgets(user_id);
 CREATE INDEX idx_goals_user_id ON goals(user_id);
+CREATE INDEX idx_profiles_user_id ON profiles(user_id);

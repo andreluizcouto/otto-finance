@@ -77,6 +77,10 @@ def _normalize_tipo(value: Any) -> str:
 def _normalize_data(value: Any) -> str:
     raw = str(value or "").strip()
     if "/" in raw:
+        parts = raw.split("/")
+        if len(parts) == 2:
+            day, month = parts
+            raw = f"{day}/{month}/{datetime.now().year}"
         return raw
 
     # Accept ISO-like dates from model outputs.
@@ -101,6 +105,30 @@ def _normalize_source(value: Any) -> str | None:
     return None
 
 
+def _normalize_time(value: Any) -> str | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+
+    try:
+        parsed = datetime.strptime(raw, "%H:%M")
+        return parsed.strftime("%H:%M")
+    except ValueError as exc:
+        raise ValueError("Campo 'time' invalido.") from exc
+
+
+def _normalize_category_hint(value: Any) -> str | None:
+    raw = " ".join(str(value or "").split()).strip()
+    return raw or None
+
+
+def _normalize_raw_text(value: Any, fallback: str) -> str:
+    raw = " ".join(str(value or fallback).split()).strip()
+    if not raw:
+        raise ValueError("Campo 'raw_text' invalido.")
+    return raw
+
+
 def _normalize_transaction_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     normalized: list[dict[str, Any]] = []
 
@@ -110,7 +138,8 @@ def _normalize_transaction_items(items: list[dict[str, Any]]) -> list[dict[str, 
 
         data = _normalize_data(item.get("data") or item.get("date"))
         descricao = item.get("descricao") or item.get("description")
-        if not descricao:
+        merchant_name = item.get("merchant_name")
+        if not descricao and not merchant_name:
             raise ValueError("Campo 'descricao' invalido.")
 
         valor = item.get("valor")
@@ -119,14 +148,26 @@ def _normalize_transaction_items(items: list[dict[str, Any]]) -> list[dict[str, 
         if valor is None:
             raise ValueError("Campo 'valor' invalido.")
 
-        tipo = _normalize_tipo(item.get("tipo") or item.get("type"))
+        if item.get("tipo") or item.get("type"):
+            tipo = _normalize_tipo(item.get("tipo") or item.get("type"))
+        else:
+            tipo = "credito" if float(valor) >= 0 else "debito"
         origem = _normalize_source(item.get("origem") or item.get("source"))
+        time_value = _normalize_time(item.get("time"))
+        category_hint = _normalize_category_hint(item.get("category_hint"))
+        descricao_text = str(descricao or merchant_name)
+        raw_text = _normalize_raw_text(item.get("raw_text"), descricao_text)
+        amount_value = abs(float(valor))
 
         normalized.append(
             {
                 "data": data,
-                "descricao": str(descricao),
-                "valor": float(valor),
+                "descricao": descricao_text,
+                "merchant_name": str(merchant_name or descricao_text),
+                "raw_text": raw_text,
+                "time": time_value,
+                "category_hint": category_hint,
+                "valor": amount_value,
                 "tipo": tipo,
                 "origem": origem,
             }

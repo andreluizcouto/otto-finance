@@ -44,3 +44,36 @@ class CorrectTransactionRequest(BaseModel):
 
 class ImportPdfRequest(BaseModel):
     result: str = Field(max_length=500_000)
+
+
+# --- Goals ---
+
+class GoalCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    emoji: str = Field(min_length=1, max_length=4)
+    type: str = Field(pattern="^(savings|spending)$")
+    target_amount: float = Field(gt=0)
+    current_amount: float = Field(ge=0, default=0)
+    deadline: str = Field(min_length=1, max_length=20)
+    color: str = Field(min_length=4, max_length=7)
+    category: str | None = Field(default=None, max_length=50)
+
+    @field_validator("color")
+    @classmethod
+    def validate_goal_color(cls, v: str) -> str:
+        if not re.fullmatch(r"#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?", v):
+            raise ValueError("color deve ser uma cor hexadecimal valida.")
+        return v
+
+
+class GoalProgressPatchRequest(BaseModel):
+    action: str = Field(pattern="^(add|remove)$")
+    amount: float = Field(gt=0)
+
+
+# --- Profile ---
+
+class ProfilePatchRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    phone: str = Field(min_length=14, max_length=15)
+    cpf: str = Field(min_length=14, max_length=14)

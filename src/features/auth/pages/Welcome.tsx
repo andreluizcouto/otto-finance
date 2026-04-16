@@ -30,7 +30,7 @@ export function Welcome() {
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
 
-          <p className="text-center text-[10px] text-white/30 tracking-wide uppercase">
+          <p className="text-center text-[10px] text-white/30 tracking-wide uppercase mb-10 md:mb-16">
             Já tem conta?{' '}
             <button
               onClick={() => navigate('/login')}

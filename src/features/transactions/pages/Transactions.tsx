@@ -12,7 +12,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
-import { apiGet, formatBRL, formatDate } from '@/shared/lib/api';
+import { apiGet, formatBRL, formatDateOnly } from '@/shared/lib/api';
 import { toast } from 'sonner';
 import { ImportPdfModal } from '../components/ImportPdfModal';
 import { cn } from '@/shared/lib/utils';
@@ -25,9 +25,11 @@ interface ApiTransaction {
   description: string;
   merchant_name?: string;
   amount: number;
-  confidence_score: number | null;
+  confidence_score: string | number | null;
   manually_reviewed: boolean;
   categories: { name: string; emoji: string } | null;
+  category_name?: string;
+  category_emoji?: string;
 }
 
 type FilterKey = 'Todos' | 'Receitas' | 'Despesas' | 'Não Revisadas';
@@ -35,9 +37,14 @@ const FILTERS: FilterKey[] = ['Todos', 'Receitas', 'Despesas', 'Não Revisadas']
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function ConfidenceBadge({ score }: { score: number | null }) {
+function ConfidenceBadge({ score }: { score: string | number | null }) {
   if (score === null) return null;
-  const pct = score > 1 ? Math.round(score) : Math.round(score * 100);
+  const normalizedScore =
+    score === 'high' ? 95 :
+    score === 'medium' ? 75 :
+    score === 'low' ? 40 :
+    score;
+  const pct = normalizedScore > 1 ? Math.round(normalizedScore) : Math.round(normalizedScore * 100);
   const color =
     pct >= 90 ? 'text-white/70 border-white/20'  :
     pct >= 70 ? 'text-white/50 border-white/10'  :
@@ -223,7 +230,7 @@ export function Transactions() {
           <div className="col-span-5">Entidade / Descrição</div>
           <div className="col-span-3">Categoria</div>
           <div className="col-span-2">Data</div>
-          <div className="col-span-2 text-right">Montante</div>
+          <div className="col-span-2 text-right">Valor</div>
         </div>
 
         <div className="flex flex-col divide-y divide-white/[0.04]">
@@ -266,8 +273,8 @@ export function Transactions() {
                     "bg-white/[0.02] border-white/[0.06] group-hover:border-white/15",
                     isIncome ? 'text-white' : 'text-white/40'
                   )}>
-                    {tx.categories?.emoji 
-                      ? <span>{tx.categories.emoji}</span>
+                    {(tx.categories?.emoji ?? tx.category_emoji)
+                      ? <span>{tx.categories?.emoji ?? tx.category_emoji}</span>
                       : isIncome 
                         ? <ArrowDownRight className="w-5 h-5" /> 
                         : <ArrowUpRight className="w-5 h-5" />
@@ -279,7 +286,7 @@ export function Transactions() {
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[10px] text-white/30 md:hidden uppercase tracking-widest">
-                        {tx.categories?.name ?? 'Sem categoria'} · {formatDate(tx.date)}
+                        {tx.categories?.name ?? tx.category_name ?? 'Sem categoria'} · {formatDateOnly(tx.date)}
                       </span>
                       {tx.manually_reviewed 
                         ? <CheckCircle2 className="w-3.5 h-3.5 text-white/30 shrink-0" /> 
@@ -292,13 +299,13 @@ export function Transactions() {
 
                 <div className="hidden md:flex col-span-3 items-center relative z-10">
                   <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-[10px] font-bold text-white/40 uppercase tracking-widest group-hover:bg-white/[0.08] group-hover:text-white/60 transition-all">
-                    {tx.categories?.emoji && <span>{tx.categories.emoji}</span>}
-                    <span className="truncate">{tx.categories?.name ?? 'Outros'}</span>
+                    {(tx.categories?.emoji ?? tx.category_emoji) && <span>{tx.categories?.emoji ?? tx.category_emoji}</span>}
+                    <span className="truncate">{tx.categories?.name ?? tx.category_name ?? 'Sem categoria'}</span>
                   </span>
                 </div>
 
                 <div className="hidden md:block col-span-2 text-[10px] font-bold text-white/30 relative z-10 tabular-nums uppercase tracking-widest">
-                  {formatDate(tx.date)}
+                  {formatDateOnly(tx.date)}
                 </div>
 
                 <div className="col-span-1 md:col-span-2 flex justify-end relative z-10">
