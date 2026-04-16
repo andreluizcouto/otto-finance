@@ -19,9 +19,10 @@ _origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
-_frontend_url = os.getenv("FRONTEND_URL", "")
-if _frontend_url:
-    _origins.append(_frontend_url)
+for _url in os.getenv("FRONTEND_URL", "").split(","):
+    _url = _url.strip()
+    if _url:
+        _origins.append(_url)
 
 app.add_middleware(
     CORSMiddleware,

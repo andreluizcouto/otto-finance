@@ -66,7 +66,7 @@ export function Signup() {
       <div className="w-full max-w-sm flex flex-col gap-12">
         <div className="flex flex-col items-center text-center gap-4">
           <span className="text-4xl font-light tracking-[0.3em] text-foreground otto-title">OTTO</span>
-          <p className="otto-label text-[10px] text-muted-foreground tracking-[0.2em]">Create Account</p>
+          <p className="otto-label text-[10px] text-muted-foreground tracking-[0.2em]">Criar Conta</p>
         </div>
 
         <form className="space-y-8" onSubmit={handleSubmit}>
@@ -74,7 +74,7 @@ export function Signup() {
             <div className="space-y-2">
               <label className="otto-label text-[9px] text-muted-foreground">Email</label>
               <Input
-                placeholder="Email Address"
+                placeholder="Endereço de e-mail"
                 type="email"
                 required
                 className="bg-card border-border rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
@@ -121,14 +121,14 @@ export function Signup() {
             className="w-full rounded-xl py-8 text-xs otto-label tracking-[0.2em] disabled:opacity-50"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Criando conta...' : 'Create Account'}
+            {isSubmitting ? 'Criando conta...' : 'Criar Conta'}
           </Button>
         </form>
 
         <p className="text-center text-[10px] otto-label text-muted-foreground">
           Já tem conta?{' '}
           <button onClick={() => navigate('/login')} className="text-foreground hover:underline transition-all font-medium">
-            Sign In
+            Entrar
           </button>
         </p>
       </div>
