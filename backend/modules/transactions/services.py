@@ -47,7 +47,9 @@ _CATEGORY_HINTS: dict[str, tuple[str, ...]] = {
     "assinaturas": ("netflix", "spotify", "prime video", "youtube", "assinatura"),
 }
 
-def resolve_merchant_name(merchant: str) -> str:
+def resolve_merchant_name(merchant: str | None) -> str:
+    if not merchant:
+        return ""
     normalized = merchant.upper().strip()
     if normalized in _MERCHANT_LOOKUP:
         return _MERCHANT_LOOKUP[normalized]
@@ -66,8 +68,8 @@ def build_classification_payload(
         "transactions": [
             {
                 "id": t["id"],
-                "description": t["description"],
-                "merchant_name": resolve_merchant_name(t.get("merchant_name", "")),
+                "description": t.get("description") or "",
+                "merchant_name": resolve_merchant_name(t.get("merchant_name")),
                 "amount": t["amount"],
             }
             for t in transactions
