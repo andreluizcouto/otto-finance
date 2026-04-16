@@ -54,20 +54,24 @@ def _parse_transactions_from_result(raw: str) -> list[dict[str, Any]]:
             candidates.append(sliced)
 
     for candidate in candidates:
-        try:
-            data = json.loads(candidate)
-        except json.JSONDecodeError:
-            continue
+        # Tenta parsing direto, depois tenta sanitizando newlines literais
+        # que o Claude às vezes insere dentro de valores de string (ex: raw_text)
+        for attempt in (candidate, candidate.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")):
+            try:
+                data = json.loads(attempt)
+            except json.JSONDecodeError:
+                continue
 
-        if isinstance(data, list):
-            return data
+            if isinstance(data, list):
+                return data
 
-        if isinstance(data, dict):
-            transacoes = data.get("transacoes")
-            if transacoes is None:
-                transacoes = data.get("transações")
-            if isinstance(transacoes, list):
-                return transacoes
+            if isinstance(data, dict):
+                transacoes = data.get("transacoes")
+                if transacoes is None:
+                    transacoes = data.get("transações")
+                if isinstance(transacoes, list):
+                    return transacoes
+            break
 
     logger.warning(
         "Resposta do Claude nao continha JSON valido de transacoes. raw (primeiros 300 chars): %s",
