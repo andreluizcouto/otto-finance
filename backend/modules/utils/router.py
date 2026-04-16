@@ -79,7 +79,7 @@ def _run_anthropic_text_analysis(
     )
     message = client.messages.create(
         model=model_name,
-        max_tokens=4096,
+        max_tokens=8192,
         messages=[
             {
                 "role": "user",
@@ -98,7 +98,7 @@ def _run_anthropic_document_analysis(
     pdf_base64 = base64.standard_b64encode(pdf_content).decode("utf-8")
     message = client.messages.create(
         model=model_name,
-        max_tokens=4096,
+        max_tokens=8192,
         messages=[
             {
                 "role": "user",
