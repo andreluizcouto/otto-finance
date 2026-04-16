@@ -68,6 +68,13 @@ export function ImportPdfModal({
     }
 
     const analyzeData = await response.json();
+    if (analyzeData?.warning) {
+      toast.error(analyzeData.warning);
+      return {
+        imported: 0,
+        skipped: 0,
+      };
+    }
     if (!analyzeData?.result) {
       throw new Error(`Resposta inválida na extração (${file.name}).`);
     }
@@ -265,7 +272,12 @@ export function ImportPdfModal({
           >
             Cancelar
           </Button>
-          <Button type="button" onClick={handleImport} disabled={files.length === 0 || isLoading}>
+          <Button
+            type="button"
+            onClick={handleImport}
+            disabled={files.length === 0 || isLoading}
+            className="bg-white text-black hover:bg-white/90"
+          >
             {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             {isLoading
               ? "Importando..."

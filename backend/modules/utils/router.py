@@ -59,8 +59,12 @@ def _build_text_extraction_prompt(extracted_text: str, source_hint: str | None) 
 
 
 def _coerce_transactions_json_result(raw_result: str) -> str:
-    items = _parse_transactions_from_result(raw_result)
-    normalized = _normalize_transaction_items(items)
+    try:
+        items = _parse_transactions_from_result(raw_result)
+        normalized = _normalize_transaction_items(items)
+    except Exception:
+        logger.exception("Erro ao normalizar transacoes extraidas pelo Claude.")
+        normalized = []
     return json.dumps({"transacoes": normalized}, ensure_ascii=False)
 
 
@@ -220,8 +224,13 @@ async def analyze_pdf(
     if has_meaningful_financial_text(extracted_text):
         try:
             raw_result = _run_anthropic_text_analysis(client, model_name, extracted_text)
+            coerced = _coerce_transactions_json_result(raw_result)
+            parsed = json.loads(coerced)
+            if not parsed.get("transacoes"):
+                logger.warning("Modo text-first: Claude nao retornou transacoes. Tentando fallback.")
+                raise ValueError("Sem transacoes no modo text-first.")
             return {
-                "result": _coerce_transactions_json_result(raw_result),
+                "result": coerced,
                 "mode": "text-first",
                 "text_chars": len(extracted_text),
             }
@@ -230,8 +239,16 @@ async def analyze_pdf(
 
     try:
         raw_result = _run_anthropic_document_analysis(client, model_name, pdf_content)
+        coerced = _coerce_transactions_json_result(raw_result)
+        parsed = json.loads(coerced)
+        if not parsed.get("transacoes"):
+            return {
+                "result": json.dumps({"transacoes": []}, ensure_ascii=False),
+                "mode": "document-fallback",
+                "warning": "Nao foi possivel extrair transacoes deste PDF. O formato pode nao ser suportado ou o documento esta ilegivel.",
+            }
         return {
-            "result": _coerce_transactions_json_result(raw_result),
+            "result": coerced,
             "mode": "document-fallback",
             "text_chars": len(extracted_text),
         }

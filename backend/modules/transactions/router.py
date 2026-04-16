@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 from typing import Annotated, Any
 import unicodedata
@@ -15,6 +16,7 @@ from .services import (
 )
 
 router = APIRouter(prefix="/api", tags=["transactions"])
+logger = logging.getLogger(__name__)
 
 
 def _extract_json_payload(raw: str) -> str:
@@ -34,7 +36,14 @@ def _extract_json_payload(raw: str) -> str:
 
 
 def _parse_transactions_from_result(raw: str) -> list[dict[str, Any]]:
-    text = _extract_json_payload(raw)
+    try:
+        text = _extract_json_payload(raw)
+    except ValueError:
+        logger.warning(
+            "Resposta do Claude nao continha JSON valido de transacoes. raw (primeiros 300 chars): %s",
+            (raw or "")[:300],
+        )
+        return []
     candidates = [text]
 
     first_obj = text.find("{")
@@ -60,7 +69,11 @@ def _parse_transactions_from_result(raw: str) -> list[dict[str, Any]]:
             if isinstance(transacoes, list):
                 return transacoes
 
-    raise ValueError("JSON de extracao invalido.")
+    logger.warning(
+        "Resposta do Claude nao continha JSON valido de transacoes. raw (primeiros 300 chars): %s",
+        (raw or "")[:300],
+    )
+    return []
 
 
 def _normalize_tipo(value: Any) -> str:
