@@ -392,7 +392,3 @@ export function Categories() {
     </div>
   );
 }
-
-    </div>
-  );
-}

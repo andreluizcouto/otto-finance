@@ -278,6 +278,3 @@ export function TransactionDetail() {
     </div>
   );
 }
-    </div>
-  );
-}
