@@ -59,7 +59,13 @@ def _parse_transactions_from_result(raw: str) -> list[dict[str, Any]]:
         for attempt in (candidate, candidate.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")):
             try:
                 data = json.loads(attempt)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as exc:
+                logger.info(
+                    "JSONDecodeError pos=%d msg=%s snippet=%r",
+                    exc.pos,
+                    exc.msg,
+                    attempt[max(0, exc.pos - 40) : exc.pos + 40],
+                )
                 continue
 
             if isinstance(data, list):
