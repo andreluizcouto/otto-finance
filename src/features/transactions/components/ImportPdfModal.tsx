@@ -29,13 +29,11 @@ export function ImportPdfModal({
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentFileIndex, setCurrentFileIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetState = () => {
     setFiles([]);
     setError(null);
-    setCurrentFileIndex(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -108,20 +106,24 @@ export function ImportPdfModal({
       const failedFiles: File[] = [];
       const failedMessages: string[] = [];
 
-      for (let i = 0; i < files.length; i += 1) {
-        const current = files[i];
-        setCurrentFileIndex(i);
-        try {
-          const result = await processFile(current, token);
-          totalImported += result.imported;
-          totalSkipped += result.skipped;
-        } catch (err) {
-          failedFiles.push(current);
-          const message =
-            err instanceof Error ? err.message : "Falha no processamento do arquivo.";
-          failedMessages.push(`${current.name}: ${message}`);
+      const results = await Promise.allSettled(
+        files.map((file) => processFile(file, token))
+      );
+
+      results.forEach((result, i) => {
+        if (result.status === "fulfilled") {
+          totalImported += result.value.imported;
+          totalSkipped += result.value.skipped;
+          return;
         }
-      }
+
+        failedFiles.push(files[i]);
+        const message =
+          result.reason instanceof Error
+            ? result.reason.message
+            : "Falha no processamento do arquivo.";
+        failedMessages.push(`${files[i].name}: ${message}`);
+      });
 
       let autoClassified = 0;
       let autoSkipped = 0;
@@ -187,7 +189,6 @@ export function ImportPdfModal({
       setError(message);
       toast.error(message);
     } finally {
-      setCurrentFileIndex(null);
       setIsLoading(false);
     }
   };
@@ -252,10 +253,9 @@ export function ImportPdfModal({
                 {files.length > 5 && <li>- ... e mais {files.length - 5} arquivo(s)</li>}
               </ul>
             )}
-            {isLoading && currentFileIndex !== null && (
+            {isLoading && files.length > 0 && (
               <p className="text-xs text-muted-foreground">
-                Processando {currentFileIndex + 1}/{files.length}:{" "}
-                {files[currentFileIndex]?.name}
+                Processando {files.length} arquivo(s) em paralelo...
               </p>
             )}
           </div>
