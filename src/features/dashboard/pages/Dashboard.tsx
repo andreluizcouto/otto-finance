@@ -403,7 +403,7 @@ export function Dashboard() {
                     <div className="text-right shrink-0 ml-4">
                       <div className={cn(
                         "font-medium text-sm tabular-nums",
-                        isIncome ? "text-white" : "text-white/60"
+                        isIncome ? "text-emerald-400" : "text-rose-400"
                       )}>
                         {isIncome ? '+' : '-'}{formatBRL(Math.abs(tx.amount))}
                       </div>

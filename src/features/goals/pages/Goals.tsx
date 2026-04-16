@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Calendar,
-  Sparkles,
-  Plus,
+  AlertCircle,
   ArrowRight,
-  Flame,
-  ShieldCheck,
-  X,
-  Target,
+  Calendar,
   ChevronLeft,
   ChevronRight,
+  Flame,
   Loader2,
   Minus,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  X,
 } from 'lucide-react';
 import { apiGet, apiPatch, apiPost, formatBRL } from '@/shared/lib/api';
 import { cn } from '@/shared/lib/utils';
@@ -21,17 +22,23 @@ import { EmojiPickerGrid } from '@/shared/components/EmojiPickerGrid';
 type GoalType = 'savings' | 'spending';
 type GoalProgressAction = 'add' | 'remove';
 
-interface Goal {
+type GoalDraft = {
   id: string;
-  type: GoalType;
   name: string;
   emoji: string;
-  target: number;
-  current: number;
+  type: GoalType;
+  target_amount: number;
+  current_amount: number;
   deadline: string;
   color: string;
   category?: string;
+};
+
+interface Goal extends GoalDraft {
+  target: number;
+  current: number;
   aiInsight: string;
+  isPending?: boolean;
 }
 
 interface ApiGoal {
@@ -52,22 +59,37 @@ interface ApiCategory {
   emoji: string;
 }
 
-function mapGoal(goal: ApiGoal): Goal {
+const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+const PENDING_GOALS_STORAGE_KEY = 'otto_pending_goals';
+
+function mapGoal(goal: ApiGoal | GoalDraft, isPending = false): Goal {
   const isSavings = goal.type === 'savings';
   return {
-    id: goal.id,
-    type: goal.type,
-    name: goal.name,
-    emoji: goal.emoji || '🎯',
+    ...goal,
     target: Number(goal.target_amount ?? 0),
     current: Number(goal.current_amount ?? 0),
-    deadline: goal.deadline || '',
-    color: goal.color || (isSavings ? '#FFFFFF' : '#A3A3A3'),
-    category: goal.category ?? undefined,
     aiInsight: isSavings
       ? 'Acompanhe aportes recorrentes para acelerar a formação do seu objetivo.'
       : 'Revise este limite com frequência para evitar que a categoria consuma caixa demais.',
+    isPending,
   };
+}
+
+function readPendingGoals(): GoalDraft[] {
+  try {
+    const raw = localStorage.getItem(PENDING_GOALS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePendingGoals(goals: GoalDraft[]) {
+  localStorage.setItem(PENDING_GOALS_STORAGE_KEY, JSON.stringify(goals));
+}
+
+function isConnectionLikeError(message: string) {
+  return /indisponível|indisponivel|temporariamente|conexão|conexao|tente novamente/i.test(message);
 }
 
 function CircularProgress({ pct, color, size = 120 }: { pct: number; color: string; size?: number }) {
@@ -162,11 +184,7 @@ function UpdateProgressModal({
           inputMode="decimal"
         />
 
-        <button
-          onClick={handleSubmit}
-          disabled={saving || !amount}
-          className="w-full mt-8 h-14 min-h-[48px] rounded-2xl bg-white text-black font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-white/90 disabled:opacity-30"
-        >
+        <button onClick={handleSubmit} disabled={saving || !amount} className="w-full mt-8 h-14 min-h-[48px] rounded-2xl bg-white text-black font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-white/90 disabled:opacity-30">
           {saving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Salvar'}
         </button>
       </div>
@@ -174,13 +192,7 @@ function UpdateProgressModal({
   );
 }
 
-function GoalCard({
-  goal,
-  onUpdateProgress,
-}: {
-  goal: Goal;
-  onUpdateProgress: (goal: Goal) => void;
-}) {
+function GoalCard({ goal, onUpdateProgress }: { goal: Goal; onUpdateProgress: (goal: Goal) => void }) {
   const pct = goal.target > 0 ? (goal.current / goal.target) * 100 : 0;
   const remaining = Math.max(goal.target - goal.current, 0);
   const isSavings = goal.type === 'savings';
@@ -201,6 +213,11 @@ function GoalCard({
                 <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest px-2 md:px-2.5 py-1 rounded-lg border shrink-0" style={{ color: goal.color, borderColor: `${goal.color}40`, backgroundColor: `${goal.color}10` }}>
                   {isSavings ? 'Juntar' : 'Limite'}
                 </span>
+                {goal.isPending && (
+                  <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest px-2 md:px-2.5 py-1 rounded-lg border border-amber-400/30 bg-amber-500/10 text-amber-300">
+                    Pendente de sync
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-3 text-[10px] md:text-xs text-white/40 mt-1 font-medium uppercase tracking-widest">
                 <Calendar className="w-3.5 h-3.5 shrink-0" />
@@ -244,10 +261,7 @@ function GoalCard({
                 <ArrowRight className="w-5 h-5 group-hover/insight:translate-x-1 transition-transform" />
               </button>
             </div>
-            <button
-              onClick={() => onUpdateProgress(goal)}
-              className="w-full md:w-auto px-5 py-4 min-h-[48px] rounded-2xl bg-white/[0.05] border border-white/[0.08] text-white/80 hover:bg-white/[0.1] hover:text-white transition-all text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2"
-            >
+            <button onClick={() => onUpdateProgress(goal)} className="w-full md:w-auto px-5 py-4 min-h-[48px] rounded-2xl bg-white/[0.05] border border-white/[0.08] text-white/80 hover:bg-white/[0.1] hover:text-white transition-all text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2">
               <Plus className="w-4 h-4" />
               Atualizar progresso
             </button>
@@ -262,9 +276,26 @@ function GoalCard({
   );
 }
 
-const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+function RetryBanner({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="mb-8 rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex items-start gap-4">
+        <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/[0.08]">
+          <AlertCircle className="w-5 h-5 text-white/70" />
+        </div>
+        <div>
+          <h2 className="text-white/90 text-base font-medium mb-1">Conectando ao servidor... Isso pode levar alguns segundos.</h2>
+          <p className="text-white/40 text-sm">Você ainda pode criar metas agora. Se a API responder depois, as pendências serão sincronizadas.</p>
+        </div>
+      </div>
+      <button onClick={onRetry} className="px-5 py-3 min-h-[44px] rounded-xl border border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white transition-all text-xs font-bold uppercase tracking-widest">
+        Tentar novamente
+      </button>
+    </div>
+  );
+}
 
-function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function MonthYearPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
@@ -272,7 +303,7 @@ function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: str
   useEffect(() => {
     if (value) {
       const [monthLabel, yearLabel] = value.split(' ');
-      const monthIndex = MONTHS.findIndex((m) => m === monthLabel);
+      const monthIndex = MONTHS.findIndex((monthItem) => monthItem === monthLabel);
       if (monthIndex >= 0 && yearLabel) {
         setMonth(monthIndex);
         setYear(Number(yearLabel));
@@ -322,16 +353,7 @@ function NewGoalModal({
   onSave,
 }: {
   onClose: () => void;
-  onSave: (goal: {
-    name: string;
-    emoji: string;
-    type: GoalType;
-    target_amount: number;
-    current_amount: number;
-    deadline: string;
-    color: string;
-    category?: string;
-  }) => Promise<void>;
+  onSave: (goal: GoalDraft) => Promise<void>;
 }) {
   const [type, setType] = useState<GoalType>('savings');
   const [name, setName] = useState('');
@@ -344,15 +366,19 @@ function NewGoalModal({
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    apiGet('/api/categories').then((res) => setApiCategories(res?.categories ?? [])).catch(() => {});
+    apiGet('/api/categories')
+      .then((res) => setApiCategories(res?.categories ?? []))
+      .catch(() => setApiCategories([]));
   }, []);
 
   const handleSubmit = async () => {
     const parsedTarget = Number(target);
     if (!name || !parsedTarget || (type === 'spending' && !category)) return;
+
     setIsSaving(true);
     try {
       await onSave({
+        id: `pending-${Date.now()}`,
         name,
         emoji,
         type,
@@ -404,22 +430,11 @@ function NewGoalModal({
               )}
             </div>
 
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={type === 'savings' ? 'Ex: Reserva de Liquidez' : 'Ex: Lifestyle / Delivery'}
-              className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 min-h-[48px] text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
-            />
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={type === 'savings' ? 'Ex: Reserva de Liquidez' : 'Ex: Lifestyle / Delivery'} className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 min-h-[48px] text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all" />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
-            <input
-              value={target}
-              onChange={(e) => setTarget(e.target.value.replace(/[^0-9.]/g, ''))}
-              placeholder={type === 'savings' ? 'Montante Alvo (R$)' : 'Teto Mensal (R$)'}
-              className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 min-h-[48px] text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
-              inputMode="decimal"
-            />
+            <input value={target} onChange={(e) => setTarget(e.target.value.replace(/[^0-9.]/g, ''))} placeholder={type === 'savings' ? 'Montante Alvo (R$)' : 'Teto Mensal (R$)'} className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 min-h-[48px] text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all" inputMode="decimal" />
             <MonthYearPicker value={deadline} onChange={setDeadline} />
           </div>
 
@@ -469,7 +484,7 @@ function SummaryBar({ goals }: { goals: Goal[] }) {
       <div className="p-5 md:p-6 rounded-[1.5rem] bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] backdrop-blur-xl">
         <div className="text-white/30 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Alertas de Fluxo</div>
         <div className="text-2xl md:text-3xl font-light">
-          {overBudget > 0 ? <span className="text-red-400/80">{overBudget}</span> : <span className="text-white/40 italic text-lg md:text-xl">Nenhum alerta</span>}
+          {overBudget > 0 ? <span className="text-rose-400">{overBudget}</span> : <span className="text-white/40 italic text-lg md:text-xl">Nenhum alerta</span>}
         </div>
       </div>
     </div>
@@ -513,14 +528,46 @@ export function Goals() {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [savingProgress, setSavingProgress] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showRetryBanner, setShowRetryBanner] = useState(false);
   const [filter, setFilter] = useState<'all' | 'savings' | 'spending'>('all');
 
   const loadGoals = async () => {
     setLoading(true);
     try {
       const response = await apiGet('/api/goals');
-      setGoals((response?.goals ?? []).map(mapGoal));
+      const serverGoals = (response?.goals ?? []).map((goal: ApiGoal) => mapGoal(goal));
+      const pendingGoals = readPendingGoals();
+
+      let nextGoals = [...serverGoals];
+      let remainingPending = [...pendingGoals];
+
+      for (const pendingGoal of pendingGoals) {
+        try {
+          const createRes = await apiPost('/api/goals', {
+            name: pendingGoal.name,
+            emoji: pendingGoal.emoji,
+            type: pendingGoal.type,
+            target_amount: pendingGoal.target_amount,
+            current_amount: pendingGoal.current_amount,
+            deadline: pendingGoal.deadline,
+            color: pendingGoal.color,
+            category: pendingGoal.category,
+          });
+          const createdGoal = createRes?.goal ? mapGoal(createRes.goal) : mapGoal(pendingGoal);
+          nextGoals = [...nextGoals.filter((goal) => goal.id !== pendingGoal.id), createdGoal];
+          remainingPending = remainingPending.filter((goal) => goal.id !== pendingGoal.id);
+        } catch {
+          nextGoals = [...nextGoals.filter((goal) => goal.id !== pendingGoal.id), mapGoal(pendingGoal, true)];
+        }
+      }
+
+      writePendingGoals(remainingPending);
+      setGoals(nextGoals.length ? nextGoals : remainingPending.map((goal) => mapGoal(goal, true)));
+      setShowRetryBanner(false);
     } catch (error: any) {
+      const pendingGoals = readPendingGoals().map((goal) => mapGoal(goal, true));
+      setGoals(pendingGoals);
+      setShowRetryBanner(true);
       toast.error(error?.message ?? 'Erro ao carregar metas.');
     } finally {
       setLoading(false);
@@ -534,24 +581,43 @@ export function Goals() {
   const filtered = useMemo(() => filter === 'all' ? goals : goals.filter((goal) => goal.type === filter), [filter, goals]);
   const hasGoals = goals.length > 0;
 
-  const handleCreateGoal = async (payload: {
-    name: string;
-    emoji: string;
-    type: GoalType;
-    target_amount: number;
-    current_amount: number;
-    deadline: string;
-    color: string;
-    category?: string;
-  }) => {
-    await apiPost('/api/goals', payload);
-    toast.success('Meta estabelecida com sucesso.');
-    setShowModal(false);
-    await loadGoals();
+  const handleCreateGoal = async (payload: GoalDraft) => {
+    const optimisticGoal = mapGoal(payload, false);
+    try {
+      const response = await apiPost('/api/goals', {
+        name: payload.name,
+        emoji: payload.emoji,
+        type: payload.type,
+        target_amount: payload.target_amount,
+        current_amount: payload.current_amount,
+        deadline: payload.deadline,
+        color: payload.color,
+        category: payload.category,
+      });
+      const createdGoal = response?.goal ? mapGoal(response.goal) : optimisticGoal;
+      setGoals((prev) => [...prev.filter((goal) => goal.id !== payload.id), createdGoal]);
+      setShowRetryBanner(false);
+      toast.success('Meta estabelecida com sucesso.');
+    } catch (error: any) {
+      if (isConnectionLikeError(error?.message ?? '')) {
+        const pending = [...readPendingGoals(), payload];
+        writePendingGoals(pending);
+        setGoals((prev) => [...prev, mapGoal(payload, true)]);
+        setShowRetryBanner(true);
+        toast.warning('Meta salva localmente. Vamos sincronizar quando o servidor responder.');
+      } else {
+        toast.error(error?.message ?? 'Erro ao criar meta.');
+      }
+    } finally {
+      setShowModal(false);
+    }
   };
 
   const handleUpdateProgress = async (action: GoalProgressAction, amount: number) => {
-    if (!selectedGoal) return;
+    if (!selectedGoal || selectedGoal.isPending) {
+      toast.warning('Esta meta ainda está pendente de sincronização.');
+      return;
+    }
     setSavingProgress(true);
     try {
       await apiPatch(`/api/goals/${selectedGoal.id}`, { action, amount });
@@ -581,6 +647,8 @@ export function Goals() {
           <span>Nova Meta</span>
         </button>
       </div>
+
+      {showRetryBanner && <RetryBanner onRetry={loadGoals} />}
 
       <div className="flex gap-3 mb-8 md:mb-10 overflow-x-auto no-scrollbar pb-2">
         {([

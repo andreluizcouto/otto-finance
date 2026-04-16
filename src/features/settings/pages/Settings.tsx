@@ -16,6 +16,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { apiGet, apiPatch } from '@/shared/lib/api';
+import { getToken } from '@/shared/lib/auth';
+import { supabase } from '@/shared/lib/supabase';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
 
@@ -60,6 +62,25 @@ export function Settings() {
   const [isLoading, setIsLoading] = useState(true);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
+  const applySessionFallback = () => {
+    const token = getToken();
+    if (!token) return false;
+    try {
+      const [, payload] = token.split('.');
+      const parsed = JSON.parse(atob(payload));
+      const email = parsed.email || '';
+      const fullName = parsed.user_metadata?.full_name || parsed.app_metadata?.full_name || '';
+      setProfileForm((prev) => ({
+        ...prev,
+        name: fullName || email.split('@')[0] || prev.name || 'Usuário',
+        email: email || prev.email || '',
+      }));
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
     if (digits.length <= 2) return digits;
@@ -91,8 +112,13 @@ export function Settings() {
   };
 
   useEffect(() => {
-    Promise.all([apiGet('/api/auth/me'), apiGet('/api/profile')])
-      .then(([authRes, profileRes]) => {
+    const loadProfile = async () => {
+      setIsLoading(true);
+      try {
+        const [authRes, profileRes] = await Promise.all([
+          apiGet('/api/auth/me'),
+          apiGet('/api/profile'),
+        ]);
         const u = authRes.user ?? authRes;
         const profile = profileRes.profile ?? {};
         setProfileForm({
@@ -101,9 +127,36 @@ export function Settings() {
           phone: profile.phone || '',
           cpf: profile.cpf || '',
         });
-      })
-      .catch(() => toast.error('Erro ao sincronizar identidade.'))
-      .finally(() => setIsLoading(false));
+      } catch {
+        try {
+          if (!supabase) {
+            throw new Error('Supabase client unavailable');
+          }
+          const { data, error } = await supabase.auth.getUser();
+          if (error || !data.user) {
+            throw error ?? new Error('No cached user');
+          }
+          const fallbackUser = data.user;
+          setProfileForm((prev) => ({
+            ...prev,
+            name:
+              (fallbackUser.user_metadata?.full_name as string | undefined) ||
+              fallbackUser.email?.split('@')[0] ||
+              prev.name ||
+              'Usuário',
+            email: fallbackUser.email || prev.email || '',
+          }));
+          toast.warning('Perfil carregado do cache local.');
+        } catch {
+          applySessionFallback();
+          toast.warning('Perfil carregado do cache local.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {

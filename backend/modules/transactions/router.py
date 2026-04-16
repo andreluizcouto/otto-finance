@@ -221,6 +221,27 @@ def correct_category(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=result.get("error", "Falha ao corrigir categoria."),
+    )
+    return result
+
+
+@router.patch("/transactions/{transaction_id}")
+def update_transaction(
+    transaction_id: str,
+    payload: CorrectTransactionRequest,
+    user: Annotated[dict, Depends(get_current_user)] = None,
+    client: Annotated[Client, Depends(get_current_client)] = None,
+) -> dict:
+    result = correct_transaction_category(
+        client=client,
+        transaction_id=transaction_id,
+        category_id=str(payload.category_id),
+        user_id=user["id"],
+    )
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.get("error", "Falha ao atualizar transacao."),
         )
     return result
 

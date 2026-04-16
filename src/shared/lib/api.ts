@@ -1,3 +1,4 @@
+// In production, configure VITE_API_URL as https://otto-qkio.onrender.com
 import { getToken } from './auth';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -24,7 +25,7 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
       headers,
     });
   } catch {
-    throw new Error(`Sem conexão com a API (${BASE_URL}). Verifique se o backend está rodando.`);
+    throw new Error('Serviço temporariamente indisponível. Tente novamente em instantes.');
   }
 
   if (!response.ok) {
