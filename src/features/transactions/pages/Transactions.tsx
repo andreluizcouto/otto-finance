@@ -316,7 +316,7 @@ export function Transactions() {
       setError(null);
       try {
         const [txRes, catRes] = await Promise.all([
-          apiGet('/api/transactions?limit=200'),
+          apiGet('/api/transactions?limit=1000'),
           apiGet('/api/categories'),
         ]);
         setAllTransactions(txRes.transactions ?? []);
