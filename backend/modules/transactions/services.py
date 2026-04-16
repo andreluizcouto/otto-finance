@@ -574,28 +574,20 @@ def import_transactions_from_pdf(
                 skipped_count += 1
                 continue
 
-            duplicate_resp = (
+            # Deduplicacao simples: date + transaction_time + amount + user_id
+            # No extrato bancario brasileiro toda movimentacao tem timestamp unico.
+            # Se bater data + hora + valor = ja existe, nao importar.
+            dup_query = (
                 client.table("transactions")
-                .select("id, description, raw_text, transaction_time")
+                .select("id")
                 .eq("user_id", user_id)
                 .eq("date", date_str)
                 .eq("amount", amount)
-                .execute()
             )
-            canonical_incoming = _canonical_description(description)
-            existing_rows = duplicate_resp.data or []
-            has_duplicate = any(
-                _canonical_description(str(row.get("description", "")))
-                == canonical_incoming
-                for row in existing_rows
-            )
-            if not has_duplicate and raw_text and transaction_time:
-                has_duplicate = any(
-                    " ".join(str(row.get("raw_text") or "").split()) == raw_text
-                    and str(row.get("transaction_time") or "").strip() == transaction_time
-                    for row in existing_rows
-                )
-            if has_duplicate:
+            if transaction_time:
+                dup_query = dup_query.eq("transaction_time", transaction_time)
+            duplicate_resp = dup_query.execute()
+            if duplicate_resp.data:
                 skipped_count += 1
                 continue
 
