@@ -194,23 +194,20 @@ function FilterDrawer({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[105]">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute right-0 top-0 h-full w-full max-w-md bg-[#0a0a0a] border-l border-white/10 p-6 md:p-8 shadow-2xl animate-in slide-in-from-right duration-300 overflow-y-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-light text-white">Filtros</h2>
-            <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] mt-2">Filtre o histórico em memória</p>
-          </div>
+    <>
+      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+      <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-[#0a0a0a] border-l border-white/10 z-50 overflow-y-auto p-6 shadow-2xl animate-in slide-in-from-right duration-300">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-light text-white">Filtros</h2>
           <button onClick={onClose} className="p-2 text-white/20 hover:text-white transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="space-y-8">
-          <div>
-            <h3 className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4">Período</h3>
-            <div className="flex gap-2 flex-wrap">
+        <div className="pb-28">
+          <div className="mb-6">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3">Período</h3>
+            <div className="flex flex-wrap gap-2">
               {PERIOD_OPTIONS.map((label) => (
                 <button
                   key={label}
@@ -234,9 +231,9 @@ function FilterDrawer({
             )}
           </div>
 
-          <div>
-            <h3 className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4">Tipo</h3>
-            <div className="flex gap-2 flex-wrap">
+          <div className="mb-6">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3">Tipo</h3>
+            <div className="flex flex-wrap gap-2">
               {FILTERS.map((type) => (
                 <button
                   key={type}
@@ -254,11 +251,14 @@ function FilterDrawer({
             </div>
           </div>
 
-          <div>
-            <h3 className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4">Categoria</h3>
-            <div className="space-y-3">
+          <div className="mb-6">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3">Categoria</h3>
+            <div className="flex flex-col gap-2">
               {categories.map((category) => (
-                <label key={category.id} className="flex items-center gap-3 text-sm text-white/70 cursor-pointer">
+                <label
+                  key={category.id}
+                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-3 text-sm text-white/70 cursor-pointer hover:border-white/20 hover:bg-white/[0.04] transition-colors"
+                >
                   <input
                     type="checkbox"
                     checked={selectedCategoryIds.includes(category.id)}
@@ -271,18 +271,24 @@ function FilterDrawer({
               ))}
             </div>
           </div>
+        </div>
 
-          <div className="flex gap-3 pt-4">
-            <button onClick={onClose} className="flex-1 px-4 py-3 min-h-[44px] rounded-xl bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-all">
-              Aplicar filtros
-            </button>
-            <button onClick={onClear} className="px-4 py-3 min-h-[44px] rounded-xl border border-white/10 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/[0.08] transition-all text-xs font-bold uppercase tracking-widest">
-              Limpar
-            </button>
-          </div>
+        <div className="sticky bottom-0 bg-[#0a0a0a] pt-4 border-t border-white/10 flex gap-3">
+          <button
+            onClick={onClear}
+            className="flex-1 px-4 py-3 min-h-[44px] rounded-xl border border-white/10 bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/[0.08] transition-all text-xs font-bold uppercase tracking-widest"
+          >
+            Limpar
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 min-h-[44px] rounded-xl bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-all"
+          >
+            Aplicar
+          </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
