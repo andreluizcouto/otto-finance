@@ -185,34 +185,19 @@ def trigger_classification(client: Any, user_id: str) -> dict[str, Any]:
 
     try:
         webhook_url = get_make_webhook_url()
+    except ValueError:
+        # MAKE_WEBHOOK_URL nao configurada — usar classificacao local silenciosamente
+        return _fallback_local_classification(client, user_id, unclassified, categories)
+
+    try:
         response = httpx.post(webhook_url, json=payload, timeout=60.0)
         response.raise_for_status()
         result = response.json()
         count = int(result.get("classified_count", len(unclassified)))
         skipped_count = max(len(unclassified) - count, 0)
         return {"success": True, "classified_count": count, "skipped_count": skipped_count}
-    except httpx.TimeoutException:
-        fallback = _fallback_local_classification(client, user_id, unclassified, categories)
-        if fallback.get("success"):
-            fallback["warning"] = (
-                "Classificacao em modo local aplicada porque o servico externo nao respondeu."
-            )
-            return fallback
-        return {
-            "success": False,
-            "error": "O servico de classificacao nao respondeu. Tente novamente em alguns minutos.",
-        }
     except Exception:
-        fallback = _fallback_local_classification(client, user_id, unclassified, categories)
-        if fallback.get("success"):
-            fallback["warning"] = (
-                "Classificacao em modo local aplicada porque o servico externo estava indisponivel."
-            )
-            return fallback
-        return {
-            "success": False,
-            "error": "Erro ao conectar com o servico de classificacao. Tente novamente.",
-        }
+        return _fallback_local_classification(client, user_id, unclassified, categories)
 
 # ---------------------------------------------------------------------------
 # Confidence score mapping (AICL-03 + D-10)
