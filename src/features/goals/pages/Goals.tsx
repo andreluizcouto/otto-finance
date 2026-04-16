@@ -323,13 +323,18 @@ function NewGoalModal({ onClose, onSave }: { onClose: () => void; onSave: (g: Go
                 {emoji}
               </button>
               {showEmojiPicker && (
-                <div className="absolute left-0 top-full mt-2 z-50 bg-[#111] border border-white/10 rounded-2xl p-3 shadow-2xl grid grid-cols-7 gap-2 w-64">
+                <div className="absolute left-0 top-full mt-2 z-50 bg-[#111] border border-white/10 rounded-2xl p-4 shadow-2xl grid grid-cols-6 gap-3 w-[336px]">
                   {EMOJI_OPTIONS.map((e) => (
                     <button
                       key={e}
                       type="button"
                       onClick={() => { setEmoji(e); setShowEmojiPicker(false); }}
-                      className={`text-2xl p-2 rounded-xl hover:bg-white/10 transition-colors ${emoji === e ? 'bg-white/20 ring-1 ring-white/30' : ''}`}
+                      className={cn(
+                        "w-12 h-12 flex items-center justify-center text-2xl rounded-xl transition-all",
+                        emoji === e
+                          ? "bg-white/20 ring-2 ring-white/40"
+                          : "hover:bg-white/10"
+                      )}
                     >
                       {e}
                     </button>

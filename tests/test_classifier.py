@@ -156,12 +156,12 @@ def test_trigger_classification_fallbacks_to_unclassified_length():
     ):
         result = classifier.trigger_classification(client, "user-1")
 
-    assert result == {"success": True, "classified_count": 1}
+    assert result == {"success": True, "classified_count": 1, "skipped_count": 0}
     post_mock.assert_called_once()
 
 
 def test_trigger_classification_timeout_error_message():
-    """trigger_classification() returns timeout-specific error copy."""
+    """trigger_classification() falls back to local mode when webhook times out."""
     from backend.modules.transactions import services as classifier
 
     client = mock.MagicMock()
@@ -179,12 +179,14 @@ def test_trigger_classification_timeout_error_message():
     ):
         result = classifier.trigger_classification(client, "user-1")
 
-    assert result["success"] is False
-    assert "nao respondeu" in result["error"]
+    assert result["success"] is True
+    assert result["fallback_used"] is True
+    assert result["classified_count"] == 1
+    assert "modo local" in result["warning"].lower()
 
 
 def test_trigger_classification_generic_error_message():
-    """trigger_classification() returns generic integration error copy on unexpected exceptions."""
+    """trigger_classification() falls back to local mode on unexpected webhook errors."""
     from backend.modules.transactions import services as classifier
 
     client = mock.MagicMock()
@@ -200,5 +202,7 @@ def test_trigger_classification_generic_error_message():
     ):
         result = classifier.trigger_classification(client, "user-1")
 
-    assert result["success"] is False
-    assert "Erro ao conectar com o servico de classificacao" in result["error"]
+    assert result["success"] is True
+    assert result["fallback_used"] is True
+    assert result["classified_count"] == 1
+    assert "modo local" in result["warning"].lower()

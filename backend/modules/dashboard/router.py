@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client
@@ -6,6 +7,7 @@ from backend.core import get_current_client, get_current_user
 from .services import get_dashboard_payload
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
+logger = logging.getLogger(__name__)
 
 @router.get("/dashboard")
 def dashboard(
@@ -25,6 +27,7 @@ def dashboard(
     except HTTPException:
         raise
     except Exception:
+        logger.exception("Erro inesperado ao montar dashboard (period=%s, user_id=%s)", period, user.get("id"))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erro ao carregar dados do dashboard.",

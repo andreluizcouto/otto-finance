@@ -14,3 +14,4 @@ streamlit-option-menu>=0.4.0
 pikepdf>=9.5.2
 python-multipart>=0.0.9
 anthropic>=0.40.0
+pypdf>=5.4.0

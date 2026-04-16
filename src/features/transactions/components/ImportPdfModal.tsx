@@ -13,7 +13,7 @@ import {
 import { apiPost } from "@/shared/lib/api";
 import { getToken } from "@/shared/lib/auth";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 interface ImportPdfModalProps {
   open: boolean;
@@ -116,10 +116,33 @@ export function ImportPdfModal({
         }
       }
 
+      let autoClassified = 0;
+      let autoSkipped = 0;
+      let autoWarning: string | null = null;
+      if (totalImported > 0) {
+        try {
+          const classifyResult = await apiPost("/api/transactions/classify");
+          autoClassified = Number(classifyResult?.classified_count ?? 0);
+          autoSkipped = Number(classifyResult?.skipped_count ?? 0);
+          if (typeof classifyResult?.warning === "string" && classifyResult.warning.trim()) {
+            autoWarning = classifyResult.warning;
+          }
+        } catch (classificationError) {
+          const message =
+            classificationError instanceof Error
+              ? classificationError.message
+              : "Falha ao classificar automaticamente após importação.";
+          toast.error(message);
+        }
+      }
+
       if (failedFiles.length === 0) {
         toast.success(
-          `${totalImported} transações importadas, ${totalSkipped} já existiam e foram ignoradas em ${files.length} arquivo(s).`,
+          `${totalImported} transações importadas, ${totalSkipped} já existiam e foram ignoradas em ${files.length} arquivo(s). ${autoClassified} classificadas automaticamente (${autoSkipped} ignoradas).`,
         );
+        if (autoWarning) {
+          toast.warning(autoWarning);
+        }
         onSuccess();
         onOpenChange(false);
         resetState();
@@ -129,8 +152,11 @@ export function ImportPdfModal({
       const processedCount = files.length - failedFiles.length;
       if (processedCount > 0) {
         toast.success(
-          `${totalImported} transações importadas, ${totalSkipped} já existiam e foram ignoradas. ${processedCount}/${files.length} arquivo(s) processados.`,
+          `${totalImported} transações importadas, ${totalSkipped} já existiam e foram ignoradas. ${autoClassified} classificadas automaticamente (${autoSkipped} ignoradas). ${processedCount}/${files.length} arquivo(s) processados.`,
         );
+        if (autoWarning) {
+          toast.warning(autoWarning);
+        }
         onSuccess();
       }
 

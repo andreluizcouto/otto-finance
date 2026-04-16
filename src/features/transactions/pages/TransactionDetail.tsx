@@ -1,185 +1,280 @@
-import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router";
-import { Card, Button, Input } from "@/shared/components/ui";
-import { ArrowLeft, Edit2, Share2, FileText, ShoppingCart, Calendar, CreditCard, Tag } from "lucide-react";
-import { apiGet } from "@/shared/lib/api";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { Link, useParams, useNavigate } from 'react-router';
+import {
+  ArrowLeft,
+  Tag,
+  CreditCard,
+  Edit2,
+  Sparkles,
+  Receipt,
+  Split,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Calendar,
+  Share2,
+} from 'lucide-react';
+import { apiGet, formatBRL, formatDate } from '@/shared/lib/api';
+import { toast } from 'sonner';
+import { cn } from '@/shared/lib/utils';
 
-export function TransactionDetail() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [transaction, setTransaction] = useState<any | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (!id) {
-      setError("ID de transação inválido.");
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    apiGet("/api/transactions?limit=1000")
-      .then((res) => {
-        const found = (res?.transactions ?? []).find((item: any) => item.id === id);
-        if (!found) {
-          setError("Transação não encontrada.");
-          return;
-        }
-        setTransaction(found);
-        setError(null);
-      })
-      .catch(() => {
-        setError("Erro ao carregar detalhes da transação.");
-        toast.error("Erro ao carregar detalhes da transação");
-      })
-      .finally(() => setIsLoading(false));
-  }, [id]);
-
-  const amountLabel = useMemo(() => {
-    if (!transaction) {
-      return "—";
-    }
-    const abs = Math.abs(Number(transaction.amount ?? 0));
-    const signal = Number(transaction.amount ?? 0) >= 0 ? "+" : "-";
-    return `${signal} R$ ${abs.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-  }, [transaction]);
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-10 pt-6 max-w-4xl mx-auto px-6">
-        <Card className="p-10 border-border bg-secondary/20">
-          <div className="animate-pulse h-8 w-64 rounded bg-secondary mb-6" />
-          <div className="animate-pulse h-6 w-48 rounded bg-secondary mb-4" />
-          <div className="animate-pulse h-20 w-full rounded bg-secondary" />
-        </Card>
-      </div>
-    );
-  }
-
-  if (error || !transaction) {
-    return (
-      <div className="flex flex-col gap-10 pt-6 max-w-4xl mx-auto px-6">
-        <Card className="p-10 border-border bg-secondary/20">
-          <h1 className="text-2xl otto-title text-foreground mb-3">Detalhe indisponível</h1>
-          <p className="text-sm text-muted-foreground mb-6">{error ?? "Transação não encontrada."}</p>
-          <Button onClick={() => navigate("/transactions")}>Voltar para Transações</Button>
-        </Card>
-      </div>
-    );
-  }
+function ConfidenceBar({ score }: { score: number | null }) {
+  if (score === null) return null;
+  const pct    = score > 1 ? Math.round(score) : Math.round(score * 100);
+  const label  = pct >= 90 ? 'Alta' : pct >= 70 ? 'Média' : 'Baixa';
+  const glow   = pct >= 90
+    ? 'bg-white shadow-[0_0_12px_rgba(255,255,255,0.4)]'
+    : pct >= 70
+    ? 'bg-white/70'
+    : 'bg-white/40';
 
   return (
-    <div className="flex flex-col gap-10 pt-6 max-w-4xl mx-auto px-6">
-      <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-foreground transition-all hover:bg-muted border border-border">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex gap-4">
-          <Button variant="secondary" className="px-6 py-6">
-            <Share2 className="mr-3 h-4 w-4" /> Compartilhar
-          </Button>
-          <Button variant="outline" className="px-6 py-6">
-            <Edit2 className="mr-3 h-4 w-4" /> Editar
-          </Button>
-        </div>
+    <div className="w-full">
+      <div className="flex items-center justify-between text-[10px] text-white/40 uppercase tracking-widest mb-2 font-bold">
+        <span>Confiança IA</span>
+        <span className="text-white/70 tabular-nums">{pct}% — {label}</span>
       </div>
-
-      <Card className="overflow-hidden border-border bg-secondary/20">
-        <div className="border-b border-border bg-secondary/10 p-12 text-center">
-          <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-background text-foreground border border-border transition-all hover:scale-105">
-            <ShoppingCart className="h-10 w-10" />
-          </div>
-          <h1 className="text-3xl font-light text-foreground otto-title tracking-tight uppercase">
-            {transaction.merchant_name || transaction.description || "Transação"}
-          </h1>
-          <p className="mt-2 text-[10px] otto-label text-muted-foreground/40 tracking-[0.2em] uppercase">
-            Dado real carregado da API
-          </p>
-          <div className="mt-10 text-5xl font-light text-foreground otto-title">
-            {amountLabel}
-          </div>
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <span className="text-[9px] otto-label px-3 py-1.5 rounded-full bg-secondary text-muted-foreground border border-border">
-              {transaction.amount >= 0 ? "CRÉDITO" : "DÉBITO"}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid gap-12 p-12 md:grid-cols-2">
-          <div className="space-y-10">
-            <div>
-              <h3 className="text-[10px] otto-label text-muted-foreground tracking-widest uppercase mb-6">Detalhes</h3>
-              <div className="flex flex-col gap-6 rounded-2xl border border-border bg-secondary/20 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-[10px] otto-label text-muted-foreground/40">
-                    <Calendar className="h-4 w-4" /> DATA
-                  </div>
-                  <span className="text-xs font-medium text-foreground">
-                    {transaction.date ?? "—"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between border-t border-border pt-6">
-                  <div className="flex items-center gap-4 text-[10px] otto-label text-muted-foreground/40">
-                    <CreditCard className="h-4 w-4" /> FONTE
-                  </div>
-                  <span className="text-xs font-medium text-foreground">Não informado</span>
-                </div>
-                <div className="flex items-center justify-between border-t border-border pt-6">
-                  <div className="flex items-center gap-4 text-[10px] otto-label text-muted-foreground/40">
-                    <Tag className="h-4 w-4" /> CATEGORIA
-                  </div>
-                  <span className="text-xs font-medium text-foreground">
-                    {transaction.category_name || "Outros"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-[10px] otto-label text-muted-foreground tracking-widest uppercase mb-6">Notas</h3>
-              <Input
-                placeholder="Anotações internas (opcional)..."
-                className="h-auto min-h-[120px] items-start p-4 py-4 text-muted-foreground focus:text-foreground bg-secondary/20"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-10">
-            <Card className="border-border bg-secondary/30 p-8 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <FileText className="h-12 w-12 text-foreground" />
-              </div>
-              <div className="mb-6 flex items-center gap-3 text-[10px] otto-label text-foreground tracking-widest uppercase">
-                <SparklesIcon className="h-4 w-4" /> INSIGHT
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                Sem análise estatística automática disponível para esta tela no momento. O conteúdo acima reflete apenas dados reais da API.
-              </p>
-            </Card>
-
-            <div>
-              <h3 className="text-[10px] otto-label text-muted-foreground tracking-widest uppercase mb-6">Comprovante</h3>
-              <div className="flex h-48 cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border bg-transparent transition-all hover:border-muted-foreground/40 hover:bg-secondary/20 group">
-                <div className="h-12 w-12 flex items-center justify-center rounded-full bg-secondary text-muted-foreground/40 transition-all group-hover:bg-muted group-hover:text-foreground">
-                  <FileText className="h-6 w-6" />
-                </div>
-                <span className="text-[10px] otto-label text-muted-foreground/40 uppercase tracking-widest group-hover:text-foreground transition-all">Upload Document</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
+      <div className="h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden border border-white/[0.05]">
+        <div className={cn("h-full rounded-full transition-all duration-1000 ease-out", glow)} style={{ width: `${pct}%` }} />   
+      </div>
     </div>
   );
 }
 
-function SparklesIcon(props: any) {
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export function TransactionDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [tx, setTx] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // The current API might not have a direct GET /transactions/:id
+        // So we might need to fetch all and find, or use the endpoint if it exists
+        // Looking at reference, it uses apiFetch(`/transactions/${id}`)
+        // Let's assume the local API follows the same pattern or fetch all as backup
+        const res = await apiGet(`/api/transactions?limit=1000`);
+        const found = (res.transactions ?? []).find((t: any) => t.id === id);
+        if (!found) throw new Error('Transação não encontrada');
+        setTx(found);
+      } catch (err: any) {
+        console.error('TransactionDetail fetch error:', err);
+        setError(err.message ?? 'Erro ao carregar detalhes');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  const isIncome = (tx?.amount ?? 0) > 0;
+
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
-    </svg>
+    <div className="w-full max-w-4xl mx-auto relative z-10 animate-in slide-in-from-bottom-8 duration-700 py-10 px-6">
+
+      <div className="flex items-center justify-between mb-10">
+        <button 
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/40 hover:text-white transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          Voltar
+        </button>
+        
+        <div className="flex gap-3">
+          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs font-medium text-white/60 hover:text-white hover:bg-white/[0.08] transition-all">
+            <Share2 className="w-3.5 h-3.5" /> Compartilhar
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs font-medium text-white/60 hover:text-white hover:bg-white/[0.08] transition-all">
+            <Edit2 className="w-3.5 h-3.5" /> Editar
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-32 gap-6">
+          <Loader2 className="w-10 h-10 text-white/10 animate-spin" />
+          <p className="text-xs text-white/20 uppercase tracking-[0.2em]">Sincronizando dados...</p>
+        </div>
+      ) : error || !tx ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-6 text-center bg-white/[0.02] border border-white/[0.05] rounded-3xl">
+          <AlertCircle className="w-12 h-12 text-white/10" />
+          <div>
+            <h2 className="text-xl font-light text-white/80 mb-2">Ops, algo deu errado</h2>
+            <p className="text-white/40 text-sm max-w-xs">{error ?? 'Não conseguimos localizar esta transação.'}</p>
+          </div>
+          <Link
+            to="/transactions"
+            className="text-xs border border-white/10 hover:border-white/30 text-white/60 hover:text-white px-6 py-3 rounded-xl transition-colors bg-white/5 uppercase tracking-widest font-bold"
+          >
+            Ver todas as movimentações
+          </Link>
+        </div>
+      ) : (
+        <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/[0.08] rounded-[2.5rem] p-10 relative overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)]">
+          {/* Decorative Glow */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/4" />
+
+          {/* ── Header ────────────────────────────────────────────────────── */}
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-10 mb-12 relative z-10">       
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 rounded-3xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-4xl shadow-inner group hover:scale-105 transition-transform duration-500">
+                {tx.categories?.emoji ?? '💳'}
+              </div>
+              <div>
+                <h1 className="text-3xl font-light tracking-tight text-white mb-2">
+                  {tx.merchant_name || tx.description}
+                </h1>
+                <div className="flex items-center gap-3 text-white/40 text-xs font-medium uppercase tracking-[0.15em]">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>{formatDate(tx.date)}</span>
+                </div>
+              </div>
+            </div>
+            <div className="text-left md:text-right shrink-0">
+              <div className={cn(
+                "text-5xl font-light tabular-nums tracking-tighter drop-shadow-2xl",
+                isIncome ? 'text-white' : 'text-white/90'
+              )}>      
+                {isIncome ? '+' : '-'}{formatBRL(Math.abs(tx.amount))}
+              </div>
+              <div className="flex md:justify-end gap-2 mt-3">
+                <span className="text-[9px] font-bold text-white/30 uppercase tracking-[0.2em] px-2.5 py-1 rounded-md border border-white/[0.06] bg-white/[0.02]">
+                  {isIncome ? 'Crédito' : 'Débito'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Insight OTTO ──────────────────────────────────────────────── */}
+          <div className="bg-gradient-to-br from-white/[0.08] to-transparent border border-white/10 rounded-[2rem] p-8 mb-10 flex flex-col md:flex-row items-start gap-6 relative z-10 overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+              <Sparkles className="h-24 w-24 text-white" />
+            </div>
+            
+            <div className="p-3 bg-white/10 rounded-2xl shrink-0 shadow-xl border border-white/10">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-xs font-bold text-white uppercase tracking-widest">Insight OTTO</h3>
+                <div className="h-px flex-1 bg-white/10" />
+              </div>
+              <p className="text-sm text-white/60 leading-relaxed font-medium">
+                {tx.manually_reviewed
+                  ? 'Esta transação foi validada manualmente e está integrada ao seu fluxo de caixa consolidado.'
+                  : `Classificada de forma autônoma como "${tx.categories?.name ?? 'Outros'}" através de padrões estatísticos.`
+                }
+                {(tx.confidence_score !== null) &&
+                  ` Nível de precisão analítica: ${tx.confidence_score > 1
+                    ? Math.round(tx.confidence_score)
+                    : Math.round((tx.confidence_score as number) * 100)}%.`
+                }
+              </p>
+              {!tx.manually_reviewed && (
+                <div className="flex gap-3 mt-6">
+                  <button className="text-[10px] font-bold uppercase tracking-widest bg-white text-black hover:bg-white/90 transition-all px-4 py-2 rounded-xl shadow-lg">
+                    Validar
+                  </button>
+                  <button className="text-[10px] font-bold uppercase tracking-widest bg-transparent border border-white/20 hover:bg-white/5 transition-all px-4 py-2 rounded-xl text-white/60 hover:text-white">
+                    Reclassificar
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Details Grid ─────────────────────────────────────────────── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10 relative z-10 border-t border-white/10 pt-10">
+
+            <div className="space-y-8">
+              <h4 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em]">Atributos</h4>
+              
+              <div className="space-y-6">
+                {/* Categoria */}
+                <div className="flex items-center justify-between group py-1">
+                  <div className="flex items-center gap-3">
+                    <Tag className="w-4 h-4 text-white/20" />
+                    <span className="text-white/40 text-xs font-medium uppercase tracking-widest">Taxonomia</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-white/90">
+                      {tx.categories?.emoji} {tx.categories?.name ?? 'Outros'}
+                    </span>
+                    <button className="opacity-0 group-hover:opacity-100 transition-opacity text-white/20 hover:text-white">
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Status de revisão */}
+                <div className="flex items-center justify-between py-1">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-white/20" />
+                    <span className="text-white/40 text-xs font-medium uppercase tracking-widest">Status</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {tx.manually_reviewed ? (
+                      <>
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
+                        <span className="text-xs font-bold text-white/80 uppercase tracking-widest">Validado</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5 text-white/30" />
+                        <span className="text-xs font-bold text-white/50 uppercase tracking-widest italic">Automático</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Barra de confiança */}
+                <div className="pt-2">
+                  <ConfidenceBar score={tx.confidence_score} />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              <h4 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em]">Documentação</h4>
+              
+              <div className="space-y-6">
+                {/* Notas */}
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 hover:bg-white/[0.04] transition-colors group">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Anotações Privadas</span>
+                    <button className="text-white/20 hover:text-white transition-colors opacity-0 group-hover:opacity-100">
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-white/40 italic leading-relaxed">Nenhuma nota vinculada a este registro.</p>
+                </div>
+
+                {/* Ações rápidas */}
+                <div className="grid grid-cols-2 gap-4">
+                  <button className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/20 transition-all rounded-2xl group text-white/40 hover:text-white shadow-xl">
+                    <Receipt className="w-5 h-5 group-hover:scale-110 transition-transform text-white/20 group-hover:text-white" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Ver Recibo</span>
+                  </button>
+                  <button className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/20 transition-all rounded-2xl group text-white/40 hover:text-white shadow-xl">
+                    <Split className="w-5 h-5 group-hover:scale-110 transition-transform text-white/20 group-hover:text-white" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Dividir</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
-
