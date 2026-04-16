@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Button, Input } from "@/shared/components/ui";
+import { Input } from "@/shared/components/ui";
 import { Mail, Lock } from "lucide-react";
 import { apiPost } from "@/shared/lib/api";
 import { setToken } from "@/shared/lib/auth";
@@ -115,14 +115,13 @@ export function Signup() {
             </div>
           )}
 
-          <Button
+          <button
             type="submit"
-            size="lg"
-            className="w-full rounded-xl py-8 text-xs otto-label tracking-[0.2em] disabled:opacity-50"
             disabled={isSubmitting}
+            className="w-full h-14 rounded-xl bg-white text-black font-medium flex items-center justify-center gap-2 hover:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,255,255,0.15)] text-sm tracking-widest uppercase"
           >
             {isSubmitting ? 'Criando conta...' : 'Criar Conta'}
-          </Button>
+          </button>
         </form>
 
         <p className="text-center text-[10px] otto-label text-muted-foreground">
