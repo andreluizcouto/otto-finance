@@ -224,27 +224,27 @@ export function Categories() {
   const totalTxCount = categories.reduce((s, c) => s + (c.transactionCount ?? 0), 0);
 
   return (
-    <div className="w-full relative z-10 animate-in fade-in duration-500 max-w-7xl mx-auto px-6 py-10">
+    <div className="w-full relative z-10 animate-in fade-in duration-500 max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
 
       {/* ── Header ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-8 md:mb-12">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl tracking-[0.2em] font-medium">OTTO</span>
+            <span className="text-xl md:text-2xl tracking-[0.2em] font-medium">OTTO</span>
             <div className="h-4 w-px bg-white/20"></div>
             <h1 className="text-xs font-medium tracking-widest text-white/40 uppercase">Taxonomia</h1>
           </div>
           <p className="text-white/40 text-sm italic">Categorização estruturada de ativos e fluxos.</p>
         </div>
         
-        <div className="flex gap-4 self-start md:self-auto">
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-white/[0.04] border border-white/[0.08] text-white/60 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/[0.08] hover:text-white transition-all">
+        <div className="flex gap-4 self-stretch sm:self-start md:self-auto">
+          <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] bg-white/[0.04] border border-white/[0.08] text-white/60 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/[0.08] hover:text-white transition-all">
             <Settings2 className="w-4 h-4" />
             <span>Regras IA</span>
           </button>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white text-black rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 min-h-[48px] bg-white text-black rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]"
           >
             <Plus className="w-4 h-4" />
             <span>Definir Nova</span>
@@ -254,29 +254,29 @@ export function Categories() {
 
       {/* ── Summary Stats ──────────────────────────────────────────────── */}
       {!loading && !error && categories.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 md:mb-12">
+          <div className="p-5 md:p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden">
             <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Classes</p>
-            <p className="text-2xl font-light">{categories.length}</p>
+            <p className="text-xl md:text-2xl font-light">{categories.length}</p>
           </div>
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden">
+          <div className="p-5 md:p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden">
             <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Engajamento IA</p>
-            <p className="text-2xl font-light">100%</p>
+            <p className="text-xl md:text-2xl font-light">100%</p>
           </div>
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden">
+          <div className="p-5 md:p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden">
             <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Total Consolidado</p>
-            <p className="text-2xl font-light text-white/70">-{formatBRL(totalSpent)}</p>
+            <p className="text-xl md:text-2xl font-light text-white/70">-{formatBRL(totalSpent)}</p>
           </div>
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden">
+          <div className="p-5 md:p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden">
             <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Período</p>
-            <p className="text-2xl font-light text-white/50">90 dias</p>
+            <p className="text-xl md:text-2xl font-light text-white/50">90 dias</p>
           </div>
         </div>
       )}
 
       {/* ── Grid ──────────────────────────────────────────────────────── */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
           {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
         </div>
       ) : error ? (
@@ -285,16 +285,16 @@ export function Categories() {
           <p className="text-white/40 text-sm">{error}</p>
           <button
             onClick={fetchData}
-            className="text-xs border border-white/10 hover:border-white/30 text-white/60 hover:text-white px-6 py-3 rounded-xl transition-all bg-white/5 uppercase tracking-widest font-bold"
+            className="text-xs border border-white/10 hover:border-white/30 text-white/60 hover:text-white px-6 py-3 min-h-[44px] flex items-center justify-center rounded-xl transition-all bg-white/5 uppercase tracking-widest font-bold"
           >
             Tentar novamente
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
           {categories.length === 0 && (
-            <div className="col-span-full py-32 text-center bg-white/[0.02] border border-dashed border-white/10 rounded-[2.5rem]">
-              <p className="text-white/20 text-sm tracking-widest uppercase">Nenhuma categoria registrada no sistema.</p>
+            <div className="col-span-full py-32 text-center bg-white/[0.02] border border-dashed border-white/10 rounded-2xl md:rounded-[2.5rem]">
+              <p className="text-white/20 text-sm tracking-widest uppercase px-4">Nenhuma categoria registrada no sistema.</p>
             </div>
           )}
           
@@ -308,7 +308,7 @@ export function Categories() {
           {/* Empty Add Card */}
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex h-full min-h-[300px] cursor-pointer flex-col items-center justify-center gap-6 border-2 border-dashed border-white/[0.06] bg-transparent rounded-[2.5rem] transition-all hover:border-white/20 hover:bg-white/[0.02] group"
+            className="flex h-full min-h-[250px] md:min-h-[300px] cursor-pointer flex-col items-center justify-center gap-6 border-2 border-dashed border-white/[0.06] bg-transparent rounded-2xl md:rounded-[2.5rem] transition-all hover:border-white/20 hover:bg-white/[0.02] group"
           >
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/[0.03] border border-white/[0.06] text-white/20 transition-all group-hover:bg-white/[0.08] group-hover:text-white group-hover:scale-110">
               <Plus className="h-8 w-8" />
@@ -320,9 +320,9 @@ export function Categories() {
 
       {/* ── New Category Modal ────────────────────────────────────────── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => setIsModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-300">
+          <div className="relative w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-2xl md:rounded-[2.5rem] p-8 md:p-10 shadow-2xl animate-in zoom-in-95 duration-300">
             <button 
               onClick={() => setIsModalOpen(false)}
               className="absolute top-6 right-6 p-2 text-white/20 hover:text-white transition-colors"
@@ -330,38 +330,38 @@ export function Categories() {
               <X className="w-6 h-6" />
             </button>
             
-            <div className="mb-10 text-center">
+            <div className="mb-8 md:mb-10 text-center">
               <h2 className="text-2xl font-light text-white mb-2 tracking-tight">Nova Classe</h2>
               <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em]">Estruturação de dados</p>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-6 md:space-y-8">
               <div className="space-y-3">
                 <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest pl-1">Identificação</label>
                 <input
                   placeholder="Nome da Categoria"
-                  className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-5 text-sm text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
+                  className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-5 min-h-[48px] text-sm text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
                   value={newCat.name}
                   onChange={e => setNewCat(p => ({ ...p, name: e.target.value }))}
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest pl-1">Símbolo</label>
                   <input
                     placeholder="ex: 🏠"
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-5 text-xl text-center focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-5 min-h-[48px] text-xl text-center focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
                     value={newCat.emoji}
                     onChange={e => setNewCat(p => ({ ...p, emoji: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest pl-1">Acento</label>
-                  <div className="flex items-center gap-3 bg-white/[0.03] border border-white/10 rounded-2xl p-2.5">
+                  <div className="flex items-center gap-3 bg-white/[0.03] border border-white/10 rounded-2xl p-2.5 min-h-[48px]">
                     <input
                       type="color"
-                      className="w-10 h-10 rounded-lg border-none bg-transparent cursor-pointer"
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-lg border-none bg-transparent cursor-pointer"
                       value={newCat.color_hex}
                       onChange={e => setNewCat(p => ({ ...p, color_hex: e.target.value }))}
                     />
@@ -371,17 +371,17 @@ export function Categories() {
               </div>
             </div>
 
-            <div className="mt-12 space-y-4">
+            <div className="mt-10 md:mt-12 space-y-4">
               <button
                 disabled={isSaving || !newCat.name}
                 onClick={handleCreate}
-                className="w-full h-14 rounded-2xl bg-white text-black font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-white/90 disabled:opacity-30 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                className="w-full h-14 min-h-[48px] rounded-2xl bg-white text-black font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-white/90 disabled:opacity-30 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
               >
                 {isSaving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Confirmar Categoria'}
               </button>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="w-full h-12 rounded-2xl text-white/40 hover:text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-all"
+                className="w-full h-12 min-h-[44px] rounded-2xl text-white/40 hover:text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-all"
               >
                 Cancelar
               </button>
@@ -389,6 +389,10 @@ export function Categories() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
     </div>
   );
 }

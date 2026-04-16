@@ -62,47 +62,47 @@ export function Signup() {
   }
 
   return (
-    <div className="flex w-full flex-col items-center justify-center min-h-[80vh]">
-      <div className="w-full max-w-sm flex flex-col gap-12">
+    <div className="flex w-full flex-col items-center justify-center min-h-[80vh] py-6 md:py-10">
+      <div className="w-full max-w-sm flex flex-col gap-8 md:gap-12">
         <div className="flex flex-col items-center text-center gap-4">
-          <span className="text-4xl font-light tracking-[0.3em] text-foreground otto-title">OTTO</span>
+          <span className="text-3xl md:text-4xl font-light tracking-[0.3em] text-foreground otto-title">OTTO</span>
           <p className="otto-label text-[10px] text-muted-foreground tracking-[0.2em]">Criar Conta</p>
         </div>
 
-        <form className="space-y-8" onSubmit={handleSubmit}>
+        <form className="space-y-6 md:space-y-8" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="otto-label text-[9px] text-muted-foreground">Email</label>
+              <label className="otto-label text-[9px] text-muted-foreground pl-1">Email</label>
               <Input
                 placeholder="Endereço de e-mail"
                 type="email"
                 required
-                className="bg-card border-border rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                className="bg-card border-border rounded-xl py-4 md:py-6 px-4 min-h-[48px] text-xs font-medium focus:border-white/20 transition-all shadow-none"
                 value={credentials.email}
                 onChange={(e) => setCredentials(p => ({ ...p, email: e.target.value }))}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="otto-label text-[9px] text-muted-foreground">Senha</label>
+              <label className="otto-label text-[9px] text-muted-foreground pl-1">Senha</label>
               <Input
                 placeholder="••••••••"
                 type="password"
                 required
                 minLength={6}
-                className="bg-card border-border rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                className="bg-card border-border rounded-xl py-4 md:py-6 px-4 min-h-[48px] text-xs font-medium focus:border-white/20 transition-all shadow-none"
                 value={credentials.password}
                 onChange={(e) => setCredentials(p => ({ ...p, password: e.target.value }))}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="otto-label text-[9px] text-muted-foreground">Confirmar Senha</label>
+              <label className="otto-label text-[9px] text-muted-foreground pl-1">Confirmar Senha</label>
               <Input
                 placeholder="••••••••"
                 type="password"
                 required
-                className="bg-card border-border rounded-xl py-6 px-4 text-xs font-medium focus:border-white/20 transition-all shadow-none"
+                className="bg-card border-border rounded-xl py-4 md:py-6 px-4 min-h-[48px] text-xs font-medium focus:border-white/20 transition-all shadow-none"
                 value={credentials.confirm}
                 onChange={(e) => setCredentials(p => ({ ...p, confirm: e.target.value }))}
               />
@@ -118,7 +118,7 @@ export function Signup() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-14 rounded-xl bg-white text-black font-medium flex items-center justify-center gap-2 hover:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,255,255,0.15)] text-sm tracking-widest uppercase"
+            className="w-full h-14 min-h-[48px] rounded-xl bg-white text-black font-medium flex items-center justify-center gap-2 hover:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,255,255,0.15)] text-sm tracking-widest uppercase"
           >
             {isSubmitting ? 'Criando conta...' : 'Criar Conta'}
           </button>

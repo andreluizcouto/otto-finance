@@ -35,7 +35,7 @@ function NavItem({ icon: Icon, label, active, onClick }: { icon: any; label: str
     <button
       onClick={onClick}
       className={cn(
-        "w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-300 group",
+        "w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-300 group whitespace-nowrap",
         active
           ? "bg-white/[0.06] text-white font-medium border-l-4 border-white shadow-xl"
           : "text-white/30 hover:text-white/60 hover:bg-white/[0.02] border-l-4 border-transparent"
@@ -45,7 +45,7 @@ function NavItem({ icon: Icon, label, active, onClick }: { icon: any; label: str
         <Icon className={cn("w-4.5 h-4.5 transition-colors", active ? "text-white" : "text-white/20 group-hover:text-white/40")} />
         <span className="text-[10px] font-bold uppercase tracking-[0.15em]">{label}</span>
       </div>
-      {active && <ChevronRight className="w-4 h-4 opacity-40" />}
+      {active && <ChevronRight className="w-4 h-4 opacity-40 hidden md:block" />}
     </button>
   );
 }
@@ -83,13 +83,13 @@ export function Settings() {
   };
 
   return (
-    <div className="w-full relative z-10 animate-in fade-in duration-700 max-w-6xl mx-auto px-6 py-10">
+    <div className="w-full relative z-10 animate-in fade-in duration-700 max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-10">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-8 md:mb-12">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl tracking-[0.2em] font-medium">OTTO</span>
+            <span className="text-xl md:text-2xl tracking-[0.2em] font-medium">OTTO</span>
             <div className="h-4 w-px bg-white/20"></div>
             <h1 className="text-xs font-medium tracking-widest text-white/40 uppercase">Configurações</h1>
           </div>
@@ -100,10 +100,10 @@ export function Settings() {
       <div className="flex flex-col md:flex-row gap-10 lg:gap-16">
         
         {/* Sidebar Nav */}
-        <aside className="w-full md:w-72 shrink-0 space-y-3 relative">
+        <aside className="w-full md:w-72 shrink-0 relative">
           <div className="absolute top-0 -left-20 w-[150%] h-full bg-white/[0.01] blur-[100px] pointer-events-none rounded-r-full -z-10" />
           
-          <div className="flex flex-col gap-1">
+          <div className="flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 no-scrollbar">
             {TABS.map(tab => (
               <NavItem
                 key={tab.id}

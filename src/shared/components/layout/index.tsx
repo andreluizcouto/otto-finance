@@ -27,11 +27,11 @@ export function MainLayout() {
         }}
       />
       <Navbar />
-      <main className="flex-1 z-10 pt-24 relative">
+      <main className="flex-1 z-10 pt-20 md:pt-24 relative">
         {/* Subtle background glow for the active page context */}
         <div className="absolute top-[-200px] right-0 w-[600px] h-[600px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none"></div>
         
-        <div className="mx-auto max-w-[1440px] pb-20 px-6">
+        <div className="mx-auto max-w-[1440px] pb-20 px-4 md:px-6">
           <Outlet />
         </div>
       </main>

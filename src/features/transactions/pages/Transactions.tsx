@@ -123,13 +123,13 @@ export function Transactions() {
   const totalOut = useMemo(() => filtered.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0), [filtered]);
 
   return (
-    <div className="w-full relative z-10 animate-in fade-in duration-500 max-w-6xl mx-auto px-6 py-10">
+    <div className="w-full relative z-10 animate-in fade-in duration-500 max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-10">
 
       {/* ── Header ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-8 md:mb-12">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl tracking-[0.2em] font-medium">OTTO</span>
+            <span className="text-xl md:text-2xl tracking-[0.2em] font-medium">OTTO</span>
             <div className="h-4 w-px bg-white/20"></div>
             <h1 className="text-xs font-medium tracking-widest text-white/40 uppercase">Transações</h1>
           </div>
@@ -139,12 +139,12 @@ export function Transactions() {
         <div className="flex items-center gap-4 flex-wrap">
           <button
             onClick={() => setImportOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium border transition-all bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.15] text-white/70 hover:text-white"
+            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-medium border transition-all bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.15] text-white/70 hover:text-white"
           >
             <Download className="w-4 h-4" />
             Importar Extrato
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white text-black rounded-xl text-xs font-medium hover:bg-white/90 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+          <button className="flex items-center gap-2 px-4 py-2.5 min-h-[48px] bg-white text-black rounded-xl text-xs font-medium hover:bg-white/90 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)]">
             <Plus className="w-4 h-4" />
             <span>Novo Lançamento</span>
           </button>
@@ -153,26 +153,26 @@ export function Transactions() {
 
       {/* ── Quick Stats ───────────────────────────────────────────────── */}
       {!loading && !error && filtered.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden group">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 md:mb-10">
+          <div className="p-5 md:p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden group">
             <div className="absolute -top-10 -right-10 w-24 h-24 bg-white/[0.02] blur-3xl rounded-full" />
             <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2 font-medium">Movimentações</p>
-            <p className="text-2xl font-light">{filtered.length}</p>
+            <p className="text-xl md:text-2xl font-light">{filtered.length}</p>
           </div>
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden group">
+          <div className="p-5 md:p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden group">
             <div className="absolute -top-10 -right-10 w-24 h-24 bg-white/[0.02] blur-3xl rounded-full" />
             <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2 font-medium">Entradas</p>
-            <p className="text-2xl font-light text-white">+{formatBRL(totalIn)}</p>
+            <p className="text-xl md:text-2xl font-light text-white">+{formatBRL(totalIn)}</p>
           </div>
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden group">
+          <div className="p-5 md:p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden group">
             <div className="absolute -top-10 -right-10 w-24 h-24 bg-white/[0.02] blur-3xl rounded-full" />
             <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2 font-medium">Saídas</p>
-            <p className="text-2xl font-light text-white/60">-{formatBRL(totalOut)}</p>
+            <p className="text-xl md:text-2xl font-light text-white/60">-{formatBRL(totalOut)}</p>
           </div>
-          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden group">
+          <div className="p-5 md:p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl relative overflow-hidden group">
             <div className="absolute -top-10 -right-10 w-24 h-24 bg-white/[0.02] blur-3xl rounded-full" />
             <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2 font-medium">Saldo Líquido</p>
-            <p className={cn("text-2xl font-light", totalIn - totalOut >= 0 ? 'text-white' : 'text-red-400/80')}>
+            <p className={cn("text-xl md:text-2xl font-light", totalIn - totalOut >= 0 ? 'text-white' : 'text-red-400/80')}>
               {totalIn - totalOut >= 0 ? '+' : '-'}{formatBRL(totalIn - totalOut)}
             </p>
           </div>
@@ -180,14 +180,14 @@ export function Transactions() {
       )}
 
       {/* ── Filters & Search ──────────────────────────────────────────── */}
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8">
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-5 md:gap-6 mb-8">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0 w-full lg:w-auto no-scrollbar">
           {FILTERS.map(f => (
             <button
               key={f}
               onClick={() => setActiveFilter(f)}
               className={cn(
-                "whitespace-nowrap px-4 py-2 rounded-xl text-xs font-medium transition-all border",
+                "whitespace-nowrap px-4 py-2 min-h-[44px] rounded-xl text-xs font-medium transition-all border",
                 activeFilter === f
                   ? 'bg-white text-black border-white'
                   : 'text-white/40 hover:text-white hover:bg-white/[0.04] border-white/[0.08]'
@@ -206,17 +206,17 @@ export function Transactions() {
               placeholder="Pesquisar histórico..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white/[0.02] border border-white/10 rounded-xl pl-11 pr-4 py-3 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-white/30 focus:bg-white/[0.05] transition-all"
+              className="w-full bg-white/[0.02] border border-white/10 rounded-xl pl-11 pr-4 py-3 min-h-[48px] text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-white/30 focus:bg-white/[0.05] transition-all"
             />
           </div>
-          <button className="p-3 bg-white/[0.02] border border-white/10 rounded-xl hover:bg-white/[0.08] hover:border-white/30 transition-all text-white/40 hover:text-white">
+          <button className="p-3 bg-white/[0.02] border border-white/10 rounded-xl hover:bg-white/[0.08] hover:border-white/30 transition-all text-white/40 hover:text-white min-h-[48px]">
             <SlidersHorizontal className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* ── List ──────────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] rounded-3xl overflow-hidden backdrop-blur-2xl shadow-2xl">
+      <div className="bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] rounded-2xl md:rounded-3xl overflow-hidden backdrop-blur-2xl shadow-2xl">
 
         {/* Table Header */}
         <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-5 border-b border-white/[0.05] text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
@@ -235,7 +235,7 @@ export function Transactions() {
               <p className="text-sm text-white/40">{error}</p>
               <button
                 onClick={() => setRefreshKey(k => k + 1)}
-                className="text-xs border border-white/10 hover:border-white/30 text-white/60 hover:text-white px-5 py-2.5 rounded-xl transition-all bg-white/5"
+                className="text-xs border border-white/10 hover:border-white/30 text-white/60 hover:text-white px-5 py-2.5 min-h-[44px] rounded-xl transition-all bg-white/5"
               >
                 Tentar novamente
               </button>
@@ -256,7 +256,7 @@ export function Transactions() {
               <Link
                 key={tx.id}
                 to={`/transactions/${tx.id}`}
-                className="group grid grid-cols-1 md:grid-cols-12 gap-4 items-center px-8 py-5 hover:bg-white/[0.02] transition-all relative overflow-hidden"
+                className="group grid grid-cols-1 md:grid-cols-12 gap-4 items-center px-4 md:px-8 py-5 min-h-[56px] hover:bg-white/[0.02] transition-all relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 

@@ -201,13 +201,13 @@ export function Dashboard() {
   const pendingCount = data?.classification?.pending_count ?? 0;
 
   return (
-    <div className="w-full relative z-10 animate-in fade-in duration-500">
+    <div className="w-full relative z-10 animate-in fade-in duration-500 py-6 md:py-10">
 
       {/* ── Header Area ────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-8 md:mb-12">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl tracking-[0.2em] font-medium">OTTO</span>
+            <span className="text-xl md:text-2xl tracking-[0.2em] font-medium">OTTO</span>
             <div className="h-4 w-px bg-white/20"></div>
             <h1 className="text-xs font-medium tracking-widest text-white/40 uppercase">Dashboard</h1>
           </div>
@@ -222,7 +222,7 @@ export function Dashboard() {
                 key={p.api}
                 onClick={() => setActivePeriod(p)}
                 className={cn(
-                  "px-4 py-1.5 rounded-lg text-xs font-medium transition-all",
+                  "px-4 py-1.5 min-h-[44px] md:min-h-[unset] rounded-lg text-xs font-medium transition-all",
                   activePeriod.api === p.api 
                     ? "bg-white text-black shadow-lg" 
                     : "text-white/40 hover:text-white/60"
@@ -236,7 +236,7 @@ export function Dashboard() {
           <button
             onClick={handleClassify}
             disabled={isClassifying || loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.15] text-white/70 hover:text-white"
+            className="flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl text-xs font-medium border transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.15] text-white/70 hover:text-white"
           >
             {isClassifying ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -251,7 +251,7 @@ export function Dashboard() {
       </div>
 
       {/* ── Hero: Summary Cards ────────────────────────────────────────── */}
-      <div className="mb-12">
+      <div className="mb-8 md:mb-12">
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -303,16 +303,16 @@ export function Dashboard() {
       </div>
 
       {/* ── Main Content Grid ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-8">
 
         {/* Column 1 & 2: Recent Activity & Categories List */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-5 md:space-y-8">
           
           {/* Gastos por Categoria (List Style) */}
-          <div className="rounded-2xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] p-8 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-8">
+          <div className="rounded-2xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] p-5 md:p-8 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-6 md:mb-8">
               <h3 className="text-lg font-medium text-white/90">Distribuição de Gastos</h3>
-              <Link to="/categories" className="text-sm text-white/40 hover:text-white transition-colors flex items-center gap-1">
+              <Link to="/categories" className="text-sm text-white/40 hover:text-white transition-colors flex items-center gap-1 min-h-[44px]">
                 Ver Tudo <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -353,10 +353,10 @@ export function Dashboard() {
           </div>
 
           {/* Atividade Recente */}
-          <div className="rounded-2xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] p-8 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-8">
+          <div className="rounded-2xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] p-5 md:p-8 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-6 md:mb-8">
               <h3 className="text-lg font-medium text-white/90">Atividade Recente</h3>
-              <Link to="/transactions" className="text-sm text-white/40 hover:text-white transition-colors">
+              <Link to="/transactions" className="text-sm text-white/40 hover:text-white transition-colors min-h-[44px] flex items-center">
                 Explorar Tudo
               </Link>
             </div>
@@ -369,7 +369,7 @@ export function Dashboard() {
                   <p className="text-sm text-white/30">Seu dashboard ainda está vazio...</p>
                   <button
                     onClick={() => setIsImportOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white/[0.06] border border-white/10 text-white/70 rounded-xl text-sm font-medium hover:bg-white/[0.1] hover:text-white transition-all"
+                    className="flex items-center gap-2 px-5 py-2.5 min-h-[48px] bg-white/[0.06] border border-white/10 text-white/70 rounded-xl text-sm font-medium hover:bg-white/[0.1] hover:text-white transition-all"
                   >
                     <Upload className="w-4 h-4" />
                     Importar extrato
@@ -383,7 +383,7 @@ export function Dashboard() {
                   <Link
                     key={tx.id}
                     to={`/transactions/${tx.id}`}
-                    className="group flex items-center justify-between p-4 rounded-xl hover:bg-white/[0.03] border border-transparent hover:border-white/[0.08] transition-all"
+                    className="group flex items-center justify-between p-4 min-h-[56px] rounded-xl hover:bg-white/[0.03] border border-transparent hover:border-white/[0.08] transition-all"
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="w-10 h-10 rounded-full bg-white/[0.02] border border-white/[0.05] flex items-center justify-center group-hover:bg-white/[0.06] transition-colors shrink-0 text-base shadow-inner">
@@ -415,11 +415,11 @@ export function Dashboard() {
         </div>
 
         {/* Column 3: Stats & Tips */}
-        <div className="space-y-8">
+        <div className="space-y-5 md:space-y-8">
           
           {/* Pie Chart Card */}
-          <div className="rounded-2xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] p-8 backdrop-blur-xl">
-            <h3 className="text-sm font-medium tracking-widest text-white/40 uppercase mb-8">Composição</h3>
+          <div className="rounded-2xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] p-5 md:p-8 backdrop-blur-xl">
+            <h3 className="text-sm font-medium tracking-widest text-white/40 uppercase mb-6 md:mb-8">Composição</h3>
             
             {loading ? (
               <div className="h-48 animate-pulse bg-white/[0.03] rounded-full mx-auto w-48" />
@@ -453,7 +453,7 @@ export function Dashboard() {
           </div>
 
           {/* Comparativo de Tendências */}
-          <div className="rounded-2xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] p-8 backdrop-blur-xl">
+          <div className="rounded-2xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] p-5 md:p-8 backdrop-blur-xl">
             <h3 className="text-sm font-medium tracking-widest text-white/40 uppercase mb-6">Comparativo</h3>
             <div className="space-y-5">
               {!loading && (data?.comparison ?? []).map((item) => (
