@@ -236,6 +236,9 @@ function NewGoalModal({ onClose, onSave }: { onClose: () => void; onSave: (g: Go
   const [type, setType] = useState<GoalType>('savings');
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('🎯');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const EMOJI_OPTIONS = ['🎯','🏖️','🛡️','💻','🚗','🏠','✈️','🎓','💊','🍔','🛒','🎮','🎵','☕','🐾','💪','💍','🚀','🌱','🎁','📱','🏋️','🎨','📚','🏥','⚡','🌍','💼'];
+
   const [target, setTarget] = useState('');
   const [deadline, setDeadline] = useState('');
   const [category, setCategory] = useState('');
@@ -311,12 +314,29 @@ function NewGoalModal({ onClose, onSave }: { onClose: () => void; onSave: (g: Go
         {/* Fields */}
         <div className="space-y-6">
           <div className="flex gap-4">
-            <input
-              value={emoji}
-              onChange={(e) => setEmoji(e.target.value)}
-              className="w-20 text-center text-3xl bg-white/[0.03] border border-white/[0.08] rounded-2xl py-4 focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
-              maxLength={2}
-            />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker((v) => !v)}
+                className="w-20 h-full text-3xl bg-white/[0.03] border border-white/[0.08] rounded-2xl hover:border-white/30 hover:bg-white/[0.06] transition-all flex items-center justify-center"
+              >
+                {emoji}
+              </button>
+              {showEmojiPicker && (
+                <div className="absolute left-0 top-full mt-2 z-50 bg-[#111] border border-white/10 rounded-2xl p-3 shadow-2xl grid grid-cols-7 gap-1 w-56">
+                  {EMOJI_OPTIONS.map((e) => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => { setEmoji(e); setShowEmojiPicker(false); }}
+                      className={`text-xl p-1.5 rounded-lg hover:bg-white/10 transition-colors ${emoji === e ? 'bg-white/15' : ''}`}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
