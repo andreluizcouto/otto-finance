@@ -15,7 +15,13 @@ def get_goals(
     user: Annotated[dict, Depends(get_current_user)] = None,
     client: Annotated[Client, Depends(get_current_client)] = None,
 ) -> dict:
-    return {"goals": list_goals(client, user["id"])}
+    try:
+        return {"goals": list_goals(client, user["id"])}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar metas: {str(exc)}",
+        ) from exc
 
 
 @router.post("/goals")
@@ -24,7 +30,13 @@ def post_goal(
     user: Annotated[dict, Depends(get_current_user)] = None,
     client: Annotated[Client, Depends(get_current_client)] = None,
 ) -> dict:
-    return create_goal(client, user["id"], payload.model_dump())
+    try:
+        return create_goal(client, user["id"], payload.model_dump())
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao criar meta: {str(exc)}",
+        ) from exc
 
 
 @router.patch("/goals/{goal_id}")
@@ -34,16 +46,24 @@ def patch_goal(
     user: Annotated[dict, Depends(get_current_user)] = None,
     client: Annotated[Client, Depends(get_current_client)] = None,
 ) -> dict:
-    result = update_goal_progress(
-        client=client,
-        user_id=user["id"],
-        goal_id=goal_id,
-        action=payload.action,
-        amount=payload.amount,
-    )
-    if not result.get("success"):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=result.get("error", "Falha ao atualizar meta."),
+    try:
+        result = update_goal_progress(
+            client=client,
+            user_id=user["id"],
+            goal_id=goal_id,
+            action=payload.action,
+            amount=payload.amount,
         )
-    return result
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=result.get("error", "Falha ao atualizar meta."),
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao atualizar meta: {str(exc)}",
+        ) from exc

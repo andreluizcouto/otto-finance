@@ -41,14 +41,17 @@ def get_profile(client: Client, user: dict[str, Any]) -> dict[str, Any]:
 
 
 def update_profile(client: Client, user_id: str, name: str, phone: str, cpf: str) -> dict[str, Any]:
-    if not is_valid_cpf(cpf):
+    if cpf and not is_valid_cpf(cpf):
         return {"success": False, "error": "CPF invalido."}
 
     row = {
         "user_id": user_id,
         "name": name.strip(),
-        "phone": phone.strip(),
-        "cpf": cpf.strip(),
     }
+    if phone:
+        row["phone"] = phone.strip()
+    if cpf:
+        row["cpf"] = cpf.strip()
+
     client.table("profiles").upsert(row, on_conflict="user_id").execute()
     return {"success": True}

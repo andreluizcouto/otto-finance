@@ -15,7 +15,13 @@ def read_profile(
     user: Annotated[dict, Depends(get_current_user)] = None,
     client: Annotated[Client, Depends(get_current_client)] = None,
 ) -> dict:
-    return {"profile": get_profile(client, user)}
+    try:
+        return {"profile": get_profile(client, user)}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar perfil: {str(exc)}",
+        ) from exc
 
 
 @router.patch("/profile")
@@ -24,16 +30,24 @@ def patch_profile(
     user: Annotated[dict, Depends(get_current_user)] = None,
     client: Annotated[Client, Depends(get_current_client)] = None,
 ) -> dict:
-    result = update_profile(
-        client=client,
-        user_id=user["id"],
-        name=payload.name,
-        phone=payload.phone,
-        cpf=payload.cpf,
-    )
-    if not result.get("success"):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=result.get("error", "Falha ao salvar perfil."),
+    try:
+        result = update_profile(
+            client=client,
+            user_id=user["id"],
+            name=payload.name,
+            phone=payload.phone,
+            cpf=payload.cpf,
         )
-    return result
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=result.get("error", "Falha ao salvar perfil."),
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao salvar perfil: {str(exc)}",
+        ) from exc

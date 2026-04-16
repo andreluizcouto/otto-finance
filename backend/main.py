@@ -17,14 +17,17 @@ app = FastAPI(
     description="API RESTful para autenticao, dashboard e transacoes.",
 )
 
+# FRONTEND_URL=https://otto-eosin.vercel.app  (ja incluido como fallback)
+# Para multiplas origens: FRONTEND_URL=https://dominio1.com,https://dominio2.com
+_raw_origins = os.getenv("FRONTEND_URL", "")
+_extra = [u.strip() for u in _raw_origins.split(",") if u.strip()]
+
 _origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://otto-eosin.vercel.app",
+    *_extra,
 ]
-for _url in os.getenv("FRONTEND_URL", "").split(","):
-    _url = _url.strip()
-    if _url:
-        _origins.append(_url)
 
 app.add_middleware(
     CORSMiddleware,
