@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import os
+from datetime import datetime
 from io import BytesIO
 from typing import Annotated
 
@@ -16,6 +17,7 @@ from backend.modules.transactions.router import (
 )
 from .pdf_text_extraction import (
     extract_text_from_pdf_bytes,
+    filter_bank_statement_noise,
     has_meaningful_financial_text,
     infer_source_from_text,
     truncate_text_for_llm,
@@ -26,35 +28,39 @@ logger = logging.getLogger(__name__)
 
 
 def _build_text_extraction_prompt(extracted_text: str, source_hint: str | None) -> str:
-    source_instruction = (
-        (
-            f'Use origem="{source_hint}" como padrao para as transacoes deste documento. '
-            "Se houver evidencia clara de linha no debito, use origem=\"bank_statement\" nessa linha."
-        )
-        if source_hint
-        else (
-            "Identifique a origem de cada transacao: "
-            '"bank_statement" para extrato/conta e "credit_card" para fatura.'
-        )
+    source_default = source_hint or "bank_statement"
+    year = datetime.now().year
+    return (
+        "Extraia transacoes de documento financeiro BR (extrato ou fatura).\n"
+        "Ignore: saldo, juros, IOF, pagamento de fatura, limite, vencimento, encargos.\n"
+        "Retorne SO JSON puro:\n"
+        '{"t":[{"d":"AAAA-MM-DD","h":"HH:MM" ou null,"m":"merchant","a":-12.34,"c":"categoria" ou null,"o":"bank_statement|credit_card"}]}\n'
+        "Regras:\n"
+        f"- d: ISO 8601; se vier DD/MM, use ano {year}\n"
+        "- h: HH:MM explicito; senao null (sem aspas)\n"
+        "- m: merchant limpo, sem prefixos como Pix/Compra/Pagamento\n"
+        "- a: numerico, negativo=debito, positivo=credito\n"
+        "- c: categoria curta PT ou null\n"
+        f'- o: "{source_default}" default\n\n'
+        "TEXTO:\n"
+        f"{extracted_text}"
     )
 
+
+def _build_document_extraction_prompt() -> str:
+    year = datetime.now().year
     return (
-        "Voce recebera TEXTO bruto extraido de um PDF financeiro brasileiro (extrato ou fatura).\n"
-        "Nao invente nenhuma transacao. Use apenas linhas explicitamente presentes no texto.\n"
-        "Ignore linhas administrativas (saldo anterior, saldo do dia, limite, vencimento, resumo, pagamento de fatura, encargos).\n"
-        "Retorne SOMENTE JSON puro no formato:\n"
-        '{"transacoes":[{"date":"AAAA-MM-DD","time":"HH:MM ou null","merchant_name":"...","description":"...","amount":-12.34,"category_hint":"...","raw_text":"linha original","origem":"bank_statement|credit_card"}]}\n'
-        "Regras:\n"
-        "1) date deve ser ISO 8601 (AAAA-MM-DD). Se no texto vier apenas DD/MM, use o ano corrente.\n"
-        "2) time deve conter HH:MM quando houver horario explicito; caso contrario use null.\n"
-        '3) merchant_name deve vir limpo, sem prefixos como "Compra com cartao", "Compra no debito", "Pix", "Pagamento".\n'
-        "4) description deve repetir merchant_name limpo, nunca o texto bruto completo.\n"
-        "5) amount deve ser numerico e negativo para debito, positivo para credito.\n"
-        "6) category_hint deve ser uma categoria curta e plausivel em portugues (ex.: Alimentacao, Transporte, Saude) ou null.\n"
-        "7) raw_text deve preservar a linha original usada para extrair a transacao.\n"
-        f"8) {source_instruction}\n\n"
-        "TEXTO EXTRAIDO:\n"
-        f"{extracted_text}"
+        "Extraia transacoes deste PDF financeiro BR (extrato ou fatura). "
+        "Retorne SO JSON puro (sem markdown).\n"
+        'Formato: {"t":[{"d":"AAAA-MM-DD","h":"HH:MM" ou null,"m":"merchant","a":-12.34,"c":"categoria" ou null,"o":"bank_statement|credit_card"}]}\n'
+        "Regras: "
+        f"d=ISO8601 (DD/MM vira ano {year}); "
+        "h=HH:MM explicito ou null sem aspas; "
+        "m=sem prefixos (Pix/Compra/Pagamento); "
+        "a=negativo debito/positivo credito; "
+        "c=categoria curta PT ou null; "
+        "o=bank_statement para extrato/debito, credit_card para fatura. "
+        "Ignore: saldo, juros, IOF, pagamento de fatura, limite, vencimento."
     )
 
 
@@ -73,9 +79,11 @@ def _run_anthropic_text_analysis(
     model_name: str,
     extracted_text: str,
 ) -> str:
+    source_hint = infer_source_from_text(extracted_text)
+    filtered_text = filter_bank_statement_noise(extracted_text)
     prompt = _build_text_extraction_prompt(
-        extracted_text=truncate_text_for_llm(extracted_text),
-        source_hint=infer_source_from_text(extracted_text),
+        extracted_text=truncate_text_for_llm(filtered_text),
+        source_hint=source_hint,
     )
     message = client.messages.create(
         model=model_name,
@@ -113,32 +121,7 @@ def _run_anthropic_document_analysis(
                     },
                     {
                         "type": "text",
-                        "text": (
-                            "Extraia todas as transacoes deste PDF financeiro (extrato bancario ou fatura de cartao). "
-                            "Retorne SOMENTE o JSON puro, sem markdown, sem ```json, sem nenhum texto antes ou depois. "
-                            "Cada transacao deve incluir date, time, merchant_name, description, amount, category_hint, raw_text e origem. "
-                            "Use date em formato AAAA-MM-DD; se o documento trouxer apenas DD/MM, use o ano corrente. "
-                            "Use time no formato HH:MM quando houver horario explicito; senao null. "
-                            "merchant_name deve vir limpo, removendo prefixos operacionais como compra com cartao, compra no debito, pix e pagamento. "
-                            "description deve repetir merchant_name, nao o texto bruto. "
-                            "amount deve ser negativo para debitos e positivo para creditos. "
-                            "category_hint deve ser uma categoria curta inferida pelo contexto do merchant em portugues ou null. "
-                            "raw_text deve preservar a linha original usada na extracao. "
-                            "Cada transacao deve incluir a origem no campo origem: "
-                            '"bank_statement" para extrato bancario e compras no debito; '
-                            '"credit_card" para compras da fatura do cartao. '
-                            'Se uma compra estiver explicitamente no debito, use origem="bank_statement". '
-                            "Ignore linhas administrativas (ex.: saldo anterior, saldo do dia, limite, vencimento, pagamento de fatura). "
-                            "Formato exato: "
-                            '{"transacoes": [{"date": "AAAA-MM-DD", '
-                            '"time": "HH:MM ou null", '
-                            '"merchant_name": "...", '
-                            '"description": "...", '
-                            '"amount": -12.34, '
-                            '"category_hint": "...", '
-                            '"raw_text": "...", '
-                            '"origem": "bank_statement" ou "credit_card"}]}'
-                        ),
+                        "text": _build_document_extraction_prompt(),
                     },
                 ],
             }

@@ -187,7 +187,7 @@ def test_analyze_pdf_prefers_text_first_mode(monkeypatch):
     body = response.json()
     assert body["mode"] == "text-first"
     assert body["result"]
-    assert "document" not in json.dumps(captured_payload)
+    assert '"type": "document"' not in json.dumps(captured_payload)
 
 
 def test_analyze_pdf_uses_document_fallback_when_text_is_not_meaningful(monkeypatch):

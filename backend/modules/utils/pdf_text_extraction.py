@@ -9,6 +9,28 @@ from pypdf import PdfReader
 _DATE_PATTERN = re.compile(r"\b\d{2}/\d{2}(?:/\d{2,4})?\b")
 _AMOUNT_PATTERN = re.compile(r"\b\d{1,3}(?:\.\d{3})*,\d{2}\b")
 
+_BANK_NOISE_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"^(?:BANCO\s+DO\s+BRASIL\s*)+$", re.IGNORECASE),
+    re.compile(r"^Extrato\s+de\s+Conta\s+Corrente\s*$", re.IGNORECASE),
+    re.compile(r"^Cliente\s+.+$", re.IGNORECASE),
+    re.compile(r"^Per[ií]odo:\s+.+$", re.IGNORECASE),
+    re.compile(r"^Ag[eê]ncia:\s+.+$", re.IGNORECASE),
+    re.compile(r"^Lan[çc]amentos\s*$", re.IGNORECASE),
+    re.compile(r"^Dia\s+Lote\s+Documento\s+Hist[óo]rico\s+Valor\s*$", re.IGNORECASE),
+    re.compile(r"^\d{2}/\d{2}/\d{4}\s+Saldo\s+Anterior\b.*$", re.IGNORECASE),
+    re.compile(r"^Saldo\s+do\s+dia\b.*$", re.IGNORECASE),
+    re.compile(r"^\d{2}/\d{2}/\d{4}\s+S\s*A\s*L\s*D\s*O\b.*$", re.IGNORECASE),
+    re.compile(r"^Informa[çc][õo]es\s+Adicionais\s*$", re.IGNORECASE),
+    re.compile(r"^Saldo\s+[\d\.,]+\s*\([+\-]\)\s*$", re.IGNORECASE),
+    re.compile(r"^Juros\s*\*.*$", re.IGNORECASE),
+    re.compile(r"^Data\s+de\s+D[eé]bito\s+de\s+Juros\b.*$", re.IGNORECASE),
+    re.compile(r"^IOF\s*\*.*$", re.IGNORECASE),
+    re.compile(r"^Data\s+de\s+D[eé]bito\s+de\s+IOF\b.*$", re.IGNORECASE),
+    re.compile(r"^Total\s+Aplica[çc][õo]es\s+Financeiras\s*$", re.IGNORECASE),
+    re.compile(r"^\*\s*Saldos\s+por\s+dia\s+Base\s*$", re.IGNORECASE),
+    re.compile(r"^Sujeitos\s+a\s+confirma[çc][ãa]o\b.*$", re.IGNORECASE),
+)
+
 
 def extract_text_from_pdf_bytes(pdf_content: bytes) -> str:
     reader = PdfReader(BytesIO(pdf_content))
@@ -63,6 +85,24 @@ def infer_source_from_text(text: str) -> str | None:
     if cc_score >= bank_score:
         return "credit_card"
     return "bank_statement"
+
+
+def filter_bank_statement_noise(text: str) -> str:
+    """Remove watermarks, cabecalhos repetidos e linhas de saldo/juros/IOF do texto extraido.
+
+    Pensado para extratos do Banco do Brasil; padroes que nao baterem sao deixados
+    intactos, entao a funcao e segura para outros formatos (apenas nao limpa nada).
+    """
+    lines = (text or "").splitlines()
+    kept: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if any(pattern.match(stripped) for pattern in _BANK_NOISE_PATTERNS):
+            continue
+        kept.append(line)
+    return "\n".join(kept)
 
 
 def truncate_text_for_llm(text: str, max_chars: int = 120000) -> str:

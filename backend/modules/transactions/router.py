@@ -72,9 +72,11 @@ def _parse_transactions_from_result(raw: str) -> list[dict[str, Any]]:
                 return data
 
             if isinstance(data, dict):
-                transacoes = data.get("transacoes")
-                if transacoes is None:
-                    transacoes = data.get("transações")
+                transacoes = (
+                    data.get("transacoes")
+                    or data.get("transações")
+                    or data.get("t")
+                )
                 if isinstance(transacoes, list):
                     return transacoes
             break
@@ -159,9 +161,9 @@ def _normalize_transaction_items(items: list[dict[str, Any]]) -> list[dict[str, 
         if not isinstance(item, dict):
             raise ValueError("Item de transacao invalido.")
 
-        data = _normalize_data(item.get("data") or item.get("date"))
+        data = _normalize_data(item.get("data") or item.get("date") or item.get("d"))
         descricao = item.get("descricao") or item.get("description")
-        merchant_name = item.get("merchant_name")
+        merchant_name = item.get("merchant_name") or item.get("m")
         if not descricao and not merchant_name:
             raise ValueError("Campo 'descricao' invalido.")
 
@@ -169,15 +171,17 @@ def _normalize_transaction_items(items: list[dict[str, Any]]) -> list[dict[str, 
         if valor is None:
             valor = item.get("amount")
         if valor is None:
+            valor = item.get("a")
+        if valor is None:
             raise ValueError("Campo 'valor' invalido.")
 
         if item.get("tipo") or item.get("type"):
             tipo = _normalize_tipo(item.get("tipo") or item.get("type"))
         else:
             tipo = "credito" if float(valor) >= 0 else "debito"
-        origem = _normalize_source(item.get("origem") or item.get("source"))
-        time_value = _normalize_time(item.get("time"))
-        category_hint = _normalize_category_hint(item.get("category_hint"))
+        origem = _normalize_source(item.get("origem") or item.get("source") or item.get("o"))
+        time_value = _normalize_time(item.get("time") or item.get("h"))
+        category_hint = _normalize_category_hint(item.get("category_hint") or item.get("c"))
         descricao_text = str(descricao or merchant_name)
         raw_text = _normalize_raw_text(item.get("raw_text"), descricao_text)
         amount_value = abs(float(valor))
