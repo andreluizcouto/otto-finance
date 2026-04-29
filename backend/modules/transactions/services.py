@@ -130,6 +130,7 @@ def _fallback_local_classification(
 
     classified_count = 0
     skipped_count = 0
+    learned_categories = _load_learned_category_map(client, user_id)
 
     for transaction in unclassified:
         try:
@@ -140,8 +141,17 @@ def _fallback_local_classification(
 
             raw_description = str(transaction.get("description") or "")
             resolved_merchant = resolve_merchant_name(str(transaction.get("merchant_name") or raw_description))
-            slug, confidence = _infer_category_slug(raw_description, resolved_merchant)
-            category_id = slug_map.get(slug, fallback_category_id)
+            learned_category_id = _match_learned_category_id(
+                learned_categories,
+                description=raw_description,
+                merchant_name=resolved_merchant,
+            )
+            if learned_category_id:
+                category_id = learned_category_id
+                confidence = "high"
+            else:
+                slug, confidence = _infer_category_slug(raw_description, resolved_merchant)
+                category_id = slug_map.get(slug, fallback_category_id)
 
             (
                 client.table("transactions")
@@ -330,6 +340,54 @@ def _canonical_description(value: str) -> str:
     for ch in normalized:
         cleaned.append(ch if ch.isalnum() else " ")
     return " ".join("".join(cleaned).split())
+
+
+def _learned_category_keys(description: str, merchant_name: str | None) -> list[str]:
+    keys: list[str] = []
+    for value in (merchant_name, description):
+        key = _canonical_description(str(value or ""))
+        if key and key not in keys:
+            keys.append(key)
+    return keys
+
+
+def _load_learned_category_map(client: Any, user_id: str) -> dict[str, str]:
+    try:
+        resp = (
+            client.table("transactions")
+            .select("description, merchant_name, category_id")
+            .eq("user_id", user_id)
+            .eq("manually_reviewed", True)
+            .limit(1000)
+            .execute()
+        )
+    except Exception:
+        logger.exception("Erro ao carregar aprendizado de categorias para user_id=%s", user_id)
+        return {}
+
+    learned: dict[str, str] = {}
+    for row in resp.data or []:
+        category_id = str(row.get("category_id") or "").strip()
+        if not category_id:
+            continue
+        for key in _learned_category_keys(
+            description=str(row.get("description") or ""),
+            merchant_name=str(row.get("merchant_name") or ""),
+        ):
+            learned.setdefault(key, category_id)
+    return learned
+
+
+def _match_learned_category_id(
+    learned_categories: dict[str, str],
+    description: str,
+    merchant_name: str | None,
+) -> str | None:
+    for key in _learned_category_keys(description=description, merchant_name=merchant_name):
+        category_id = learned_categories.get(key)
+        if category_id:
+            return category_id
+    return None
 
 
 def _normalize_category_key(value: str) -> str:
@@ -530,6 +588,7 @@ def import_transactions_from_pdf(
             .execute()
         )
         categories = categories_resp.data or []
+        learned_categories = _load_learned_category_map(client, user_id)
 
         for item in transacoes:
             date_str = datetime.strptime(item["data"], "%d/%m/%Y").date().isoformat()
@@ -549,7 +608,12 @@ def import_transactions_from_pdf(
             source = _normalize_source(item.get("origem") or item.get("source"))
             transaction_time = str(item.get("time") or "").strip() or None
             raw_text = " ".join(str(item.get("raw_text") or description).split())
-            category_id = _match_category_id_from_hint(categories, item.get("category_hint"))
+            learned_category_id = _match_learned_category_id(
+                learned_categories,
+                description=description,
+                merchant_name=merchant_name,
+            )
+            category_id = learned_category_id or _match_category_id_from_hint(categories, item.get("category_hint"))
 
             if _is_administrative_transaction(description):
                 skipped_count += 1
@@ -588,7 +652,7 @@ def import_transactions_from_pdf(
                         "merchant_name": merchant_name or None,
                         "raw_text": raw_text,
                         "transaction_time": transaction_time,
-                        "confidence_score": None,
+                        "confidence_score": "high" if learned_category_id else None,
                         "manually_reviewed": False,
                     }
                 )

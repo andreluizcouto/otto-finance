@@ -10,7 +10,7 @@ def test_add_duplicate(mock_supabase):
     """
     from backend.modules.categories.services import add_category
     # Simulate existing category found
-    mock_supabase.table.return_value.select.return_value.ilike.return_value.execute.return_value.data = [
+    mock_supabase.table.return_value.select.return_value.ilike.return_value.or_.return_value.execute.return_value.data = [
         {"id": "existing-id"}
     ]
     result = add_category(mock_supabase, "user-1", "Pets", "#FF0000", "🐶")
@@ -27,7 +27,7 @@ def test_add_category(mock_supabase):
     """
     from backend.modules.categories.services import add_category
     # No existing category
-    mock_supabase.table.return_value.select.return_value.ilike.return_value.execute.return_value.data = []
+    mock_supabase.table.return_value.select.return_value.ilike.return_value.or_.return_value.execute.return_value.data = []
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [{"id": "new-id"}]
     result = add_category(mock_supabase, "user-1", "Minha Categoria", "#00FF00", "")
     assert result["success"] is True
@@ -40,23 +40,37 @@ def test_add_category(mock_supabase):
 
 
 class _RecorderQuery:
-    def __init__(self, existing_data=None, should_fail=False):
+    def __init__(self, existing_data=None, should_fail=False, execute_sequence=None):
         self.existing_data = existing_data if existing_data is not None else []
+        self.execute_sequence = list(execute_sequence or [])
         self.should_fail = should_fail
         self.eq_calls = []
         self.updated_payload = None
+        self.inserted_payload = None
         self.did_update = False
         self.did_delete = False
+        self.did_insert = False
 
     def select(self, *_args, **_kwargs):
+        return self
+
+    def limit(self, *_args, **_kwargs):
         return self
 
     def ilike(self, *_args, **_kwargs):
         return self
 
+    def or_(self, *_args, **_kwargs):
+        return self
+
     def update(self, payload):
         self.did_update = True
         self.updated_payload = payload
+        return self
+
+    def insert(self, payload):
+        self.did_insert = True
+        self.inserted_payload = payload
         return self
 
     def delete(self):
@@ -75,8 +89,12 @@ class _RecorderQuery:
             data = []
 
         resp = _Resp()
-        if not self.did_update and not self.did_delete:
-            resp.data = self.existing_data
+        if not self.did_update and not self.did_delete and not self.did_insert:
+            resp.data = self.execute_sequence.pop(0) if self.execute_sequence else self.existing_data
+        if self.did_update:
+            resp.data = [{"id": "updated-id"}]
+        if self.did_insert:
+            resp.data = [{"id": "custom-cat"}]
         return resp
 
 
@@ -91,7 +109,7 @@ class _RecorderClient:
 def test_rename_category_filters_user_and_non_default():
     from backend.modules.categories.services import rename_category
 
-    query = _RecorderQuery(existing_data=[])
+    query = _RecorderQuery(execute_sequence=[[{"id": "cat-1", "is_default": False}], []])
     client = _RecorderClient(query)
 
     result = rename_category(client, "user-9", "cat-1", "Novo Nome")
@@ -103,10 +121,36 @@ def test_rename_category_filters_user_and_non_default():
     assert ("is_default", False) in query.eq_calls
 
 
+def test_update_category_updates_name_color_and_emoji():
+    from backend.modules.categories.services import update_category
+
+    query = _RecorderQuery(execute_sequence=[[{"id": "cat-1", "is_default": False}], []])
+    client = _RecorderClient(query)
+
+    result = update_category(
+        client,
+        "user-9",
+        "cat-1",
+        "Mercado",
+        color_hex="#22C55E",
+        emoji="🛒",
+    )
+
+    assert result["success"] is True
+    assert query.updated_payload == {
+        "name": "Mercado",
+        "color_hex": "#22C55E",
+        "emoji": "🛒",
+    }
+    assert ("id", "cat-1") in query.eq_calls
+    assert ("user_id", "user-9") in query.eq_calls
+    assert ("is_default", False) in query.eq_calls
+
+
 def test_rename_category_duplicate_returns_error_without_update():
     from backend.modules.categories.services import rename_category
 
-    query = _RecorderQuery(existing_data=[{"id": "other-cat"}])
+    query = _RecorderQuery(execute_sequence=[[{"id": "cat-1", "is_default": False}], [{"id": "other-cat"}]])
     client = _RecorderClient(query)
 
     result = rename_category(client, "user-9", "cat-1", "Duplicada")

@@ -11,6 +11,7 @@ import {
   Plus,
   ShieldCheck,
   Sparkles,
+  CheckCircle2,
   Target,
   X,
 } from 'lucide-react';
@@ -61,6 +62,18 @@ interface ApiCategory {
 
 const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 const PENDING_GOALS_STORAGE_KEY = 'otto_pending_goals';
+
+function toMonthDateValue(month: number, year: number) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-01`;
+}
+
+function formatGoalDeadline(value: string) {
+  const isoMatch = /^(\d{4})-(\d{2})(?:-\d{2})?$/.exec(value || '');
+  if (!isoMatch) return value;
+  const year = Number(isoMatch[1]);
+  const month = Number(isoMatch[2]) - 1;
+  return `${MONTHS[month] ?? isoMatch[2]} ${year}`;
+}
 
 function mapGoal(goal: ApiGoal | GoalDraft, isPending = false): Goal {
   const isSavings = goal.type === 'savings';
@@ -156,7 +169,7 @@ function UpdateProgressModal({
           <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em]">{goal.name}</p>
         </div>
 
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
           {([
             ['add', 'Adicionar', Plus],
             ['remove', 'Retirar', Minus],
@@ -192,10 +205,21 @@ function UpdateProgressModal({
   );
 }
 
-function GoalCard({ goal, onUpdateProgress }: { goal: Goal; onUpdateProgress: (goal: Goal) => void }) {
+function GoalCard({
+  goal,
+  completing,
+  onUpdateProgress,
+  onComplete,
+}: {
+  goal: Goal;
+  completing: boolean;
+  onUpdateProgress: (goal: Goal) => void;
+  onComplete: (goal: Goal) => void;
+}) {
   const pct = goal.target > 0 ? (goal.current / goal.target) * 100 : 0;
   const remaining = Math.max(goal.target - goal.current, 0);
   const isSavings = goal.type === 'savings';
+  const isComplete = pct >= 100;
 
   return (
     <div className="bg-gradient-to-r from-white/[0.05] to-transparent border border-white/[0.08] hover:border-white/[0.15] transition-all duration-500 rounded-2xl md:rounded-[2rem] p-6 md:p-8 relative overflow-hidden backdrop-blur-xl group">
@@ -221,7 +245,7 @@ function GoalCard({ goal, onUpdateProgress }: { goal: Goal; onUpdateProgress: (g
               </div>
               <div className="flex items-center gap-3 text-[10px] md:text-xs text-white/40 mt-1 font-medium uppercase tracking-widest">
                 <Calendar className="w-3.5 h-3.5 shrink-0" />
-                <span>{isSavings ? `Prazo: ${goal.deadline}` : `Mês: ${goal.deadline}`}</span>
+                <span>{isSavings ? `Prazo: ${formatGoalDeadline(goal.deadline)}` : `Mês: ${formatGoalDeadline(goal.deadline)}`}</span>
                 {goal.category && <>
                   <span className="text-white/20">·</span>
                   <span className="truncate">{goal.category}</span>
@@ -261,10 +285,22 @@ function GoalCard({ goal, onUpdateProgress }: { goal: Goal; onUpdateProgress: (g
                 <ArrowRight className="w-5 h-5 group-hover/insight:translate-x-1 transition-transform" />
               </button>
             </div>
-            <button onClick={() => onUpdateProgress(goal)} className="w-full md:w-auto px-5 py-4 min-h-[48px] rounded-2xl bg-white/[0.05] border border-white/[0.08] text-white/80 hover:bg-white/[0.1] hover:text-white transition-all text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-              <Plus className="w-4 h-4" />
-              Atualizar progresso
-            </button>
+            <div className="flex w-full md:w-auto flex-col sm:flex-row gap-3">
+              <button onClick={() => onUpdateProgress(goal)} className="w-full md:w-auto px-5 py-4 min-h-[48px] rounded-2xl bg-white/[0.05] border border-white/[0.08] text-white/80 hover:bg-white/[0.1] hover:text-white transition-all text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" />
+                Atualizar progresso
+              </button>
+              {isComplete && !goal.isPending && (
+                <button
+                  onClick={() => onComplete(goal)}
+                  disabled={completing}
+                  className="w-full md:w-auto px-5 py-4 min-h-[48px] rounded-2xl bg-emerald-400 text-black hover:bg-emerald-300 transition-all text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {completing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  Concluir meta
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -302,19 +338,26 @@ function MonthYearPicker({ value, onChange }: { value: string; onChange: (value:
 
   useEffect(() => {
     if (value) {
+      const isoMatch = /^(\d{4})-(\d{2})/.exec(value);
+      if (isoMatch) {
+        setMonth(Number(isoMatch[2]) - 1);
+        setYear(Number(isoMatch[1]));
+        return;
+      }
+
       const [monthLabel, yearLabel] = value.split(' ');
-      const monthIndex = MONTHS.findIndex((monthItem) => monthItem === monthLabel);
+      const monthIndex = MONTHS.findIndex((monthItem) => monthItem.toLowerCase() === monthLabel?.toLowerCase());
       if (monthIndex >= 0 && yearLabel) {
         setMonth(monthIndex);
         setYear(Number(yearLabel));
       }
       return;
     }
-    onChange(`${MONTHS[month]} ${year}`);
+    onChange(toMonthDateValue(month, year));
   }, []);
 
   useEffect(() => {
-    onChange(`${MONTHS[month]} ${year}`);
+    onChange(toMonthDateValue(month, year));
   }, [month, year, onChange]);
 
   const prev = () => {
@@ -424,7 +467,7 @@ function NewGoalModal({
                 {emoji}
               </button>
               {showEmojiPicker && (
-                <div className="absolute left-0 top-full mt-2 z-50 bg-[#111] border border-white/10 rounded-2xl p-4 shadow-2xl w-[280px] md:w-[336px]">
+                <div className="absolute left-0 top-full mt-3 z-50 bg-[#111] border border-white/10 rounded-2xl p-4 shadow-2xl w-[264px] sm:w-[320px] md:w-[360px]">
                   <EmojiPickerGrid selected={emoji} onSelect={(selectedEmoji) => { setEmoji(selectedEmoji); setShowEmojiPicker(false); }} />
                 </div>
               )}
@@ -527,6 +570,7 @@ export function Goals() {
   const [showModal, setShowModal] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [savingProgress, setSavingProgress] = useState(false);
+  const [completingGoalId, setCompletingGoalId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRetryBanner, setShowRetryBanner] = useState(false);
   const [filter, setFilter] = useState<'all' | 'savings' | 'spending'>('all');
@@ -631,6 +675,23 @@ export function Goals() {
     }
   };
 
+  const handleCompleteGoal = async (goal: Goal) => {
+    if (goal.isPending) {
+      toast.warning('Esta meta ainda está pendente de sincronização.');
+      return;
+    }
+    setCompletingGoalId(goal.id);
+    try {
+      await apiPatch(`/api/goals/${goal.id}/status`, { status: 'completed' });
+      setGoals((prev) => prev.filter((item) => item.id !== goal.id));
+      toast.success('Meta concluída e arquivada.');
+    } catch (error: any) {
+      toast.error(error?.message ?? 'Erro ao concluir meta.');
+    } finally {
+      setCompletingGoalId(null);
+    }
+  };
+
   return (
     <div className="w-full relative z-10 animate-in fade-in duration-500 max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-8 md:mb-12">
@@ -670,7 +731,15 @@ export function Goals() {
             <div key={index} className="h-72 rounded-[2rem] border border-white/[0.06] bg-white/[0.03] animate-pulse" />
           ))
         ) : filtered.length > 0 ? (
-          filtered.map((goal) => <GoalCard key={goal.id} goal={goal} onUpdateProgress={setSelectedGoal} />)
+          filtered.map((goal) => (
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              completing={completingGoalId === goal.id}
+              onUpdateProgress={setSelectedGoal}
+              onComplete={handleCompleteGoal}
+            />
+          ))
         ) : hasGoals ? (
           <div className="py-24 md:py-32 text-center bg-white/[0.02] border border-dashed border-white/10 rounded-2xl md:rounded-[2.5rem]">
             <p className="text-white/20 text-xs font-bold uppercase tracking-[0.2em] px-4">Nenhuma meta identificada nesta categoria.</p>

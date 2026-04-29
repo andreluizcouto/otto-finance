@@ -49,6 +49,7 @@ interface CategoryRow {
   category_id: string;
   category_name: string;
   emoji: string;
+  color_hex?: string | null;
   amount: number;
   amount_label: string;
   share_pct: number;
@@ -79,14 +80,15 @@ interface DashboardPayload {
   saving_tips?: SavingTip[];
 }
 
-const CHART_COLORS = [
-  '#FFFFFF', // White
-  '#A3A3A3', // Neutral 400
-  '#525252', // Neutral 600
-  '#262626', // Neutral 800
-  '#404040', // Neutral 700
-  '#737373', // Neutral 500
-  '#D4D4D4', // Neutral 300
+const FALLBACK_CHART_COLORS = [
+  '#22C55E',
+  '#38BDF8',
+  '#F97316',
+  '#A855F7',
+  '#F43F5E',
+  '#EAB308',
+  '#14B8A6',
+  '#EC4899',
 ];
 
 const PERIODS = [
@@ -174,7 +176,7 @@ export function Dashboard() {
     return cats.map((c, i) => ({
       name: c.category_name,
       emoji: c.emoji ?? '📂',
-      color: CHART_COLORS[i % CHART_COLORS.length],
+      color: c.color_hex || FALLBACK_CHART_COLORS[i % FALLBACK_CHART_COLORS.length],
       total: c.amount,
     }));
   }, [data]);
@@ -343,8 +345,11 @@ export function Dashboard() {
                     </div>
                     <div className="h-1 w-full bg-white/[0.06] rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-white/40 rounded-full transition-all duration-1000"
-                        style={{ width: `${totalSpending > 0 ? (cat.total / totalSpending) * 100 : 0}%` }}
+                        className="h-full rounded-full transition-all duration-1000"
+                        style={{
+                          width: `${totalSpending > 0 ? (cat.total / totalSpending) * 100 : 0}%`,
+                          backgroundColor: cat.color,
+                        }}
                       />
                     </div>
                     <div className="h-px w-full bg-white/[0.03] mt-6" />

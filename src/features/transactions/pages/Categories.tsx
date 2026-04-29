@@ -11,7 +11,7 @@ import {
   X,
   Trash2,
 } from 'lucide-react';
-import { apiDelete, apiGet, apiPost, formatBRL } from '@/shared/lib/api';
+import { apiDelete, apiGet, apiPatch, apiPost, formatBRL } from '@/shared/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
 import { EmojiPickerGrid } from '@/shared/components/EmojiPickerGrid';
@@ -21,6 +21,7 @@ interface ApiCategory {
   name: string;
   emoji: string;
   color_hex: string | null;
+  is_default?: boolean;
 }
 
 interface ApiTransaction {
@@ -65,7 +66,17 @@ function isTransactionInPeriod(dateStr: string, period: PeriodOption) {
   return txDate >= start;
 }
 
-function CategoryCard({ cat, maxSpent, onDelete }: { cat: EnrichedCategory; maxSpent: number; onDelete: (id: string) => void }) {
+function CategoryCard({
+  cat,
+  maxSpent,
+  onDelete,
+  onEdit,
+}: {
+  cat: EnrichedCategory;
+  maxSpent: number;
+  onDelete: (id: string) => void;
+  onEdit: (cat: EnrichedCategory) => void;
+}) {
   const accentColor = cat.color_hex ?? '#ffffff';
   const totalSpent = cat.totalSpent ?? 0;
   const progress = maxSpent > 0 ? (totalSpent / maxSpent) * 100 : 0;
@@ -89,6 +100,15 @@ function CategoryCard({ cat, maxSpent, onDelete }: { cat: EnrichedCategory; maxS
             <>
               <div className="fixed inset-0 z-20" onClick={() => setShowMenu(false)} />
               <div className="absolute right-0 top-10 w-40 bg-[#0a0a0a] border border-white/10 rounded-xl py-2 z-30 shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200">
+                <button
+                  onClick={() => {
+                    onEdit(cat);
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-white/70 hover:bg-white/5 hover:text-white transition-colors uppercase tracking-widest"
+                >
+                  <Settings2 className="w-3.5 h-3.5" /> Editar
+                </button>
                 <button
                   onClick={() => {
                     onDelete(cat.id);
@@ -166,7 +186,8 @@ export function Categories() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCat, setNewCat] = useState({ name: '', color_hex: '#FFFFFF', emoji: '📂' });
+  const [editingCategory, setEditingCategory] = useState<EnrichedCategory | null>(null);
+  const [categoryForm, setCategoryForm] = useState({ name: '', color_hex: '#FFFFFF', emoji: '📂' });
   const [isSaving, setIsSaving] = useState(false);
   const [period, setPeriod] = useState<PeriodOption>('Este mês');
 
@@ -219,14 +240,40 @@ export function Categories() {
     }
   };
 
-  const handleCreate = async () => {
-    if (!newCat.name.trim()) return;
+  const openCreateModal = () => {
+    setEditingCategory(null);
+    setCategoryForm({ name: '', color_hex: '#FFFFFF', emoji: '📂' });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (category: EnrichedCategory) => {
+    setEditingCategory(category);
+    setCategoryForm({
+      name: category.name,
+      color_hex: category.color_hex ?? '#FFFFFF',
+      emoji: category.emoji ?? '📂',
+    });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingCategory(null);
+    setCategoryForm({ name: '', color_hex: '#FFFFFF', emoji: '📂' });
+  };
+
+  const handleSaveCategory = async () => {
+    if (!categoryForm.name.trim()) return;
     setIsSaving(true);
     try {
-      await apiPost('/api/categories', newCat);
-      toast.success('Categoria definida.');
-      setIsModalOpen(false);
-      setNewCat({ name: '', color_hex: '#FFFFFF', emoji: '📂' });
+      if (editingCategory) {
+        await apiPatch(`/api/categories/${editingCategory.id}`, categoryForm);
+        toast.success('Categoria atualizada.');
+      } else {
+        await apiPost('/api/categories', categoryForm);
+        toast.success('Categoria definida.');
+      }
+      closeModal();
       fetchData();
     } catch (err: any) {
       toast.error(err.message || 'Erro ao salvar.');
@@ -254,7 +301,7 @@ export function Categories() {
             <Settings2 className="w-4 h-4" />
             <span>Regras IA</span>
           </button>
-          <button onClick={() => setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 min-h-[48px] bg-white text-black rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+          <button onClick={openCreateModal} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 min-h-[48px] bg-white text-black rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]">
             <Plus className="w-4 h-4" />
             <span>Definir Nova</span>
           </button>
@@ -301,10 +348,10 @@ export function Categories() {
           {enrichedCategories
             .sort((a, b) => (b.totalSpent ?? 0) - (a.totalSpent ?? 0))
             .map((cat) => (
-              <CategoryCard key={cat.id} cat={cat} maxSpent={maxSpent} onDelete={handleDelete} />
+              <CategoryCard key={cat.id} cat={cat} maxSpent={maxSpent} onDelete={handleDelete} onEdit={openEditModal} />
             ))}
 
-          <button onClick={() => setIsModalOpen(true)} className="flex h-full min-h-[250px] md:min-h-[300px] cursor-pointer flex-col items-center justify-center gap-6 border-2 border-dashed border-white/[0.06] bg-transparent rounded-2xl md:rounded-[2.5rem] transition-all hover:border-white/20 hover:bg-white/[0.02] group">
+          <button onClick={openCreateModal} className="flex h-full min-h-[250px] md:min-h-[300px] cursor-pointer flex-col items-center justify-center gap-6 border-2 border-dashed border-white/[0.06] bg-transparent rounded-2xl md:rounded-[2.5rem] transition-all hover:border-white/20 hover:bg-white/[0.02] group">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/[0.03] border border-white/[0.06] text-white/20 transition-all group-hover:bg-white/[0.08] group-hover:text-white group-hover:scale-110">
               <Plus className="h-8 w-8" />
             </div>
@@ -315,15 +362,15 @@ export function Categories() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => setIsModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-2xl md:rounded-[2.5rem] p-8 md:p-10 shadow-2xl animate-in zoom-in-95 duration-300">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 p-2 text-white/20 hover:text-white transition-colors">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={closeModal} />
+          <div className="relative w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-2xl md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl animate-in zoom-in-95 duration-300">
+            <button onClick={closeModal} className="absolute top-6 right-6 p-2 text-white/20 hover:text-white transition-colors">
               <X className="w-6 h-6" />
             </button>
 
             <div className="mb-8 md:mb-10 text-center">
-              <h2 className="text-2xl font-light text-white mb-2 tracking-tight">Nova Classe</h2>
-              <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em]">Estruturação de dados</p>
+              <h2 className="text-2xl font-light text-white mb-2 tracking-tight">{editingCategory ? 'Editar Classe' : 'Nova Classe'}</h2>
+              <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em]">{editingCategory ? 'Ajustar nome, cor e símbolo' : 'Estruturação de dados'}</p>
             </div>
 
             <div className="space-y-6 md:space-y-8">
@@ -332,34 +379,41 @@ export function Categories() {
                 <input
                   placeholder="Nome da Categoria"
                   className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-5 min-h-[48px] text-sm text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
-                  value={newCat.name}
-                  onChange={(e) => setNewCat((prev) => ({ ...prev, name: e.target.value }))}
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm((prev) => ({ ...prev, name: e.target.value }))}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_180px] gap-5 md:gap-6 items-start">
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest pl-1">Símbolo</label>
-                  <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4">
-                    <div className="text-center text-3xl mb-4">{newCat.emoji}</div>
-                    <EmojiPickerGrid selected={newCat.emoji} onSelect={(emoji) => setNewCat((prev) => ({ ...prev, emoji }))} />
+                  <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 md:p-5">
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] border border-white/10 text-2xl">
+                        {categoryForm.emoji}
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Escolha um ícone</span>
+                    </div>
+                    <EmojiPickerGrid selected={categoryForm.emoji} onSelect={(emoji) => setCategoryForm((prev) => ({ ...prev, emoji }))} />
                   </div>
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest pl-1">Acento</label>
-                  <div className="flex items-center gap-3 bg-white/[0.03] border border-white/10 rounded-2xl p-2.5 min-h-[48px]">
-                    <input type="color" className="w-8 h-8 md:w-10 md:h-10 rounded-lg border-none bg-transparent cursor-pointer" value={newCat.color_hex} onChange={(e) => setNewCat((prev) => ({ ...prev, color_hex: e.target.value }))} />
-                    <span className="text-[10px] text-white/40 tabular-nums uppercase font-mono">{newCat.color_hex}</span>
+                  <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 min-h-[104px]">
+                    <div className="flex items-center gap-3">
+                      <input type="color" className="w-12 h-12 rounded-xl border-none bg-transparent cursor-pointer" value={categoryForm.color_hex} onChange={(e) => setCategoryForm((prev) => ({ ...prev, color_hex: e.target.value }))} />
+                      <span className="text-[10px] text-white/40 tabular-nums uppercase font-mono">{categoryForm.color_hex}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="mt-10 md:mt-12 space-y-4">
-              <button disabled={isSaving || !newCat.name} onClick={handleCreate} className="w-full h-14 min-h-[48px] rounded-2xl bg-white text-black font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-white/90 disabled:opacity-30 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                {isSaving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Confirmar Categoria'}
+              <button disabled={isSaving || !categoryForm.name} onClick={handleSaveCategory} className="w-full h-14 min-h-[48px] rounded-2xl bg-white text-black font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-white/90 disabled:opacity-30 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                {isSaving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : editingCategory ? 'Salvar Categoria' : 'Confirmar Categoria'}
               </button>
-              <button onClick={() => setIsModalOpen(false)} className="w-full h-12 min-h-[44px] rounded-2xl text-white/40 hover:text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-all">
+              <button onClick={closeModal} className="w-full h-12 min-h-[44px] rounded-2xl text-white/40 hover:text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-all">
                 Cancelar
               </button>
             </div>
