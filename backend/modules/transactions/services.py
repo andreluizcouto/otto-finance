@@ -2,9 +2,7 @@ import logging
 from datetime import datetime
 from typing import Any
 import unicodedata
-import httpx
 from supabase import Client
-from backend.core import get_make_webhook_url
 
 logger = logging.getLogger(__name__)
 
@@ -191,23 +189,7 @@ def trigger_classification(client: Any, user_id: str) -> dict[str, Any]:
         .execute()
     )
     categories = cat_resp.data or []
-    payload = build_classification_payload(user_id, unclassified, categories)
-
-    try:
-        webhook_url = get_make_webhook_url()
-    except ValueError:
-        # MAKE_WEBHOOK_URL nao configurada — usar classificacao local silenciosamente
-        return _fallback_local_classification(client, user_id, unclassified, categories)
-
-    try:
-        response = httpx.post(webhook_url, json=payload, timeout=60.0)
-        response.raise_for_status()
-        result = response.json()
-        count = int(result.get("classified_count", len(unclassified)))
-        skipped_count = max(len(unclassified) - count, 0)
-        return {"success": True, "classified_count": count, "skipped_count": skipped_count}
-    except Exception:
-        return _fallback_local_classification(client, user_id, unclassified, categories)
+    return _fallback_local_classification(client, user_id, unclassified, categories)
 
 # ---------------------------------------------------------------------------
 # Confidence score mapping (AICL-03 + D-10)
@@ -221,48 +203,6 @@ def map_confidence_score(confidence: float) -> str:
         return "medium"
     else:
         return "low"
-
-
-# ---------------------------------------------------------------------------
-# OpenAI JSON schema (AICL-06 + D-08 + D-09)
-# ---------------------------------------------------------------------------
-
-def get_openai_json_schema() -> dict[str, Any]:
-    """Return the OpenAI Structured Outputs JSON schema for classification."""
-    return {
-        "name": "classification_result",
-        "strict": True,
-        "schema": {
-            "type": "object",
-            "properties": {
-                "category_slug": {
-                    "type": "string",
-                    "enum": [
-                        "alimentacao",
-                        "transporte",
-                        "moradia",
-                        "saude",
-                        "lazer",
-                        "educacao",
-                        "compras",
-                        "assinaturas",
-                        "delivery",
-                        "outros",
-                    ],
-                    "description": "Category slug matching the categories table. Fallback to 'outros' if unknown.",
-                },
-                "confidence": {
-                    "type": "number",
-                    "description": (
-                        "Confidence score from 0.0 to 1.0. "
-                        "Return < 0.5 if merchant name is cryptic, abbreviated, or unknown."
-                    ),
-                },
-            },
-            "required": ["category_slug", "confidence"],
-            "additionalProperties": False,
-        },
-    }
 
 
 # ==============================================================================

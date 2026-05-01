@@ -13,7 +13,6 @@ class Settings:
     def __init__(self) -> None:
         self.supabase_url = self._get_required("SUPABASE_URL")
         self.supabase_anon_key = self._get_required("SUPABASE_ANON_KEY")
-        self.make_webhook_url = os.getenv("MAKE_WEBHOOK_URL", "").strip()
 
     @staticmethod
     def _get_required(name: str) -> str:
@@ -42,12 +41,6 @@ def get_authenticated_client(
         client.postgrest.auth(access_token)
 
     return client
-
-def get_make_webhook_url() -> str:
-    settings = get_settings()
-    if not settings.make_webhook_url:
-        raise ValueError("MAKE_WEBHOOK_URL not found in environment")
-    return settings.make_webhook_url
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
