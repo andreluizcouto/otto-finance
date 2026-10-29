@@ -1,81 +1,23 @@
-import os
-from functools import lru_cache
-from typing import Annotated
-
 from dotenv import load_dotenv
-from fastapi import Depends, Header, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from supabase import Client, create_client
+
+from backend.local_db import LocalClient, get_database
 
 load_dotenv()
 
-class Settings:
-    def __init__(self) -> None:
-        self.supabase_url = self._get_required("SUPABASE_URL")
-        self.supabase_anon_key = self._get_required("SUPABASE_ANON_KEY")
+# O OTTO roda só na máquina de quem usa: não há login, há um único usuário local.
+LOCAL_USER = {
+    "id": "00000000-0000-4000-8000-000000000001",
+    "email": "",
+    "created_at": "",
+}
 
-    @staticmethod
-    def _get_required(name: str) -> str:
-        value = os.getenv(name, "").strip()
-        if not value:
-            raise ValueError(f"{name} not found in environment")
-        return value
 
-@lru_cache
-def get_settings() -> Settings:
-    return Settings()
+def get_current_user() -> dict:
+    return LOCAL_USER
 
-def get_supabase_client() -> Client:
-    settings = get_settings()
-    return create_client(settings.supabase_url, settings.supabase_anon_key)
 
-def get_authenticated_client(
-    access_token: str | None = None,
-    refresh_token: str | None = None,
-) -> Client:
-    client = get_supabase_client()
-
-    if access_token and refresh_token:
-        client.auth.set_session(access_token, refresh_token)
-    elif access_token:
-        client.postgrest.auth(access_token)
-
-    return client
-
-bearer_scheme = HTTPBearer(auto_error=False)
-
-def get_access_token(
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-) -> str:
-    if not credentials or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de autenticacao nao fornecido.",
-        )
-    return credentials.credentials
-
-def get_refresh_token(
-    refresh_token: Annotated[str | None, Header(alias="X-Refresh-Token")] = None,
-) -> str | None:
-    if refresh_token and len(refresh_token) > 2048:
-        raise HTTPException(status_code=400, detail="Refresh token invalido.")
-    return refresh_token
-
-def get_current_user(access_token: Annotated[str, Depends(get_access_token)]) -> dict:
-    from backend.modules.auth.services import get_user_from_token
-    user = get_user_from_token(access_token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalido ou expirado.",
-        )
-    return user
-
-def get_current_client(
-    access_token: Annotated[str, Depends(get_access_token)],
-    refresh_token: Annotated[str | None, Depends(get_refresh_token)],
-) -> Client:
-    return get_authenticated_client(access_token=access_token, refresh_token=refresh_token)
+def get_current_client() -> LocalClient:
+    return LocalClient(get_database())
 
 
 def format_brl(value: float) -> str:

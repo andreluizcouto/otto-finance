@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router';
-import { Bell, ChevronDown, Settings, LogOut, Search, Menu, X } from 'lucide-react';
+import { Bell, ChevronDown, Settings, Search, Menu, X } from 'lucide-react';
 import { cn } from '../ui';
 import { apiFetch } from "@/shared/lib/api";
-import { clearToken } from "@/shared/lib/auth";
 
 const navItems = [
   { path: '/dashboard', label: 'Painel' },
@@ -15,17 +14,18 @@ const navItems = [
 export function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [user, setUser] = useState<{ email: string } | null>(null);
+  const [name, setName] = useState('');
 
   useEffect(() => {
-    apiFetch('/api/auth/me')
-      .then((data) => setUser(data.user ?? data))
+    apiFetch('/api/profile')
+      .then((data) => setName(data.profile?.name ?? ''))
       .catch(() => {});
   }, []);
+
+  const initial = name ? name.slice(0, 1).toUpperCase() : 'U';
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -39,17 +39,6 @@ export function Navbar() {
     }
     return () => { document.body.style.overflow = ''; };
   }, [mobileMenuOpen]);
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await apiFetch('/api/auth/logout', { method: 'POST' });
-    } catch {
-      // ignore errors — always clear token and redirect
-    }
-    clearToken();
-    navigate('/login');
-  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -116,9 +105,7 @@ export function Navbar() {
                 onClick={() => setDropdownOpen((prev) => !prev)}
               >
                 <div className="w-8 h-8 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center transition-all group-hover:border-white/20">
-                  <span className="text-xs text-white/50 font-medium">
-                    {user?.email ? user.email.slice(0, 1).toUpperCase() : 'U'}
-                  </span>
+                  <span className="text-xs text-white/50 font-medium">{initial}</span>
                 </div>
                 <ChevronDown size={14} className="text-white/40 group-hover:text-white transition-colors" />
               </div>
@@ -127,9 +114,9 @@ export function Navbar() {
                 <div className="absolute top-[52px] right-0 w-48 bg-[#0a0a0a] border border-white/[0.08] rounded-xl py-3 z-50 shadow-2xl backdrop-blur-3xl overflow-hidden">
                   <div className="px-4 py-2 mb-2 border-b border-white/10">
                     <p className="text-[10px] font-medium tracking-widest text-white/40 uppercase truncate">
-                      {user?.email ? user.email.split('@')[0] : '...'}
+                      {name || 'Usuário'}
                     </p>
-                    <p className="text-[9px] text-white/20 truncate">{user?.email ?? '...'}</p>
+                    <p className="text-[9px] text-white/20 truncate">Dados neste computador</p>
                   </div>
                   <NavLink
                     to="/settings"
@@ -139,14 +126,6 @@ export function Navbar() {
                     <Settings size={14} />
                     Configurações
                   </NavLink>
-                  <button
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="flex items-center gap-3 px-4 py-2.5 text-xs text-white/60 hover:text-white hover:bg-white/5 w-full transition-all disabled:opacity-50"
-                  >
-                    <LogOut size={14} />
-                    {isLoggingOut ? 'Saindo...' : 'Sair'}
-                  </button>
                 </div>
               )}
             </div>
@@ -176,15 +155,11 @@ export function Navbar() {
               {/* User info */}
               <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] mb-4">
                 <div className="w-10 h-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center">
-                  <span className="text-sm text-white/50 font-medium">
-                    {user?.email ? user.email.slice(0, 1).toUpperCase() : 'U'}
-                  </span>
+                  <span className="text-sm text-white/50 font-medium">{initial}</span>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm text-white font-medium truncate">
-                    {user?.email ? user.email.split('@')[0] : 'Usuário'}
-                  </p>
-                  <p className="text-[10px] text-white/30 truncate">{user?.email ?? '...'}</p>
+                  <p className="text-sm text-white font-medium truncate">{name || 'Usuário'}</p>
+                  <p className="text-[10px] text-white/30 truncate">Dados neste computador</p>
                 </div>
               </div>
 
@@ -223,14 +198,6 @@ export function Navbar() {
                 Configurações
               </NavLink>
 
-              <button
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-medium text-white/50 hover:text-white hover:bg-white/[0.04] transition-all w-full min-h-[48px] disabled:opacity-50"
-              >
-                <LogOut className="w-4 h-4" />
-                {isLoggingOut ? 'Saindo...' : 'Sair'}
-              </button>
             </div>
           </div>
         </div>

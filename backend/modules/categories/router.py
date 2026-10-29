@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from supabase import Client
+from backend.local_db import LocalClient as Client
 
 from backend.core import get_current_client, get_current_user
 from backend.schemas import CreateCategoryRequest, UpdateCategoryRequest

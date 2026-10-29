@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated, Any
 import unicodedata
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from supabase import Client
+from backend.local_db import LocalClient as Client
 
 from backend.core import get_current_client, get_current_user
 from backend.schemas import CorrectTransactionRequest, ImportPdfRequest

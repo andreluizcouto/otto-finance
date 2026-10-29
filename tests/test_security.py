@@ -3,11 +3,6 @@ Testes de segurança — verifica que todas as vulnerabilidades identificadas no
 
 Como cada falha poderia ser explorada e como foi corrigida:
 
-CR-01 | /api/decrypt sem autenticação
-  Exploração: qualquer pessoa sem conta poderia usar POST /api/decrypt com qualquer PDF
-  e senha, usando o servidor como proxy de descriptografia gratuito.
-  Correção: endpoint agora exige Depends(get_current_user) — sem token válido retorna 401.
-
 CR-02 | IDOR em correct_transaction_category
   Exploração: usuário A autenticado faz PATCH /api/transactions/{uuid_do_usuario_B}/category
   com seu próprio token. Sem filtro por user_id, o UPDATE atingia qualquer transação do banco.
@@ -43,9 +38,6 @@ LW-01 | ImportPdfRequest.result sem limite de tamanho
   consumindo CPU e memória desnecessariamente.
   Correção: max_length=500_000 no campo result.
 
-LW-02 | X-Refresh-Token sem validação de tamanho
-  Exploração: enviar header de tamanho arbitrário para aumentar custo de processamento.
-  Correção: tokens maiores que 2048 chars retornam 400.
 """
 
 import pytest
@@ -179,36 +171,6 @@ def test_import_pdf_request_accepts_normal_result():
     """LW-01: result dentro do limite deve ser aceito."""
     req = ImportPdfRequest(result='{"transacoes": []}')
     assert req.result == '{"transacoes": []}'
-
-
-# ---------------------------------------------------------------------------
-# LW-02: X-Refresh-Token com tamanho excessivo
-# ---------------------------------------------------------------------------
-
-def test_get_refresh_token_rejects_oversized_token():
-    """LW-02: Refresh token maior que 2048 chars deve lançar HTTPException."""
-    from fastapi import HTTPException
-    from backend.core import get_refresh_token
-
-    oversized = "x" * 2049
-    with pytest.raises(HTTPException) as exc_info:
-        get_refresh_token(refresh_token=oversized)
-    assert exc_info.value.status_code == 400
-
-
-def test_get_refresh_token_accepts_normal_token():
-    """LW-02: Token dentro do limite deve ser retornado normalmente."""
-    from backend.core import get_refresh_token
-
-    token = "x" * 512
-    result = get_refresh_token(refresh_token=token)
-    assert result == token
-
-
-def test_get_refresh_token_accepts_none():
-    """LW-02: None deve ser retornado sem erro."""
-    from backend.core import get_refresh_token
-    assert get_refresh_token(refresh_token=None) is None
 
 
 # ---------------------------------------------------------------------------

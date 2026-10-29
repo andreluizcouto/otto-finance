@@ -118,15 +118,6 @@ def _app_with_transactions_router(fake_client=None, user_id="user-from-jwt"):
     return app
 
 
-def test_analyze_pdf_requires_auth():
-    client = TestClient(_app_with_utils_router())
-    response = client.post(
-        "/api/analyze-pdf",
-        files={"file": ("invoice.pdf", b"fake", "application/pdf")},
-    )
-    assert response.status_code == 401
-
-
 def test_analyze_pdf_prefers_text_first_mode(monkeypatch):
     utils_router_module = importlib.import_module("backend.modules.utils.router")
 
@@ -238,12 +229,6 @@ def test_analyze_pdf_uses_document_fallback_when_text_is_not_meaningful(monkeypa
 
     assert response.status_code == 200
     assert response.json()["mode"] == "document-fallback"
-
-
-def test_import_transactions_requires_auth():
-    client = TestClient(_app_with_transactions_router())
-    response = client.post("/api/transactions/import", json={"result": '{"transacoes": []}'})
-    assert response.status_code == 401
 
 
 def test_import_transactions_inserts_and_skips_duplicates():

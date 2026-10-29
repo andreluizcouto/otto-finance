@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from supabase import Client
+from backend.local_db import LocalClient as Client
 
 
 def _only_digits(value: str) -> str:

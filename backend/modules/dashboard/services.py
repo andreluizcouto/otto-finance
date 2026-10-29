@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from typing import Any
 
 import pandas as pd
-from supabase import Client
+from backend.local_db import LocalClient as Client
 
 from backend.core import format_brl
 

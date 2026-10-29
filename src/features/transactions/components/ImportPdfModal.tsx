@@ -11,7 +11,6 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { apiPost } from "@/shared/lib/api";
-import { getToken } from "@/shared/lib/auth";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -49,20 +48,19 @@ export function ImportPdfModal({
     onOpenChange(nextOpen);
   };
 
-  const processFile = async (file: File, token: string) => {
+  const processFile = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
 
     const response = await fetch(`${BASE_URL}/api/analyze-pdf`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
       body: formData,
     });
 
     if (!response.ok) {
-      throw new Error(`Erro na extração (${file.name}): HTTP ${response.status}`);
+      const body = await response.json().catch(() => null);
+      const detail = typeof body?.detail === "string" ? body.detail : `HTTP ${response.status}`;
+      throw new Error(`Erro na extração (${file.name}): ${detail}`);
     }
 
     const analyzeData = await response.json();
@@ -96,18 +94,13 @@ export function ImportPdfModal({
     setError(null);
 
     try {
-      const token = getToken();
-      if (!token) {
-        throw new Error("Sessão expirada. Faça login novamente.");
-      }
-
       let totalImported = 0;
       let totalSkipped = 0;
       const failedFiles: File[] = [];
       const failedMessages: string[] = [];
 
       const results = await Promise.allSettled(
-        files.map((file) => processFile(file, token))
+        files.map((file) => processFile(file))
       );
 
       results.forEach((result, i) => {

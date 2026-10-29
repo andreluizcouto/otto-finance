@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from supabase import Client
+from backend.local_db import LocalClient as Client
 
 from backend.core import get_current_client, get_current_user
 from .services import get_dashboard_payload

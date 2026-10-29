@@ -1,4 +1,4 @@
-from supabase import Client
+from backend.local_db import LocalClient as Client
 
 
 def _slugify(name: str) -> str:

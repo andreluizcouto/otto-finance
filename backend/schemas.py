@@ -1,20 +1,8 @@
-"""Schemas Pydantic centralizados do FinCoach API."""
+"""Schemas Pydantic centralizados da API do OTTO."""
 import re
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
-
-
-# --- Auth ---
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=6)
-
-
-class SignUpRequest(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=6)
+from pydantic import BaseModel, Field, field_validator
 
 
 # --- Categories ---

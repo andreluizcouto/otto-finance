@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
-from supabase import Client
+from backend.local_db import LocalClient as Client
 
 _MONTH_LABEL_TO_NUMBER = {
     "jan": 1,

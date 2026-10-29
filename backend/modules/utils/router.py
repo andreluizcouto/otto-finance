@@ -198,7 +198,10 @@ async def analyze_pdf(
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY não configurada.")
+        raise HTTPException(
+            status_code=503,
+            detail="Para ler PDFs, coloque sua ANTHROPIC_API_KEY no arquivo .env e reinicie a API.",
+        )
 
     model_name = os.getenv("ANTHROPIC_PDF_MODEL", "claude-sonnet-4-6").strip()
 

@@ -1,23 +1,18 @@
 import { useEffect, useState, useRef } from 'react';
 import {
   User,
-  Lock,
-  Shield,
-  Smartphone,
   ChevronRight,
-  Fingerprint,
-  Monitor,
+  HardDrive,
+  Sparkles,
+  Database,
   Bell,
   Wallet,
   Globe,
   UploadCloud,
   Moon,
   Loader2,
-  AlertCircle,
 } from 'lucide-react';
 import { apiGet, apiPatch } from '@/shared/lib/api';
-import { getToken } from '@/shared/lib/auth';
-import { supabase } from '@/shared/lib/supabase';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
 
@@ -25,7 +20,7 @@ import { cn } from '@/shared/lib/utils';
 
 const TABS = [
   { id: 'perfil', label: 'Wealth Identity', icon: User },
-  { id: 'seguranca', label: 'Security Protocol', icon: Shield },
+  { id: 'dados', label: 'Dados Locais', icon: HardDrive },
   { id: 'links', label: 'Institutional Links', icon: Wallet },
   { id: 'alertas', label: 'Alert Management', icon: Bell },
   { id: 'global', label: 'Global Settings', icon: Globe },
@@ -57,29 +52,11 @@ function NavItem({ icon: Icon, label, active, onClick }: { icon: any; label: str
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState('perfil');
-  const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '', cpf: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', phone: '', cpf: '' });
+  const [localInfo, setLocalInfo] = useState<{ db_path: string; ai_enabled: boolean } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-
-  const applySessionFallback = () => {
-    const token = getToken();
-    if (!token) return false;
-    try {
-      const [, payload] = token.split('.');
-      const parsed = JSON.parse(atob(payload));
-      const email = parsed.email || '';
-      const fullName = parsed.user_metadata?.full_name || parsed.app_metadata?.full_name || '';
-      setProfileForm((prev) => ({
-        ...prev,
-        name: fullName || email.split('@')[0] || prev.name || 'Usuário',
-        email: email || prev.email || '',
-      }));
-      return true;
-    } catch {
-      return false;
-    }
-  };
 
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -115,53 +92,27 @@ export function Settings() {
     const loadProfile = async () => {
       setIsLoading(true);
       try {
-        const [authRes, profileRes] = await Promise.all([
-          apiGet('/api/auth/me'),
-          apiGet('/api/profile'),
-        ]);
-        const u = authRes.user ?? authRes;
+        const profileRes = await apiGet('/api/profile');
         const profile = profileRes.profile ?? {};
         setProfileForm({
-          name: profile.name || u.email?.split('@')[0] || 'Usuário',
-          email: profile.email || u.email || '',
+          name: profile.name || 'Usuário',
           phone: profile.phone || '',
           cpf: profile.cpf || '',
         });
-      } catch {
-        try {
-          if (!supabase) {
-            throw new Error('Supabase client unavailable');
-          }
-          const { data, error } = await supabase.auth.getUser();
-          if (error || !data.user) {
-            throw error ?? new Error('No cached user');
-          }
-          const fallbackUser = data.user;
-          setProfileForm((prev) => ({
-            ...prev,
-            name:
-              (fallbackUser.user_metadata?.full_name as string | undefined) ||
-              fallbackUser.email?.split('@')[0] ||
-              prev.name ||
-              'Usuário',
-            email: fallbackUser.email || prev.email || '',
-          }));
-          toast.warning('Perfil carregado do cache local.');
-        } catch {
-          applySessionFallback();
-          toast.warning('Perfil carregado do cache local.');
-        }
+      } catch (err: any) {
+        toast.error(err?.message || 'Não foi possível carregar o perfil.');
       } finally {
         setIsLoading(false);
       }
     };
 
+    apiGet('/api/local').then(setLocalInfo).catch(() => {});
     loadProfile();
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidCpf(profileForm.cpf)) {
+    if (profileForm.cpf && !isValidCpf(profileForm.cpf)) {
       toast.error('Informe um CPF válido.');
       return;
     }
@@ -180,8 +131,6 @@ export function Settings() {
     }
   };
 
-  const shouldShowCompleteProfile = !profileForm.phone || !profileForm.cpf;
-
   return (
     <div className="w-full relative z-10 animate-in fade-in duration-700 max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-10">
       
@@ -193,7 +142,7 @@ export function Settings() {
             <div className="h-4 w-px bg-white/20"></div>
             <h1 className="text-xs font-medium tracking-widest text-white/40 uppercase">Configurações</h1>
           </div>
-          <p className="text-white/40 text-sm italic">Gestão de identidade digital e protocolos de segurança.</p>
+          <p className="text-white/40 text-sm italic">Seu perfil e onde ficam os seus dados.</p>
         </div>
       </div>
 
@@ -222,18 +171,6 @@ export function Settings() {
           {activeTab === 'perfil' && (
             <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
 
-              {shouldShowCompleteProfile && !isLoading && (
-                <div className="bg-white/[0.04] border border-white/[0.08] rounded-[2rem] p-6 flex items-start gap-4">
-                  <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/[0.08]">
-                    <AlertCircle className="w-5 h-5 text-white/70" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg text-white/90 font-medium mb-1">Complete seu cadastro</h2>
-                    <p className="text-sm text-white/40">Adicione seu CPF e telefone para aproveitar todos os recursos do OTTO.</p>
-                  </div>
-                </div>
-              )}
-              
               {/* Identity Card */}
               <div className="bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.08] backdrop-blur-2xl rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl">
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/[0.02] blur-[80px] rounded-full pointer-events-none" />
@@ -280,15 +217,6 @@ export function Settings() {
                         className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-5 text-sm text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
                         value={profileForm.name}
                         onChange={(e) => setProfileForm(p => ({ ...p, name: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest pl-1">Digital Signature (Email)</label>
-                      <input
-                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-5 text-sm text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all"
-                        value={profileForm.email}
-                        onChange={(e) => setProfileForm(p => ({ ...p, email: e.target.value }))}
-                        type="email"
                       />
                     </div>
                     <div className="space-y-3">
@@ -352,97 +280,59 @@ export function Settings() {
             </div>
           )}
 
-          {activeTab === 'seguranca' && (
+          {activeTab === 'dados' && (
             <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
-              {/* Security Status */}
               <div className="bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.08] rounded-[2.5rem] p-8 relative overflow-hidden shadow-2xl">
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/[0.03] blur-[50px] rounded-full pointer-events-none" />
-                <div className="flex items-start justify-between relative z-10">
-                  <div className="flex items-center gap-6">
-                    <div className="p-4 bg-white/[0.04] rounded-2xl border border-white/[0.08] shadow-inner">
-                      <Shield className="w-8 h-8 text-white/40" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-light text-white mb-1">Segurança da Conta</h2>
-                      <p className="text-sm text-white/40">Configurações de blindagem do seu OTTO ID.</p>   
-                    </div>
+                <div className="flex items-center gap-6 relative z-10">
+                  <div className="p-4 bg-white/[0.04] rounded-2xl border border-white/[0.08] shadow-inner">
+                    <HardDrive className="w-8 h-8 text-white/40" />
                   </div>
-                  <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-white/20 px-3 py-1.5 bg-white/[0.03] rounded-lg border border-white/[0.06]">
-                    Nível 01
-                  </span>
+                  <div>
+                    <h2 className="text-xl font-light text-white mb-1">Tudo neste computador</h2>
+                    <p className="text-sm text-white/40">O OTTO não tem conta nem servidor: transações, metas e categorias ficam num arquivo aqui na sua máquina.</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Authentication Options */}
               <div className="bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl rounded-[2.5rem] p-10 space-y-6">
-                <h3 className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] mb-10 pl-1 border-b border-white/5 pb-6">Autenticação</h3>
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 rounded-2xl hover:bg-white/[0.02] border border-transparent hover:border-white/[0.05] transition-all group">
-                  <div className="flex items-center gap-6">
-                    <Fingerprint className="w-6 h-6 text-white/20 group-hover:text-white/40 transition-colors" />
-                    <div>
-                      <h4 className="text-sm font-medium text-white">Login Biométrico</h4>
-                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mt-1">FaceID ou TouchID</p>        
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 rounded-2xl border border-white/[0.05]">
+                  <div className="flex items-center gap-6 min-w-0">
+                    <Database className="w-6 h-6 text-white/30 shrink-0" />
+                    <div className="min-w-0">
+                      <h4 className="text-sm font-medium text-white">Arquivo do banco</h4>
+                      <p className="text-xs text-white/40 mt-1 break-all font-mono">{localInfo?.db_path ?? '...'}</p>
+                      <p className="text-[11px] text-white/30 mt-2">Para fazer backup, copie esse arquivo. Para começar do zero, apague-o com a API desligada.</p>
                     </div>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-12 h-7 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-white/[0.3] border border-white/20 shadow-xl"></div>
-                  </label>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 rounded-2xl hover:bg-white/[0.02] border border-transparent hover:border-white/[0.05] transition-all group">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 rounded-2xl border border-white/[0.05]">
                   <div className="flex items-center gap-6">
-                    <Smartphone className="w-6 h-6 text-white/20 group-hover:text-white/40 transition-colors" />
+                    <Sparkles className="w-6 h-6 text-white/30 shrink-0" />
                     <div>
-                      <h4 className="text-sm font-medium text-white">Fator Duplo (2FA)</h4>
-                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mt-1">App Autenticador</p>
+                      <h4 className="text-sm font-medium text-white">Leitura de PDF com IA</h4>
+                      <p className="text-[11px] text-white/30 mt-1">
+                        {localInfo?.ai_enabled
+                          ? 'Ligada. O texto do extrato vai para a API da Anthropic só na hora da leitura.'
+                          : 'Desligada. Coloque sua ANTHROPIC_API_KEY no arquivo .env e reinicie a API.'}
+                      </p>
                     </div>
                   </div>
-                  <button className="px-6 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white/60 hover:text-white text-[10px] font-bold uppercase tracking-widest rounded-xl">
-                    Configurar
-                  </button>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 rounded-2xl hover:bg-white/[0.02] border border-transparent hover:border-white/[0.05] transition-all group">
-                  <div className="flex items-center gap-6">
-                    <Lock className="w-6 h-6 text-white/20 group-hover:text-white/40 transition-colors" />
-                    <div>
-                      <h4 className="text-sm font-medium text-white">Chave Mestra</h4>
-                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mt-1">Alterar senha de acesso</p>
-                    </div>
-                  </div>
-                  <button className="px-6 py-2.5 border border-white/10 hover:bg-white/5 transition-all text-white/60 hover:text-white text-[10px] font-bold uppercase tracking-widest rounded-xl">
-                    Redefinir
-                  </button>
-                </div>
-              </div>
-
-              {/* Active Sessions */}
-              <div className="bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl rounded-[2.5rem] p-10">
-                <h3 className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] mb-10 pl-1 border-b border-white/5 pb-6">Sessões Ativas</h3>
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between p-2">
-                    <div className="flex items-center gap-6">
-                      <Monitor className="w-6 h-6 text-white/20" />
-                      <div>
-                        <div className="text-sm font-medium text-white">Web Interface (Atual)</div>
-                        <div className="text-[10px] font-bold text-emerald-400/60 uppercase tracking-widest mt-1 flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" /> Sincronizado
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em]">ID-7724</span>
-                  </div>
-                  <div className="pt-6 border-t border-white/5 text-center">
-                    <p className="text-[10px] font-bold text-white/10 uppercase tracking-[0.2em]">Nenhum outro dispositivo vinculado.</p>
-                  </div>
+                  <span className={cn(
+                    "text-[10px] uppercase font-bold tracking-[0.2em] px-3 py-1.5 rounded-lg border shrink-0",
+                    localInfo?.ai_enabled
+                      ? "text-emerald-400/80 bg-emerald-400/[0.06] border-emerald-400/20"
+                      : "text-white/30 bg-white/[0.03] border-white/[0.06]"
+                  )}>
+                    {localInfo?.ai_enabled ? 'Ativa' : 'Inativa'}
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
-          {activeTab !== 'perfil' && activeTab !== 'seguranca' && (
+          {activeTab !== 'perfil' && activeTab !== 'dados' && (
             <div className="flex flex-col items-center justify-center py-40 text-center text-white/20 animate-in fade-in duration-500">
               {(() => {
                 const TabIcon = TABS.find(t => t.id === activeTab)?.icon || Globe;

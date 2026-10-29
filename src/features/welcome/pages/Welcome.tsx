@@ -1,8 +1,20 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Shield, ArrowRight } from "lucide-react";
+import { HardDrive, ArrowRight } from "lucide-react";
+import { hasStarted, markStarted } from "@/shared/lib/local";
 
 export function Welcome() {
   const navigate = useNavigate();
+
+  // Quem já passou por aqui cai direto no painel.
+  useEffect(() => {
+    if (hasStarted()) navigate("/dashboard", { replace: true });
+  }, [navigate]);
+
+  const start = (path: string) => {
+    markStarted();
+    navigate(path);
+  };
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center relative overflow-hidden font-sans">
@@ -23,28 +35,28 @@ export function Welcome() {
         {/* Actions */}
         <div className="w-full flex flex-col gap-4">
           <button
-            onClick={() => navigate('/signup')}
+            onClick={() => start('/onboarding/1')}
             className="w-full h-14 min-h-[48px] rounded-xl bg-white text-black font-medium flex items-center justify-center gap-2 hover:bg-white/90 transition-all group shadow-[0_0_20px_rgba(255,255,255,0.15)] text-sm tracking-widest uppercase"
           >
-            Criar Conta
+            Começar
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
 
           <p className="text-center text-[10px] text-white/30 tracking-wide uppercase mb-10 md:mb-16">
-            Já tem conta?{' '}
+            Já conhece?{' '}
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => start('/dashboard')}
               className="text-white/60 hover:text-white transition-colors font-medium border-b border-white/20 hover:border-white pb-0.5 normal-case min-h-[44px]"
             >
-              Entrar
+              Ir para o painel
             </button>
           </p>
         </div>
 
         {/* Footer */}
         <div className="absolute bottom-12 flex items-center gap-2">
-          <Shield className="h-3 w-3 text-white/20" />
-          <span className="text-[9px] text-white/20 uppercase tracking-widest">Segurança Institucional</span>
+          <HardDrive className="h-3 w-3 text-white/20" />
+          <span className="text-[9px] text-white/20 uppercase tracking-widest">Seus dados ficam neste computador</span>
         </div>
       </div>
     </div>

@@ -1,18 +1,8 @@
-import { useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router';
+import { Outlet } from 'react-router';
 import { Navbar } from './Navbar';
-import { isAuthenticated } from "@/shared/lib/auth";
 import { Toaster } from "sonner";
 
 export function MainLayout() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate('/login', { replace: true });
-    }
-  }, [navigate]);
-
   return (
     <div className="flex flex-col min-h-screen bg-black text-white font-sans selection:bg-white/20 selection:text-white relative overflow-x-hidden">
       <Toaster
@@ -39,7 +29,7 @@ export function MainLayout() {
   );
 }
 
-export function AuthLayout() {
+export function WelcomeLayout() {
   return (
     <div className="flex min-h-screen flex-col justify-center bg-black text-white px-4 py-12 lg:px-8 relative overflow-hidden">
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -52,15 +42,7 @@ export function AuthLayout() {
   );
 }
 
-export function ProtectedAuthLayout() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate('/login', { replace: true });
-    }
-  }, [navigate]);
-
+export function OnboardingLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-black text-white relative">
       <div className="absolute top-[-200px] right-0 w-[600px] h-[600px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none"></div>

@@ -1,21 +1,13 @@
-// In production, configure VITE_API_URL as https://otto-qkio.onrender.com
-import { getToken } from './auth';
-
+// API local (backend/main.py). Outra porta? VITE_API_URL=http://127.0.0.1:9000
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
-  const token = getToken();
-
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string> ?? {}),
   };
 
   if (options.body !== undefined && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
-  }
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
   }
 
   let response: Response;
@@ -25,7 +17,7 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
       headers,
     });
   } catch {
-    throw new Error('Serviço temporariamente indisponível. Tente novamente em instantes.');
+    throw new Error('A API local não respondeu. Ela está rodando? (python -m uvicorn backend.main:app --port 8000)');
   }
 
   if (!response.ok) {

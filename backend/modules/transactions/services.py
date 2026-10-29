@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import Any
 import unicodedata
-from supabase import Client
+from backend.local_db import LocalClient as Client
 
 logger = logging.getLogger(__name__)
 
