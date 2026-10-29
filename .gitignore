@@ -8,3 +8,8 @@ venv/
 dist/
 build/
 node_modules/
+
+# logs e saídas temporárias de análise (podem conter dados reais)
+*.log
+tmp_*.json
+.claude/settings.local.json
